@@ -1,5 +1,8 @@
 package com.netherpyro.glcv
 
+import android.animation.ValueAnimator
+import android.view.animation.AccelerateInterpolator
+import androidx.core.animation.doOnEnd
 import kotlin.math.min
 
 /**
@@ -10,6 +13,8 @@ internal class GlLayoutHelper(private var viewportAspect: Float) {
     companion object {
         const val NO_PADDING = -1
     }
+
+    var animDuration = 150L
 
     private var viewWidth = 0
     private var viewHeight = 0
@@ -26,10 +31,23 @@ internal class GlLayoutHelper(private var viewportAspect: Float) {
         return recalculateViewport()
     }
 
-    fun changeAspectRatio(aspect: Float): GlViewport {
-        viewportAspect = aspect
-
-        return recalculateViewport()
+    fun changeAspectRatio(aspect: Float, animated: Boolean = false, onViewportReady: (GlViewport) -> Unit) {
+        if (!animated /*|| abs(viewportAspect - aspect) > 1f */) {
+            viewportAspect = aspect
+            onViewportReady(recalculateViewport())
+        } else {
+            ValueAnimator.ofFloat(viewportAspect, aspect)
+                .apply {
+                    duration = animDuration
+                    interpolator = AccelerateInterpolator()
+                    addUpdateListener {
+                        viewportAspect = it.animatedValue as Float
+                        onViewportReady(recalculateViewport())
+                    }
+                    doOnEnd { onViewportReady(recalculateViewport()) }
+                    start()
+                }
+        }
     }
 
     fun setViewportPadding(left: Int, top: Int, right: Int, bottom: Int): GlViewport {

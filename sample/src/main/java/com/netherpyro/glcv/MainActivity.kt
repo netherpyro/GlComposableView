@@ -46,17 +46,17 @@ class MainActivity : AppCompatActivity() {
         player.prepare(concatenatedSource)
         player.playWhenReady = true
 
-        glView.addVideoLayer(player)
+        glView.addExoPlayerLayer(player)
 
-        a1_1.setOnClickListener { glView.setAspectRatio(1f) }
-        a3_2.setOnClickListener { glView.setAspectRatio(3 / 2f) }
-        a2_3.setOnClickListener { glView.setAspectRatio(2 / 3f) }
-        a4_5.setOnClickListener { glView.setAspectRatio(4 / 5f) }
-        a5_4.setOnClickListener { glView.setAspectRatio(5 / 4f) }
-        a9_16.setOnClickListener { glView.setAspectRatio(9 / 16f) }
-        a16_9.setOnClickListener { glView.setAspectRatio(16 / 9f) }
-        a18_9.setOnClickListener { glView.setAspectRatio(18 / 9f) }
-        a9_18.setOnClickListener { glView.setAspectRatio(9 / 18f) }
+        a1_1.setOnClickListener { glView.setAspectRatio(1f, true) }
+        a3_2.setOnClickListener { glView.setAspectRatio(3 / 2f, true) }
+        a2_3.setOnClickListener { glView.setAspectRatio(2 / 3f, true) }
+        a4_5.setOnClickListener { glView.setAspectRatio(4 / 5f, true) }
+        a5_4.setOnClickListener { glView.setAspectRatio(5 / 4f, true) }
+        a9_16.setOnClickListener { glView.setAspectRatio(9 / 16f, true) }
+        a16_9.setOnClickListener { glView.setAspectRatio(16 / 9f, true) }
+        a18_9.setOnClickListener { glView.setAspectRatio(18 / 9f, true) }
+        a9_18.setOnClickListener { glView.setAspectRatio(9 / 18f, true) }
         v1.setOnClickListener { player.seekTo(0, 0) }
         v2.setOnClickListener { player.seekTo(1, 0) }
         v3.setOnClickListener { player.seekTo(2, 3000) }

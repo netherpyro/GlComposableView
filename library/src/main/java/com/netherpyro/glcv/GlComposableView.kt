@@ -51,13 +51,14 @@ class GlComposableView @JvmOverloads constructor(
         updateViewport(viewport)
     }
 
-    fun addVideoLayer(player: SimpleExoPlayer) {
+    fun addExoPlayerLayer(player: SimpleExoPlayer) {
         renderMediator.addExoPlayerLayer(player)
     }
 
-    fun setAspectRatio(aspect: Float) {
-        val viewport = layoutHelper.changeAspectRatio(aspect)
-        updateViewport(viewport)
+    fun setAspectRatio(aspect: Float, animated: Boolean = false) {
+        layoutHelper.changeAspectRatio(aspect, animated) {
+            updateViewport(it)
+        }
     }
 
     fun setBaseColor(@ColorInt color: Int) {
@@ -70,6 +71,10 @@ class GlComposableView @JvmOverloads constructor(
         renderer.viewportColor = color
 
         requestDraw()
+    }
+
+    fun setChangeAspectRatioAnimationDuration(duration: Long) {
+        layoutHelper.animDuration = duration
     }
 
     fun setViewportPadding(

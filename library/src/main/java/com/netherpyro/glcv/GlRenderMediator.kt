@@ -12,15 +12,7 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     private val layers = mutableListOf<Layer>()
 
     override fun invalidate() {
-        render()
-    }
-
-    fun addLayer(layer: Layer) {
-        layers.add(layer)
-    }
-
-    fun addExoPlayerLayer(player: SimpleExoPlayer) {
-        addLayer(ExoPLayer(player, this))
+        renderHost.requestDraw()
     }
 
     fun onSurfaceCreated() {
@@ -31,18 +23,20 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         renderHost.onSurfaceChanged(width, height)
     }
 
+    fun addLayer(layer: Layer) {
+        layers.add(layer)
+    }
+
+    fun addExoPlayerLayer(player: SimpleExoPlayer) {
+        addLayer(ExoPLayer(player, this))
+    }
+
     fun onViewportChanged(viewport: GlViewport) {
         val aspect = viewport.width / viewport.height.toFloat()
         layers.forEach { it.onViewportAspectRatioChanged(aspect) }
-
-        render()
     }
 
     fun onDrawFrame(fbo: FramebufferObject) {
         layers.forEach { it.onDrawFrame() }
-    }
-
-    private fun render() {
-        renderHost.requestDraw()
     }
 }

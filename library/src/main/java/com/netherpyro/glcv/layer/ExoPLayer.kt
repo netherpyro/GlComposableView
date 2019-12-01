@@ -158,36 +158,36 @@ internal class ExoPLayer(
 
         if (viewportHorizontal) { // horizontal viewport
             if (videoAspect <= 1f) { // vertical video
-                left *= viewportAspect // ok
-                right *= viewportAspect // ok
+                left *= viewportAspect
+                right *= viewportAspect
             } else { // horizontal video
                 if (s > 1.0f) {
-                    left *= videoAspect // ok
-                    right *= videoAspect // ok
-                    top *= videoAspect * 1f / viewportAspect // ok
-                    bottom *= videoAspect * 1f / viewportAspect // ok
+                    left *= videoAspect
+                    right *= videoAspect
+                    top *= videoAspect * 1f / viewportAspect
+                    bottom *= videoAspect * 1f / viewportAspect
                 } else {
-                    left *= viewportAspect // ok
-                    right *= viewportAspect // ok
+                    left *= viewportAspect
+                    right *= viewportAspect
                 }
             }
         } else { // vertical viewport
             if (videoAspect < 1f) { // vertical video
                 if (s < 1.0f) {
-                    left *= viewportAspect // ok
-                    right *= viewportAspect // ok
+                    left *= viewportAspect
+                    right *= viewportAspect
                 } else {
-                    left *= videoAspect // ok
-                    right *= videoAspect // ok
-                    top *= videoAspect * 1f / viewportAspect // ok
-                    bottom *= videoAspect * 1f / viewportAspect // ok
+                    left *= videoAspect
+                    right *= videoAspect
+                    top *= videoAspect * 1f / viewportAspect
+                    bottom *= videoAspect * 1f / viewportAspect
                 }
             } else { // horizontal video
                 left *= videoAspect
                 right *= videoAspect
                 if (s > 1.0f) {
-                    top *= videoAspect * 1f / viewportAspect // ok
-                    bottom *= videoAspect * 1f / viewportAspect // ok
+                    top *= videoAspect * 1f / viewportAspect
+                    bottom *= videoAspect * 1f / viewportAspect
                 }
             }
         }
