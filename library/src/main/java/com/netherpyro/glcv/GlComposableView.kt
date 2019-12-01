@@ -6,6 +6,7 @@ import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import androidx.annotation.ColorInt
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_PADDING
 import com.netherpyro.glcv.util.EConfigChooser
 import com.netherpyro.glcv.util.EContextFactory
 
@@ -44,23 +45,19 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     override fun onSurfaceChanged(width: Int, height: Int) {
-        val viewport = layoutHelper.onSurfaceChanged(width, height)
-        renderMediator.onViewportChanged(viewport)
-        renderer.setViewport(viewport)
+        post { holder.setFixedSize(width, height) }
 
-        requestDraw()
+        val viewport = layoutHelper.onSurfaceChanged(width, height)
+        updateViewport(viewport)
     }
 
     fun addVideoLayer(player: SimpleExoPlayer) {
-        renderMediator.addVideoLayer(player)
+        renderMediator.addExoPlayerLayer(player)
     }
 
     fun setAspectRatio(aspect: Float) {
         val viewport = layoutHelper.changeAspectRatio(aspect)
-        renderMediator.onViewportChanged(viewport)
-        renderer.setViewport(viewport)
-
-        requestDraw()
+        updateViewport(viewport)
     }
 
     fun setBaseColor(@ColorInt color: Int) {
@@ -71,6 +68,23 @@ class GlComposableView @JvmOverloads constructor(
 
     fun setViewportColor(@ColorInt color: Int) {
         renderer.viewportColor = color
+
+        requestDraw()
+    }
+
+    fun setViewportPadding(
+            left: Int = NO_PADDING,
+            top: Int = NO_PADDING,
+            right: Int = NO_PADDING,
+            bottom: Int = NO_PADDING
+    ) {
+        val viewport = layoutHelper.setViewportPadding(left, top, right, bottom)
+        updateViewport(viewport)
+    }
+
+    private fun updateViewport(vp: GlViewport) {
+        renderMediator.onViewportChanged(vp)
+        renderer.setViewport(vp)
 
         requestDraw()
     }

@@ -5,12 +5,18 @@ import kotlin.math.min
 /**
  * @author mmikhailov on 2019-11-30.
  */
-class GlLayoutHelper(private var viewportAspect: Float) {
+internal class GlLayoutHelper(private var viewportAspect: Float) {
 
-    private var viewportW = 0
-    private var viewportH = 0
+    companion object {
+        const val NO_PADDING = -1
+    }
+
     private var viewWidth = 0
     private var viewHeight = 0
+    private var viewportPaddingLeft = 0
+    private var viewportPaddingTop = 0
+    private var viewportPaddingRight = 0
+    private var viewportPaddingBottom = 0
     private var viewport = GlViewport()
 
     fun onSurfaceChanged(width: Int, height: Int): GlViewport {
@@ -26,16 +32,36 @@ class GlLayoutHelper(private var viewportAspect: Float) {
         return recalculateViewport()
     }
 
+    fun setViewportPadding(left: Int, top: Int, right: Int, bottom: Int): GlViewport {
+        viewportPaddingLeft = if (left == NO_PADDING) viewportPaddingLeft else left
+        viewportPaddingTop = if (top == NO_PADDING) viewportPaddingTop else top
+        viewportPaddingRight = if (right == NO_PADDING) viewportPaddingRight else right
+        viewportPaddingBottom = if (bottom == NO_PADDING) viewportPaddingBottom else bottom
+
+        return recalculateViewport()
+    }
+
     private fun recalculateViewport(): GlViewport {
+        val x: Int
+        val y: Int
+        val h: Int
+        val w: Int
+
+        val maxW = viewWidth - viewportPaddingLeft - viewportPaddingRight
+        val maxH = viewHeight - viewportPaddingTop - viewportPaddingBottom
+
         if (viewportAspect >= 1f) {
-            viewportH = min((viewWidth / viewportAspect).toInt(), viewHeight)
-            viewportW = (viewportH * viewportAspect).toInt() + 1
+            h = min((maxW / viewportAspect).toInt(), maxH)
+            w = (h * viewportAspect).toInt() + 1
         } else {
-            viewportW = min((viewHeight * viewportAspect).toInt(), viewWidth)
-            viewportH = (viewportW / viewportAspect).toInt() + 1
+            w = min((maxH * viewportAspect).toInt(), maxW)
+            h = (w / viewportAspect).toInt() + 1
         }
 
-        viewport = GlViewport(0, 0, viewportW, viewportH)
+        x = ((maxW - w) / 2f).toInt() + viewportPaddingLeft
+        y = ((maxH - h) / 2f).toInt() + viewportPaddingBottom
+
+        viewport = GlViewport(x, y, w, h)
 
         return viewport
     }

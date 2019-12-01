@@ -1,11 +1,11 @@
-package com.netherpyro.glcv.drawer
+package com.netherpyro.glcv.shader
 
 import android.opengl.GLES20
 
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal class GlExtTextureDrawer : GlDrawer(VERTEX_SHADER, createFragmentShaderSourceOES()) {
+internal class GlExtTextureShader : GlShader(VERTEX_SHADER, createFragmentShaderSourceOES()) {
 
     companion object {
         const val GL_TEXTURE_EXTERNAL_OES = 0x8D65

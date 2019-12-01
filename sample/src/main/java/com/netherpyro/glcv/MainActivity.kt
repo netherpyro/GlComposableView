@@ -1,6 +1,9 @@
 package com.netherpyro.glcv
 
 import android.os.Bundle
+import android.view.View
+import android.view.ViewTreeObserver
+import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.exoplayer2.ExoPlayerFactory
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -57,8 +60,52 @@ class MainActivity : AppCompatActivity() {
         v1.setOnClickListener { player.seekTo(0, 0) }
         v2.setOnClickListener { player.seekTo(1, 0) }
         v3.setOnClickListener { player.seekTo(2, 3000) }
-        ml.setOnClickListener {
-            //ePlayerView.setGlPadding();
+
+        bottomView.alsoOnLaid { bottomView ->
+            val maxHeight = container.height / 2
+            bottomSeek.progress = ((bottomView.height / maxHeight.toFloat()) * 100).toInt()
+            glView.setViewportPadding(bottom = bottomView.height)
+
+            bottomSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+
+                    val viewHeight = (maxHeight * (progress / 100f)).toInt()
+                    bottomView.layoutParams = bottomView.layoutParams.apply {
+                        height = viewHeight
+                    }
+
+                    glView.setViewportPadding(bottom = viewHeight)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                }
+            })
+        }
+
+        topView.alsoOnLaid { topView ->
+            val maxHeight = container.height / 2
+            topSeek.progress = ((topView.height / maxHeight.toFloat()) * 100).toInt()
+            glView.setViewportPadding(top = topView.height)
+
+            topSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val viewHeight = (maxHeight * (progress / 100f)).toInt()
+                    topView.layoutParams = topView.layoutParams.apply {
+                        height = viewHeight
+                    }
+
+                    glView.setViewportPadding(top = viewHeight)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                }
+            })
         }
     }
 
@@ -79,16 +126,12 @@ class MainActivity : AppCompatActivity() {
         player.release()
     }
 
-    private val currentMl = 0
-    private val currentMt = 0
-    private val currentMr = 0
-    private val currentMb = 0
-    private val margins = intArrayOf(0, 150, 300)
-
-    private fun nextMargin(curIdx: Int): Int {
-        val res: Int = if (curIdx == margins.size - 1) 0
-        else curIdx + 1
-
-        return margins[res]
+    fun <T : View> T.alsoOnLaid(block: (T) -> Unit) {
+        viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                viewTreeObserver.removeOnGlobalLayoutListener(this)
+                block.invoke(this@alsoOnLaid)
+            }
+        })
     }
 }

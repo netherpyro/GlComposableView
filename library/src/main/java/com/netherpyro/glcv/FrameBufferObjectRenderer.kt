@@ -5,7 +5,7 @@ import android.opengl.GLES20.glBindFramebuffer
 import android.opengl.GLES20.glClear
 import android.opengl.GLES20.glViewport
 import android.opengl.GLSurfaceView
-import com.netherpyro.glcv.drawer.GlDrawer
+import com.netherpyro.glcv.shader.GlShader
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -15,11 +15,11 @@ import javax.microedition.khronos.opengles.GL10
 internal abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
 
     private lateinit var mFramebufferObject: FramebufferObject
-    private lateinit var normalShader: GlDrawer
+    private lateinit var normalShader: GlShader
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         mFramebufferObject = FramebufferObject()
-        normalShader = GlDrawer()
+        normalShader = GlShader()
         normalShader.setup()
 
         onSurfaceCreated()

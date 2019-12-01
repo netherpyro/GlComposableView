@@ -1,8 +1,8 @@
 package com.netherpyro.glcv
 
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.netherpyro.glcv.layer.ExoPLayer
 import com.netherpyro.glcv.layer.Layer
-import com.netherpyro.glcv.layer.VideoLayer
 
 /**
  * @author mmikhailov on 2019-11-30.
@@ -19,9 +19,8 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         layers.add(layer)
     }
 
-    fun addVideoLayer(player: SimpleExoPlayer) {
-        val videoLayer = VideoLayer(player, this)
-        addLayer(videoLayer)
+    fun addExoPlayerLayer(player: SimpleExoPlayer) {
+        addLayer(ExoPLayer(player, this))
     }
 
     fun onSurfaceCreated() {

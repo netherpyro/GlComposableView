@@ -10,14 +10,14 @@ import android.view.Surface
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.video.VideoListener
 import com.netherpyro.glcv.Invalidator
-import com.netherpyro.glcv.drawer.GlExtTextureDrawer
+import com.netherpyro.glcv.shader.GlExtTextureShader
 import com.netherpyro.glcv.util.EglUtil
 import timber.log.Timber
 
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal class VideoLayer(
+internal class ExoPLayer(
         private val player: SimpleExoPlayer,
         invalidator: Invalidator
 ) : Layer(invalidator), VideoListener, OnFrameAvailableListener {
@@ -27,7 +27,7 @@ internal class VideoLayer(
     }
 
     private lateinit var surfaceTexture: SurfaceTexture
-    private lateinit var videoDrawer: GlExtTextureDrawer
+    private lateinit var videoDrawer: GlExtTextureShader
 
     private var updateSurface = false
 
@@ -38,7 +38,7 @@ internal class VideoLayer(
     private val mMatrix = FloatArray(16)
     private val vMatrix = FloatArray(16)
     private val transformMatrix = FloatArray(16)
-    private val textureTarget = GlExtTextureDrawer.GL_TEXTURE_EXTERNAL_OES
+    private val textureTarget = GlExtTextureShader.GL_TEXTURE_EXTERNAL_OES
 
     private var scaleFactor = 1f
     private var rotation = 0
@@ -73,7 +73,7 @@ internal class VideoLayer(
         EglUtil.setupSampler(textureTarget, GLES20.GL_LINEAR, GLES20.GL_NEAREST)
         glBindTexture(GLES20.GL_TEXTURE_2D, 0)
 
-        videoDrawer = GlExtTextureDrawer()
+        videoDrawer = GlExtTextureShader()
         videoDrawer.setup()
 
         val surface = Surface(surfaceTexture)

@@ -43,9 +43,9 @@ internal class GlRenderer(
         glClearColor(backgroundColor.red(), backgroundColor.green(), backgroundColor.blue(), backgroundColor.alpha())
         glClear(GLES20.GL_COLOR_BUFFER_BIT)
 
-        glViewport(0, 0, viewport.width, viewport.height)
+        glViewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
-        glScissor(0, 0, viewport.width, viewport.height)
+        glScissor(viewport.x, viewport.y, viewport.width, viewport.height)
         glEnable(GLES20.GL_SCISSOR_TEST)
 
         glClearColor(viewportColor.red(), viewportColor.green(), viewportColor.blue(), viewportColor.alpha())

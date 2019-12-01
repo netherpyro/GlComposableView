@@ -1,4 +1,4 @@
-package com.netherpyro.glcv.drawer
+package com.netherpyro.glcv.shader
 
 import android.opengl.GLES20
 import com.netherpyro.glcv.FramebufferObject
@@ -8,7 +8,7 @@ import java.util.HashMap
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal open class GlDrawer @JvmOverloads constructor(
+internal open class GlShader @JvmOverloads constructor(
         private val vertexShaderSource: String = DEFAULT_VERTEX_SHADER,
         private val fragmentShaderSource: String = DEFAULT_FRAGMENT_SHADER
 ) {

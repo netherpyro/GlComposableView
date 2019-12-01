@@ -5,7 +5,7 @@ import com.netherpyro.glcv.Invalidator
 /**
  * @author mmikhailov on 2019-11-30.
  */
-abstract class Layer(protected val invalidator: Invalidator) {
+internal abstract class Layer(protected val invalidator: Invalidator) {
 
     abstract fun onGlPrepared()
     abstract fun onDrawFrame()
