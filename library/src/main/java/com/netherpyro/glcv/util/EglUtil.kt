@@ -130,4 +130,8 @@ object EglUtil {
 
         return textures[0]
     }
+
+    fun deleteTextures(vararg texIds: Int) {
+        GLES20.glDeleteTextures(texIds.size, texIds, 0)
+    }
 }

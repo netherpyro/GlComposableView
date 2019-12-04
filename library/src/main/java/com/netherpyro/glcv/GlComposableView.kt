@@ -8,7 +8,11 @@ import androidx.annotation.ColorInt
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_PADDING
 import com.netherpyro.glcv.util.EConfigChooser
-import com.netherpyro.glcv.util.EContextFactory
+import timber.log.Timber
+import javax.microedition.khronos.egl.EGL10
+import javax.microedition.khronos.egl.EGLConfig
+import javax.microedition.khronos.egl.EGLContext
+import javax.microedition.khronos.egl.EGLDisplay
 
 /**
  * @author mmikhailov on 2019-10-26.
@@ -17,7 +21,7 @@ import com.netherpyro.glcv.util.EContextFactory
 class GlComposableView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null
-) : GLSurfaceView(context, attrs), RenderHost {
+) : GLSurfaceView(context, attrs), RenderHost, GLSurfaceView.EGLContextFactory {
 
     private val renderer: GlRenderer
     private val renderMediator: GlRenderMediator
@@ -30,7 +34,7 @@ class GlComposableView @JvmOverloads constructor(
     private val defaultViewportAspectRatio = 1f
 
     init {
-        setEGLContextFactory(EContextFactory())
+        setEGLContextFactory(this)
         setEGLConfigChooser(EConfigChooser())
 
         layoutHelper = GlLayoutHelper(defaultViewportAspectRatio)
@@ -49,6 +53,24 @@ class GlComposableView @JvmOverloads constructor(
 
         val viewport = layoutHelper.onSurfaceChanged(width, height)
         updateViewport(viewport)
+    }
+
+    override fun createContext(egl: EGL10, display: EGLDisplay,
+                               config: EGLConfig): EGLContext {
+        val attribList: IntArray = intArrayOf(0x3098, 2, EGL10.EGL_NONE)
+
+        return egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT, attribList)
+    }
+
+    override fun destroyContext(egl: EGL10, display: EGLDisplay,
+                                context: EGLContext) {
+        renderer.release()
+        renderMediator.release()
+
+        if (!egl.eglDestroyContext(display, context)) {
+            Timber.e("display:$display context: $context")
+            throw RuntimeException("eglDestroyContex" + egl.eglGetError())
+        }
     }
 
     fun addExoPlayerLayer(player: SimpleExoPlayer) {

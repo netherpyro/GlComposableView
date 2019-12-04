@@ -27,7 +27,7 @@ internal class ExoPLayer(
     }
 
     private lateinit var surfaceTexture: SurfaceTexture
-    private lateinit var videoDrawer: GlExtTextureShader
+    private lateinit var shader: GlExtTextureShader
 
     private var updateSurface = false
 
@@ -73,8 +73,8 @@ internal class ExoPLayer(
         EglUtil.setupSampler(textureTarget, GLES20.GL_LINEAR, GLES20.GL_NEAREST)
         glBindTexture(GLES20.GL_TEXTURE_2D, 0)
 
-        videoDrawer = GlExtTextureShader()
-        videoDrawer.setup()
+        shader = GlExtTextureShader()
+        shader.setup()
 
         val surface = Surface(surfaceTexture)
         player.setVideoSurface(surface)
@@ -100,7 +100,7 @@ internal class ExoPLayer(
             }
         }
 
-        videoDrawer.draw(texName, mvpMatrix, transformMatrix, videoAspect)
+        shader.draw(texName, mvpMatrix, transformMatrix, videoAspect)
     }
 
     override fun onViewportAspectRatioChanged(aspect: Float) {
@@ -132,7 +132,8 @@ internal class ExoPLayer(
     }
 
     override fun release() {
-        surfaceTexture.release()
+        shader.release()
+        EglUtil.deleteTextures(texName)
     }
 
     private fun onVideoSizeChanged(videoW: Float, videoH: Float) {

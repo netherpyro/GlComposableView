@@ -45,6 +45,11 @@ internal abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
         normalShader.draw(mFramebufferObject.texName, null)
     }
 
+    fun release() {
+        normalShader.release()
+        mFramebufferObject.release()
+    }
+
     @Throws(Throwable::class)
     protected fun finalize() {
     }

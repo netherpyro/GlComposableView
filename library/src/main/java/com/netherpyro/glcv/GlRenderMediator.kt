@@ -39,4 +39,8 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     fun onDrawFrame(fbo: FramebufferObject) {
         layers.forEach { it.onDrawFrame() }
     }
+
+    fun release() {
+        layers.forEach { it.release() }
+    }
 }
