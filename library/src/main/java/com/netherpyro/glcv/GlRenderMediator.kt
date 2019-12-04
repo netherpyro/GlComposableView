@@ -1,7 +1,9 @@
 package com.netherpyro.glcv
 
+import android.graphics.Bitmap
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.netherpyro.glcv.layer.ExoPLayer
+import com.netherpyro.glcv.layer.ImageLayer
 import com.netherpyro.glcv.layer.Layer
 
 /**
@@ -23,12 +25,12 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         renderHost.onSurfaceChanged(width, height)
     }
 
-    fun addLayer(layer: Layer) {
-        layers.add(layer)
+    fun addExoPlayerLayer(player: SimpleExoPlayer) {
+        layers.add(ExoPLayer(player, this))
     }
 
-    fun addExoPlayerLayer(player: SimpleExoPlayer) {
-        addLayer(ExoPLayer(player, this))
+    fun addImageLayer(bitmap: Bitmap) {
+        layers.add(ImageLayer(bitmap, this))
     }
 
     fun onViewportChanged(viewport: GlViewport) {
@@ -37,6 +39,7 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     }
 
     fun onDrawFrame(fbo: FramebufferObject) {
+        // todo use FBOs
         layers.forEach { it.onDrawFrame() }
     }
 

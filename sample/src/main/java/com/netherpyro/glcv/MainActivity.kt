@@ -48,6 +48,10 @@ class MainActivity : AppCompatActivity() {
 
         glView.addExoPlayerLayer(player)
 
+        LibraryHelper.image1()?.also {
+            glView.addImageLayer(it)
+        }
+
         a1_1.setOnClickListener { glView.setAspectRatio(1f, true) }
         a3_2.setOnClickListener { glView.setAspectRatio(3 / 2f, true) }
         a2_3.setOnClickListener { glView.setAspectRatio(2 / 3f, true) }

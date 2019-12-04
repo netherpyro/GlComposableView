@@ -1,6 +1,7 @@
 package com.netherpyro.glcv
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
@@ -75,6 +76,10 @@ class GlComposableView @JvmOverloads constructor(
 
     fun addExoPlayerLayer(player: SimpleExoPlayer) {
         renderMediator.addExoPlayerLayer(player)
+    }
+
+    fun addImageLayer(bitmap: Bitmap) {
+        renderMediator.addImageLayer(bitmap)
     }
 
     fun setAspectRatio(aspect: Float, animated: Boolean = false) {

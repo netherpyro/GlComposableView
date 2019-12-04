@@ -60,7 +60,7 @@ internal open class GlShader @JvmOverloads constructor(
 
     private val handleMap = HashMap<String, Int>()
 
-    fun setup() {
+    open fun setup() {
         release()
         vertexShader = EglUtil.loadShader(vertexShaderSource, GLES20.GL_VERTEX_SHADER)
         fragmentShader = EglUtil.loadShader(fragmentShaderSource, GLES20.GL_FRAGMENT_SHADER)
@@ -68,7 +68,7 @@ internal open class GlShader @JvmOverloads constructor(
         vertexBufferName = EglUtil.createBuffer(VERTICES_DATA)
     }
 
-    fun release() {
+    open fun release() {
         GLES20.glDeleteProgram(program)
         program = 0
         GLES20.glDeleteShader(vertexShader)

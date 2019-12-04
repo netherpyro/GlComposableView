@@ -3,6 +3,8 @@ package com.netherpyro.glcv
 import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import java.io.File
 import java.io.FileOutputStream
@@ -13,18 +15,7 @@ object LibraryHelper {
     private const val video1 = "VFX-debug.mov"
     private const val video2 = "VID.mp4"
     private const val video3 = "Test_Audio_video_sync.mp4"
-
-    fun video1(): Uri {
-        return createUriSource(video1)
-    }
-
-    fun video2(): Uri {
-        return createUriSource(video2)
-    }
-
-    fun video3(): Uri {
-        return createUriSource(video3)
-    }
+    private const val image1 = "LT-passthrough.png"
 
     @SuppressLint("StaticFieldLeak") // application context used
     private lateinit var sContext: Context
@@ -33,7 +24,23 @@ object LibraryHelper {
         sContext = context
     }
 
-    private fun getEffectFilePath(fileName: String): String? {
+    fun video1(): Uri {
+        return Uri.parse(getVideoPath(video1))
+    }
+
+    fun video2(): Uri {
+        return Uri.parse(getVideoPath(video2))
+    }
+
+    fun video3(): Uri {
+        return Uri.parse(getVideoPath(video3))
+    }
+
+    fun image1(): Bitmap? {
+        return loadBitmapFromAsset(image1)
+    }
+
+    private fun getVideoPath(fileName: String): String? {
         var result: String? = null
         try {
             sContext.assets
@@ -57,8 +64,16 @@ object LibraryHelper {
         return result
     }
 
-    private fun createUriSource(fileName: String): Uri {
-        return Uri.parse(getEffectFilePath(fileName))
+    private fun loadBitmapFromAsset(fileName: String): Bitmap? {
+        var bitmap: Bitmap? = null
+        try {
+            sContext.assets
+                .open(fileName)
+                .use { bitmap = BitmapFactory.decodeStream(it) }
+        } catch (e: IOException) {
+            bitmap = null
+        }
+        return bitmap
     }
 
     /**
