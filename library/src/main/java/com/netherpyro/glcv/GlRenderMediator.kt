@@ -25,12 +25,18 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         renderHost.onSurfaceChanged(width, height)
     }
 
-    fun addExoPlayerLayer(player: SimpleExoPlayer) {
-        layers.add(ExoPLayer(player, this))
+    fun addExoPlayerLayer(player: SimpleExoPlayer): Transformable {
+        val layer = ExoPLayer(player, this)
+        layers.add(layer)
+
+        return layer
     }
 
-    fun addImageLayer(bitmap: Bitmap) {
-        layers.add(ImageLayer(bitmap, this))
+    fun addImageLayer(bitmap: Bitmap): Transformable {
+        val layer = ImageLayer(bitmap, this)
+        layers.add(layer)
+
+        return layer
     }
 
     fun onViewportChanged(viewport: GlViewport) {

@@ -139,4 +139,32 @@
         android:layout_marginTop="100dp"
         android:max="100" />
 
+    <SeekBar android:id="@+id/scaleSeek"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="64dp"
+        android:max="100" />
+
+    <SeekBar android:id="@+id/rotationSeek"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="88dp"
+        android:max="100" />
+
+    <SeekBar android:id="@+id/translationYSeek"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="112dp"
+        android:max="100" />
+
+    <SeekBar android:id="@+id/translationXSeek"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="136dp"
+        android:max="100" />
+
 </FrameLayout>

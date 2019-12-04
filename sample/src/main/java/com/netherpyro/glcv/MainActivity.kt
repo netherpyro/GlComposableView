@@ -22,6 +22,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var player: SimpleExoPlayer
 
+    private val transformableList = mutableListOf<Transformable>()
+
+    private val maxScale = 2f
+    private val minScale = 0.5f
+    private val maxTranslation = 2f
+    private val minTranslation = -2f
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -46,11 +53,12 @@ class MainActivity : AppCompatActivity() {
         player.prepare(concatenatedSource)
         player.playWhenReady = true
 
-        glView.addExoPlayerLayer(player)
+        transformableList.add(glView.addExoPlayerLayer(player))
 
-        LibraryHelper.image1()?.also {
-            glView.addImageLayer(it)
-        }
+        LibraryHelper.image1()
+            ?.also {
+                transformableList.add(glView.addImageLayer(it))
+            }
 
         a1_1.setOnClickListener { glView.setAspectRatio(1f, true) }
         a3_2.setOnClickListener { glView.setAspectRatio(3 / 2f, true) }
@@ -111,6 +119,65 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         }
+
+        scaleSeek.progress = ((1f - minScale) / maxScale * 100f).toInt()
+        scaleSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                transformableList[1].setScale(progress / 100f * maxScale + minScale)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            }
+        })
+
+        rotationSeek.progress = 50
+        rotationSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                transformableList[1].setRotation(progress / 100f * 360f)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            }
+        })
+
+        translationXSeek.progress = 50
+        translationXSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val f = progress / 100f
+                val value = minTranslation * (1f - f) + maxTranslation * f
+                translationYSeek.progress = 50
+                transformableList[1].setTranslation(value, 0f)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            }
+        })
+
+        translationYSeek.progress = 50
+        translationYSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val f = progress / 100f
+                val value = minTranslation * (1f - f) + maxTranslation * f
+                translationXSeek.progress = 50
+                transformableList[1].setTranslation(0f, value)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            }
+        })
     }
 
     override fun onResume() {

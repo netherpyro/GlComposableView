@@ -74,12 +74,12 @@ class GlComposableView @JvmOverloads constructor(
         }
     }
 
-    fun addExoPlayerLayer(player: SimpleExoPlayer) {
-        renderMediator.addExoPlayerLayer(player)
+    fun addExoPlayerLayer(player: SimpleExoPlayer): Transformable {
+        return renderMediator.addExoPlayerLayer(player)
     }
 
-    fun addImageLayer(bitmap: Bitmap) {
-        renderMediator.addImageLayer(bitmap)
+    fun addImageLayer(bitmap: Bitmap): Transformable {
+        return renderMediator.addImageLayer(bitmap)
     }
 
     fun setAspectRatio(aspect: Float, animated: Boolean = false) {

@@ -2,13 +2,14 @@ package com.netherpyro.glcv.layer
 
 import android.opengl.Matrix
 import com.netherpyro.glcv.Invalidator
+import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.shader.GlShader
 import timber.log.Timber
 
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal abstract class Layer(protected val invalidator: Invalidator) {
+internal abstract class Layer(protected val invalidator: Invalidator): Transformable {
 
     protected val mvpMatrix = FloatArray(16)
     private val pMatrix = FloatArray(16)
@@ -26,10 +27,10 @@ internal abstract class Layer(protected val invalidator: Invalidator) {
     protected var aspect: Float = 1f
     protected abstract var shader: GlShader
 
-    private var scaleFactor: Float = 1f
-    private var rotationDeg = 0
-    private var translationX = 0
-    private var translationY = 0
+    private var scaleFactor = 1f
+    private var rotationDeg = 0f
+    private var translationX = 0f
+    private var translationY = 0f
     private var viewportAspect = 1f
 
     abstract fun onGlPrepared()
@@ -39,21 +40,21 @@ internal abstract class Layer(protected val invalidator: Invalidator) {
         shader.release()
     }
 
-    fun setScale(scaleFactor: Float) {
+    override fun setScale(scaleFactor: Float) {
         this.scaleFactor = scaleFactor
 
         recalculateMatrices()
         invalidator.invalidate()
     }
 
-    fun setRotation(rotation: Int) {
-        this.rotationDeg = rotation
+    override fun setRotation(rotationDeg: Float) {
+        this.rotationDeg = rotationDeg
 
         recalculateMatrices()
         invalidator.invalidate()
     }
 
-    fun setTranslation(x: Int, y: Int) {
+    override fun setTranslation(x: Float, y: Float) {
         this.translationX = x
         this.translationY = y
 
@@ -116,9 +117,9 @@ internal abstract class Layer(protected val invalidator: Invalidator) {
         }
         Matrix.frustumM(pMatrix, 0, left, right, bottom, top, 5f, 7f)
         Matrix.setIdentityM(mMatrix, 0)
-//        Matrix.scaleM(MMatrix, 0, 1.1f, 1.1f, 0); // todo scale
-//        Matrix.rotateM(MMatrix, 0, 38f, 0, 0, 1); // todo rotation
-//        Matrix.translateM(MMatrix, 0, 0.1f, 0.1f, 0); // todo translation
+        Matrix.scaleM(mMatrix, 0, scaleFactor, scaleFactor, 0f)
+        Matrix.rotateM(mMatrix, 0, rotationDeg, 0f, 0f, 1f)
+        Matrix.translateM(mMatrix, 0, translationX, translationY, 0f)
 
         Matrix.multiplyMM(mvpMatrix, 0, vMatrix, 0, mMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, pMatrix, 0, mvpMatrix, 0)
