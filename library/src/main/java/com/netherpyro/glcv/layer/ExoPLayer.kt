@@ -10,7 +10,6 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.video.VideoListener
 import com.netherpyro.glcv.Invalidator
 import com.netherpyro.glcv.shader.GlExtTextureShader
-import com.netherpyro.glcv.shader.GlShader
 import com.netherpyro.glcv.util.EglUtil
 import timber.log.Timber
 
@@ -26,12 +25,13 @@ internal class ExoPLayer(
         player.addVideoListener(this)
     }
 
-    override lateinit var shader: GlShader
+    override val shader = GlExtTextureShader()
+
     private lateinit var surfaceTexture: SurfaceTexture
 
     private var updateSurface = false
     private var texName = EglUtil.NO_TEXTURE
-    
+
     private val transformMatrix = FloatArray(16)
     private val textureTarget = GlExtTextureShader.GL_TEXTURE_EXTERNAL_OES
 
@@ -61,7 +61,6 @@ internal class ExoPLayer(
         EglUtil.setupSampler(textureTarget, GLES20.GL_LINEAR, GLES20.GL_NEAREST)
         glBindTexture(GLES20.GL_TEXTURE_2D, 0)
 
-        shader = GlExtTextureShader()
         shader.setup()
 
         val surface = Surface(surfaceTexture)
@@ -82,12 +81,11 @@ internal class ExoPLayer(
             }
         }
 
-        (shader as GlExtTextureShader).draw(texName, mvpMatrix, transformMatrix, aspect)
+        shader.draw(texName, mvpMatrix, transformMatrix, aspect)
     }
 
     override fun release() {
-        super.release()
-
+        shader.release()
         EglUtil.deleteTextures(texName)
     }
 
@@ -95,8 +93,6 @@ internal class ExoPLayer(
         Timber.d("changeVideoSize::video w: $videoW, h: $videoH")
 
         aspect = videoW / videoH
-        aspectReadyAction?.invoke(aspect)
-        aspectReadyAction = null
 
         recalculateMatrices()
         invalidator.invalidate()

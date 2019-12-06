@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         player.playWhenReady = true
 
         glView.setAspectsPreset(AspectRatio.values().map { it.value })
-        transformableList.add(glView.addExoPlayerLayer(player))
+        transformableList.add(glView.addExoPlayerLayer(player, applyLayerAspect = true))
 
         LibraryHelper.image1()
             ?.also {

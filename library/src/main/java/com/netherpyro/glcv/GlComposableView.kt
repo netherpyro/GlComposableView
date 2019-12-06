@@ -77,19 +77,25 @@ class GlComposableView @JvmOverloads constructor(
         }
     }
 
-    override fun onFirstLayerAspect(aspect: Float) {
-        setAspectRatio(aspectRatioChooser?.selectNearestAspect(aspect) ?: aspect)
+    override fun onLayerAspectRatio(aspect: Float) {
+        setAspectRatioInternal(
+                aspect = aspectRatioChooser?.selectNearestAspect(aspect) ?: aspect,
+                animated = false,
+                fromUser = false
+        )
     }
 
-    fun addExoPlayerLayer(player: SimpleExoPlayer): Transformable {
-        return renderMediator.addExoPlayerLayer(player)
+    fun addExoPlayerLayer(player: SimpleExoPlayer, applyLayerAspect: Boolean = false): Transformable {
+        return renderMediator.addExoPlayerLayer(player, applyLayerAspect)
     }
 
-    fun addImageLayer(bitmap: Bitmap): Transformable {
-        return renderMediator.addImageLayer(bitmap)
+    fun addImageLayer(bitmap: Bitmap, applyLayerAspect: Boolean = false): Transformable {
+        return renderMediator.addImageLayer(bitmap, applyLayerAspect)
     }
 
     /**
+     * Sets preferred aspects, one of them being apply automatically once one of layers has given its aspect
+     *
      * Make sure this function called before layers being added for proper initial aspect installation
      * */
     fun setAspectsPreset(aspectRatioPresetList: List<Float>) {
@@ -97,9 +103,7 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     fun setAspectRatio(aspect: Float, animated: Boolean = false) {
-        layoutHelper.changeAspectRatio(aspect, animated) {
-            updateViewport(it)
-        }
+        setAspectRatioInternal(aspect, animated, fromUser = true)
     }
 
     fun setBaseColor(@ColorInt color: Int) {
@@ -133,5 +137,13 @@ class GlComposableView @JvmOverloads constructor(
         renderer.setViewport(vp)
 
         requestDraw()
+    }
+
+    private fun setAspectRatioInternal(aspect: Float, animated: Boolean, fromUser: Boolean) {
+        val appliedAspect = if (fromUser) aspect else aspectRatioChooser?.selectNearestAspect(aspect) ?: aspect
+
+        layoutHelper.changeAspectRatio(appliedAspect, animated) {
+            updateViewport(it)
+        }
     }
 }

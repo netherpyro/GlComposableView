@@ -9,15 +9,16 @@ import timber.log.Timber
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal abstract class Layer(protected val invalidator: Invalidator): Transformable {
+internal abstract class Layer(protected val invalidator: Invalidator) : Transformable {
+
+    protected abstract val shader: GlShader
 
     protected val mvpMatrix = FloatArray(16)
+
     private val pMatrix = FloatArray(16)
     private val mMatrix = FloatArray(16)
-    private val vMatrix = FloatArray(16)
-
-    init {
-        Matrix.setLookAtM(vMatrix, 0,
+    private val vMatrix = FloatArray(16).apply {
+        Matrix.setLookAtM(this, 0,
                 0.0f, 0.0f, 5.0f,
                 0.0f, 0.0f, 0.0f,
                 0.0f, 1.0f, 0.0f
@@ -25,8 +26,14 @@ internal abstract class Layer(protected val invalidator: Invalidator): Transform
     }
 
     protected var aspect: Float = 1f
-    protected abstract var shader: GlShader
-    protected var aspectReadyAction: ((Float) -> Unit)? = null
+        set(value) {
+            field = value
+
+            if (!aspectCallbackFired) {
+                aspectReadyAction?.invoke(value)
+                    ?.also { aspectCallbackFired = true }
+            }
+        }
 
     private var scaleFactor = 1f
     private var rotationDeg = 0f
@@ -34,12 +41,12 @@ internal abstract class Layer(protected val invalidator: Invalidator): Transform
     private var translationY = 0f
     private var viewportAspect = 1f
 
+    private var aspectReadyAction: ((Float) -> Unit)? = null
+    private var aspectCallbackFired = false
+
     abstract fun onGlPrepared()
     abstract fun onDrawFrame()
-
-    open fun release() {
-        shader.release()
-    }
+    abstract fun release()
 
     override fun setScale(scaleFactor: Float) {
         this.scaleFactor = scaleFactor
@@ -69,7 +76,7 @@ internal abstract class Layer(protected val invalidator: Invalidator): Transform
         recalculateMatrices()
     }
 
-    open fun requestAspectReadyAction(onReadyAction: (Float) -> Unit) {
+    fun listenAspectRatioReady(onReadyAction: (Float) -> Unit) {
         aspectReadyAction = onReadyAction
     }
 

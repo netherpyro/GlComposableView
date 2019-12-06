@@ -25,18 +25,14 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         renderHost.onSurfaceChanged(width, height)
     }
 
-    fun addExoPlayerLayer(player: SimpleExoPlayer): Transformable {
-        val layer = ExoPLayer(player, this)
-        addLayer(layer)
-
-        return layer
+    fun addExoPlayerLayer(player: SimpleExoPlayer, applyLayerAspect: Boolean): Transformable {
+        return ExoPLayer(player, this)
+            .also { addLayer(it, applyLayerAspect) }
     }
 
-    fun addImageLayer(bitmap: Bitmap): Transformable {
-        val layer = ImageLayer(bitmap, this)
-        addLayer(layer)
-
-        return layer
+    fun addImageLayer(bitmap: Bitmap, applyLayerAspect: Boolean): Transformable {
+        return ImageLayer(bitmap, this)
+            .also { addLayer(it, applyLayerAspect) }
     }
 
     fun onViewportChanged(viewport: GlViewport) {
@@ -53,10 +49,8 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         layers.forEach { it.release() }
     }
 
-    private fun addLayer(layer: Layer) {
-        if (layers.isEmpty()) {
-            layer.requestAspectReadyAction { renderHost.onFirstLayerAspect(it) }
-        }
+    private fun addLayer(layer: Layer, applyLayerAspect: Boolean) {
+        if (applyLayerAspect) layer.listenAspectRatioReady { renderHost.onLayerAspectRatio(it) }
 
         layers.add(layer)
     }
