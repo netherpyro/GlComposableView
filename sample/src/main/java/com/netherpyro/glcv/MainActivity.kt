@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         player.prepare(concatenatedSource)
         player.playWhenReady = true
 
+        glView.setAspectsPreset(AspectRatio.values().map { it.value })
         transformableList.add(glView.addExoPlayerLayer(player))
 
         LibraryHelper.image1()
@@ -60,15 +61,15 @@ class MainActivity : AppCompatActivity() {
                 transformableList.add(glView.addImageLayer(it))
             }
 
-        a1_1.setOnClickListener { glView.setAspectRatio(1f, true) }
-        a3_2.setOnClickListener { glView.setAspectRatio(3 / 2f, true) }
-        a2_3.setOnClickListener { glView.setAspectRatio(2 / 3f, true) }
-        a4_5.setOnClickListener { glView.setAspectRatio(4 / 5f, true) }
-        a5_4.setOnClickListener { glView.setAspectRatio(5 / 4f, true) }
-        a9_16.setOnClickListener { glView.setAspectRatio(9 / 16f, true) }
-        a16_9.setOnClickListener { glView.setAspectRatio(16 / 9f, true) }
-        a18_9.setOnClickListener { glView.setAspectRatio(18 / 9f, true) }
-        a9_18.setOnClickListener { glView.setAspectRatio(9 / 18f, true) }
+        a1_1.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
+        a3_2.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
+        a2_3.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_2_3.value, true) }
+        a4_5.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_4_5.value, true) }
+        a5_4.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_5_4.value, true) }
+        a9_16.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_9_16.value, true) }
+        a16_9.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_16_9.value, true) }
+        a18_9.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_18_9.value, true) }
+        a9_18.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_9_18.value, true) }
         v1.setOnClickListener { player.seekTo(0, 0) }
         v2.setOnClickListener { player.seekTo(1, 0) }
         v3.setOnClickListener { player.seekTo(2, 3000) }

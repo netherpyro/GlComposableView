@@ -26,6 +26,7 @@ internal abstract class Layer(protected val invalidator: Invalidator): Transform
 
     protected var aspect: Float = 1f
     protected abstract var shader: GlShader
+    protected var aspectReadyAction: ((Float) -> Unit)? = null
 
     private var scaleFactor = 1f
     private var rotationDeg = 0f
@@ -66,6 +67,10 @@ internal abstract class Layer(protected val invalidator: Invalidator): Transform
         viewportAspect = aspect
 
         recalculateMatrices()
+    }
+
+    open fun requestAspectReadyAction(onReadyAction: (Float) -> Unit) {
+        aspectReadyAction = onReadyAction
     }
 
     protected fun recalculateMatrices() {

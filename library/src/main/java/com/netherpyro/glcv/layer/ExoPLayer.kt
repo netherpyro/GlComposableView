@@ -95,10 +95,10 @@ internal class ExoPLayer(
         Timber.d("changeVideoSize::video w: $videoW, h: $videoH")
 
         aspect = videoW / videoH
+        aspectReadyAction?.invoke(aspect)
+        aspectReadyAction = null
 
         recalculateMatrices()
         invalidator.invalidate()
     }
-
-
 }

@@ -31,4 +31,8 @@ internal class ImageLayer(
     override fun release() {
         shader.release()
     }
+
+    override fun requestAspectReadyAction(onReadyAction: (Float) -> Unit) {
+        onReadyAction.invoke(aspect)
+    }
 }

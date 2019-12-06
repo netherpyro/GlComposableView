@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import androidx.annotation.ColorInt
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_PADDING
+import com.netherpyro.glcv.util.AspectRatioChooser
 import com.netherpyro.glcv.util.EConfigChooser
 import timber.log.Timber
 import javax.microedition.khronos.egl.EGL10
@@ -33,6 +34,8 @@ class GlComposableView @JvmOverloads constructor(
     @ColorInt
     private val defaultViewportColor: Int = Color.parseColor("#ff5555")
     private val defaultViewportAspectRatio = 1f
+
+    private var aspectRatioChooser: AspectRatioChooser? = null
 
     init {
         setEGLContextFactory(this)
@@ -70,8 +73,12 @@ class GlComposableView @JvmOverloads constructor(
 
         if (!egl.eglDestroyContext(display, context)) {
             Timber.e("display:$display context: $context")
-            throw RuntimeException("eglDestroyContex" + egl.eglGetError())
+            throw RuntimeException("eglDestroyContext" + egl.eglGetError())
         }
+    }
+
+    override fun onFirstLayerAspect(aspect: Float) {
+        setAspectRatio(aspectRatioChooser?.selectNearestAspect(aspect) ?: aspect)
     }
 
     fun addExoPlayerLayer(player: SimpleExoPlayer): Transformable {
@@ -80,6 +87,13 @@ class GlComposableView @JvmOverloads constructor(
 
     fun addImageLayer(bitmap: Bitmap): Transformable {
         return renderMediator.addImageLayer(bitmap)
+    }
+
+    /**
+     * Make sure this function called before layers being added for proper initial aspect installation
+     * */
+    fun setAspectsPreset(aspectRatioPresetList: List<Float>) {
+        aspectRatioChooser = AspectRatioChooser(*aspectRatioPresetList.toFloatArray())
     }
 
     fun setAspectRatio(aspect: Float, animated: Boolean = false) {
