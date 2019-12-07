@@ -1,7 +1,7 @@
 package com.netherpyro.glcv.util
 
+import android.opengl.EGL14
 import android.opengl.GLSurfaceView.EGLConfigChooser
-import android.os.Build
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLDisplay
@@ -9,29 +9,19 @@ import javax.microedition.khronos.egl.EGLDisplay
 /**
  * @author mmikhailov on 2019-11-30.
  */
-class EConfigChooser @JvmOverloads constructor(
-        redSize: Int = if (USE_RGB_888) 8 else 5,
-        greenSize: Int = if (USE_RGB_888) 8 else 6,
-        blueSize: Int = if (USE_RGB_888) 8 else 5,
-        alphaSize: Int = 0,
-        depthSize: Int = 0,
-        stencilSize: Int = 0,
-        version: Int = EGL_CONTEXT_CLIENT_VERSION
-) : EGLConfigChooser {
+class EConfigChooser : EGLConfigChooser {
 
     companion object {
         private const val EGL_CONTEXT_CLIENT_VERSION = 2
-        private val USE_RGB_888 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1
-        private const val EGL_OPENGL_ES2_BIT = 4
     }
 
     private val configSpec: IntArray
-    private val redSize: Int
-    private val greenSize: Int
-    private val blueSize: Int
-    private val alphaSize: Int
-    private val depthSize: Int
-    private val stencilSize: Int
+    private val redSize: Int = 8
+    private val greenSize: Int = 8
+    private val blueSize: Int = 8
+    private val alphaSize: Int = 8
+    private val depthSize: Int = 8
+    private val stencilSize: Int = 0
 
     init {
         configSpec = filterConfigSpec(intArrayOf(
@@ -42,14 +32,7 @@ class EConfigChooser @JvmOverloads constructor(
                 EGL10.EGL_DEPTH_SIZE, depthSize,
                 EGL10.EGL_STENCIL_SIZE, stencilSize,
                 EGL10.EGL_NONE
-        ), version)
-
-        this.redSize = redSize
-        this.greenSize = greenSize
-        this.blueSize = blueSize
-        this.alphaSize = alphaSize
-        this.depthSize = depthSize
-        this.stencilSize = stencilSize
+        ), EGL_CONTEXT_CLIENT_VERSION)
     }
 
     private fun filterConfigSpec(configSpec: IntArray, version: Int): IntArray {
@@ -61,7 +44,7 @@ class EConfigChooser @JvmOverloads constructor(
         val newConfigSpec = IntArray(len + 2)
         System.arraycopy(configSpec, 0, newConfigSpec, 0, len - 1)
         newConfigSpec[len - 1] = EGL10.EGL_RENDERABLE_TYPE
-        newConfigSpec[len] = EGL_OPENGL_ES2_BIT
+        newConfigSpec[len] = EGL14.EGL_OPENGL_ES2_BIT
         newConfigSpec[len + 1] = EGL10.EGL_NONE
 
         return newConfigSpec

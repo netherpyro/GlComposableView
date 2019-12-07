@@ -3,6 +3,7 @@ package com.netherpyro.glcv
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.PixelFormat
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import androidx.annotation.ColorInt
@@ -39,12 +40,14 @@ class GlComposableView @JvmOverloads constructor(
     init {
         setEGLContextFactory(this)
         setEGLConfigChooser(EConfigChooser())
+        holder.setFormat(PixelFormat.RGBA_8888)
 
         layoutHelper = GlLayoutHelper(defaultViewportAspectRatio)
         renderMediator = GlRenderMediator(this)
         renderer = GlRenderer(renderMediator, defaultBaseColor, defaultViewportColor)
 
         setRenderer(renderer)
+        renderMode = RENDERMODE_WHEN_DIRTY
     }
 
     override fun requestDraw() {

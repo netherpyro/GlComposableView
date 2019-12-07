@@ -69,6 +69,12 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
         invalidator.invalidate()
     }
 
+    override fun setOpacity(opacity: Float) {
+        shader.opacity = opacity
+
+        invalidator.invalidate()
+    }
+
     fun onViewportAspectRatioChanged(aspect: Float) {
         viewportAspect = aspect
 

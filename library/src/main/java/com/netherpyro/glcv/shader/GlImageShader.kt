@@ -50,6 +50,7 @@ internal class GlImageShader(private val bitmap: Bitmap) : GlShader(VERTEX_SHADE
 
         GLES20.glUniformMatrix4fv(getHandle("uMVPMatrix"), 1, false, mvpMatrix, 0)
         GLES20.glUniform1f(getHandle("uCRatio"), aspectRatio)
+        GLES20.glUniform1f(getHandle(UNIFORM_OPACITY), opacity)
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexBufferName)
         GLES20.glEnableVertexAttribArray(getHandle("aPosition"))

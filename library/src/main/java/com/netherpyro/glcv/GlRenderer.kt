@@ -1,6 +1,7 @@
 package com.netherpyro.glcv
 
 import android.opengl.GLES20
+import android.opengl.GLES20.glBlendFunc
 import android.opengl.GLES20.glClear
 import android.opengl.GLES20.glClearColor
 import android.opengl.GLES20.glDisable
@@ -28,6 +29,8 @@ internal class GlRenderer(
 
     override fun onSurfaceCreated() {
         glClearColor(backgroundColor.red(), backgroundColor.green(), backgroundColor.blue(), backgroundColor.alpha())
+        glEnable(GLES20.GL_BLEND)
+        glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
 
         renderMediator.onSurfaceCreated()
     }

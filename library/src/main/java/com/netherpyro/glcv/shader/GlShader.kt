@@ -16,14 +16,15 @@ internal open class GlShader @JvmOverloads constructor(
     companion object {
 
         const val DEFAULT_UNIFORM_SAMPLER = "sTexture"
+        const val UNIFORM_OPACITY = "u_opacity"
 
         const val DEFAULT_VERTEX_SHADER = "" +
                 "attribute vec4 aPosition;\n" +
                 "attribute vec4 aTextureCoord;\n" +
                 "varying highp vec2 vTextureCoord;\n" +
-                "void main() {\n" +
 
-                "gl_Position = aPosition;\n" +
+                "void main() {\n" +
+                    "gl_Position = aPosition;\n" +
                     "vTextureCoord = aTextureCoord.xy;\n" +
                 "}\n"
 
@@ -31,9 +32,11 @@ internal open class GlShader @JvmOverloads constructor(
                 "precision mediump float;\n" +
                 "varying highp vec2 vTextureCoord;\n" +
                 "uniform lowp sampler2D sTexture;\n" +
+                "uniform lowp float u_opacity;\n" +
 
                 "void main() {\n" +
-                    "gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
+                    "mediump vec4 textureColor = texture2D(sTexture, vTextureCoord);\n" +
+                    "gl_FragColor = vec4(textureColor.rgb, u_opacity);\n" +
                 "}\n"
 
         private val VERTICES_DATA = floatArrayOf( // X, Y, Z, U, V
@@ -51,6 +54,8 @@ internal open class GlShader @JvmOverloads constructor(
         const val VERTICES_DATA_POS_OFFSET = 0 * FLOAT_SIZE_BYTES
         const val VERTICES_DATA_UV_OFFSET = VERTICES_DATA_POS_OFFSET + VERTICES_DATA_POS_SIZE * FLOAT_SIZE_BYTES
     }
+
+    var opacity = 1f
 
     private var program = 0
     private var vertexShader = 0
@@ -95,6 +100,7 @@ internal open class GlShader @JvmOverloads constructor(
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texName)
         GLES20.glUniform1i(getHandle("sTexture"), 0)
+        GLES20.glUniform1f(getHandle(UNIFORM_OPACITY), opacity)
 
         onDraw()
 
