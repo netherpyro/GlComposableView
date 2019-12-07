@@ -13,6 +13,8 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
 
     private val layers = mutableListOf<Layer>()
 
+    private var nextId = 0
+
     override fun invalidate() {
         renderHost.requestDraw()
     }
@@ -25,19 +27,35 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         renderHost.onSurfaceChanged(width, height)
     }
 
-    fun addExoPlayerLayer(player: SimpleExoPlayer, applyLayerAspect: Boolean): Transformable {
-        return ExoPLayer(player, this)
+    fun addVideoLayer(player: SimpleExoPlayer, applyLayerAspect: Boolean): Transformable {
+        return ExoPLayer(nextId++, this, player)
             .also { addLayer(it, applyLayerAspect) }
     }
 
     fun addImageLayer(bitmap: Bitmap, applyLayerAspect: Boolean): Transformable {
-        return ImageLayer(bitmap, this)
+        return ImageLayer(nextId++, this, bitmap)
             .also { addLayer(it, applyLayerAspect) }
     }
 
     fun onViewportChanged(viewport: GlViewport) {
         val aspect = viewport.width / viewport.height.toFloat()
         layers.forEach { it.onViewportAspectRatioChanged(aspect) }
+    }
+
+    fun bringLayerToFront(transformable: Transformable) {
+        bringLayerToPosition(layers.lastIndex, transformable)
+    }
+
+    fun restoreLayersOrder() {
+        layers.sortBy { it.id }
+
+        invalidate()
+    }
+
+    fun removeLayer(transformable: Transformable) {
+        with(layers) { removeAt(indexOfFirst { it.id == transformable.id }) }
+
+        invalidate()
     }
 
     fun onDrawFrame(fbo: FramebufferObject) {
@@ -53,5 +71,13 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         if (applyLayerAspect) layer.listenAspectRatioReady { renderHost.onLayerAspectRatio(it) }
 
         layers.add(layer)
+    }
+
+    private fun bringLayerToPosition(position: Int, transformable: Transformable) {
+        val index = layers.indexOfFirst { it.id == transformable.id }
+        val layer = layers.removeAt(index)
+        layers.add(position, layer)
+
+        invalidate()
     }
 }

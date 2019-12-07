@@ -9,7 +9,7 @@ import timber.log.Timber
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal abstract class Layer(protected val invalidator: Invalidator) : Transformable {
+internal abstract class Layer(override val id: Int, protected val invalidator: Invalidator) : Transformable {
 
     protected abstract val shader: GlShader
 

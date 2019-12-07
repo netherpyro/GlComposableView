@@ -5,6 +5,8 @@ package com.netherpyro.glcv
  */
 interface Transformable {
 
+    val id: Int
+
     fun setRotation(rotationDeg: Float)
     fun setScale(scaleFactor: Float)
     fun setTranslation(x: Float, y: Float)

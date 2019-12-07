@@ -85,12 +85,24 @@ class GlComposableView @JvmOverloads constructor(
         )
     }
 
-    fun addExoPlayerLayer(player: SimpleExoPlayer, applyLayerAspect: Boolean = false): Transformable {
-        return renderMediator.addExoPlayerLayer(player, applyLayerAspect)
+    fun addVideoLayer(player: SimpleExoPlayer, applyLayerAspect: Boolean = false): Transformable {
+        return renderMediator.addVideoLayer(player, applyLayerAspect)
     }
 
     fun addImageLayer(bitmap: Bitmap, applyLayerAspect: Boolean = false): Transformable {
         return renderMediator.addImageLayer(bitmap, applyLayerAspect)
+    }
+
+    fun bringToFront(transformable: Transformable) {
+        renderMediator.bringLayerToFront(transformable)
+    }
+
+    fun remove(transformable: Transformable) {
+        renderMediator.removeLayer(transformable)
+    }
+
+    fun restoreOrder() {
+        renderMediator.restoreLayersOrder()
     }
 
     /**

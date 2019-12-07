@@ -29,6 +29,8 @@ class MainActivity : AppCompatActivity() {
     private val maxTranslation = 2f
     private val minTranslation = -2f
 
+    private var frontIndex = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -54,12 +56,17 @@ class MainActivity : AppCompatActivity() {
         player.playWhenReady = true
 
         glView.setAspectsPreset(AspectRatio.values().map { it.value })
-        transformableList.add(glView.addExoPlayerLayer(player, applyLayerAspect = true))
 
+        // add video layer
+        transformableList.add(glView.addVideoLayer(player, applyLayerAspect = true))
+        // add image 1 layer
         LibraryHelper.image1()
-            ?.also {
-                transformableList.add(glView.addImageLayer(it))
-            }
+            ?.also { transformableList.add(glView.addImageLayer(it)) }
+        // add image 2 layer
+        LibraryHelper.image2()
+            ?.also { transformableList.add(glView.addImageLayer(it)) }
+
+        frontIndex = transformableList.lastIndex
 
         a1_1.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
         a3_2.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
@@ -73,6 +80,22 @@ class MainActivity : AppCompatActivity() {
         v1.setOnClickListener { player.seekTo(0, 0) }
         v2.setOnClickListener { player.seekTo(1, 0) }
         v3.setOnClickListener { player.seekTo(2, 3000) }
+        layer1ToFront.setOnClickListener {
+            frontIndex = 0
+            glView.bringToFront(transformableList[frontIndex])
+        }
+        layer2ToFront.setOnClickListener {
+            frontIndex = 1
+            glView.bringToFront(transformableList[frontIndex])
+        }
+        layer3ToFront.setOnClickListener {
+            frontIndex = 2
+            glView.bringToFront(transformableList[frontIndex])
+        }
+        restoreReordering.setOnClickListener {
+            frontIndex = transformableList.lastIndex
+            glView.restoreOrder()
+        }
 
         bottomView.alsoOnLaid { bottomView ->
             val maxHeight = container.height / 2
@@ -124,7 +147,7 @@ class MainActivity : AppCompatActivity() {
         scaleSeek.progress = ((1f - minScale) / maxScale * 100f).toInt()
         scaleSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                transformableList[1].setScale(progress / 100f * maxScale + minScale)
+                transformableList[frontIndex].setScale(progress / 100f * maxScale + minScale)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -138,7 +161,7 @@ class MainActivity : AppCompatActivity() {
         rotationSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                transformableList[1].setRotation(progress / 100f * 360f)
+                transformableList[frontIndex].setRotation(progress / 100f * 360f)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -154,7 +177,7 @@ class MainActivity : AppCompatActivity() {
                 val f = progress / 100f
                 val value = minTranslation * (1f - f) + maxTranslation * f
                 translationYSeek.progress = 50
-                transformableList[1].setTranslation(value, 0f)
+                transformableList[frontIndex].setTranslation(value, 0f)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -170,7 +193,7 @@ class MainActivity : AppCompatActivity() {
                 val f = progress / 100f
                 val value = minTranslation * (1f - f) + maxTranslation * f
                 translationXSeek.progress = 50
-                transformableList[1].setTranslation(0f, value)
+                transformableList[frontIndex].setTranslation(0f, value)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {

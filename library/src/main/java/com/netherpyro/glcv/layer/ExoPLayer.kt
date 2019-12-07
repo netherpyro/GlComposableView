@@ -17,9 +17,10 @@ import timber.log.Timber
  * @author mmikhailov on 2019-11-30.
  */
 internal class ExoPLayer(
-        private val player: SimpleExoPlayer,
-        invalidator: Invalidator
-) : Layer(invalidator), VideoListener, OnFrameAvailableListener {
+        id: Int,
+        invalidator: Invalidator,
+        private val player: SimpleExoPlayer
+) : Layer(id, invalidator), VideoListener, OnFrameAvailableListener {
 
     init {
         player.addVideoListener(this)

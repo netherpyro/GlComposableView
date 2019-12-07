@@ -95,19 +95,52 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="vertical" />
+                android:text="Video 1" />
 
             <Button android:id="@+id/v2"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="square" />
+                android:text="Video 2" />
 
             <Button android:id="@+id/v3"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="horizontal" />
+                android:text="Video 3" />
+
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button android:id="@+id/layer1ToFront"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Layer 1 to front"
+                android:textSize="12sp" />
+
+            <Button android:id="@+id/layer2ToFront"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Layer 2 to front"
+                android:textSize="12sp" />
+
+            <Button android:id="@+id/layer3ToFront"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Layer 3 to front"
+                android:textSize="12sp" />
+
+            <Button android:id="@+id/restoreReordering"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Restore order"
+                android:textSize="12sp" />
 
         </LinearLayout>
 
@@ -136,7 +169,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="150dp"
         android:max="100" />
 
     <SeekBar android:id="@+id/scaleSeek"

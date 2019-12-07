@@ -16,6 +16,7 @@ object LibraryHelper {
     private const val video2 = "VID.mp4"
     private const val video3 = "Test_Audio_video_sync.mp4"
     private const val image1 = "LT-passthrough.png"
+    private const val image2 = "windows_xp_original-wallpaper-2560x1600.jpg"
 
     @SuppressLint("StaticFieldLeak") // application context used
     private lateinit var sContext: Context
@@ -38,6 +39,10 @@ object LibraryHelper {
 
     fun image1(): Bitmap? {
         return loadBitmapFromAsset(image1)
+    }
+
+    fun image2(): Bitmap? {
+        return loadBitmapFromAsset(image2)
     }
 
     private fun getVideoPath(fileName: String): String? {
