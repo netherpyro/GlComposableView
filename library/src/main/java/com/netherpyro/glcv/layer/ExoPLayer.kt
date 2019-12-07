@@ -11,7 +11,6 @@ import com.google.android.exoplayer2.video.VideoListener
 import com.netherpyro.glcv.Invalidator
 import com.netherpyro.glcv.shader.GlExtTextureShader
 import com.netherpyro.glcv.util.EglUtil
-import timber.log.Timber
 
 /**
  * @author mmikhailov on 2019-11-30.
@@ -91,8 +90,6 @@ internal class ExoPLayer(
     }
 
     private fun onVideoSizeChanged(videoW: Float, videoH: Float) {
-        Timber.d("changeVideoSize::video w: $videoW, h: $videoH")
-
         aspect = videoW / videoH
 
         recalculateMatrices()

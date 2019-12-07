@@ -10,7 +10,6 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_PADDING
 import com.netherpyro.glcv.util.AspectRatioChooser
 import com.netherpyro.glcv.util.EConfigChooser
-import timber.log.Timber
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLContext
@@ -72,7 +71,6 @@ class GlComposableView @JvmOverloads constructor(
         renderMediator.release()
 
         if (!egl.eglDestroyContext(display, context)) {
-            Timber.e("display:$display context: $context")
             throw RuntimeException("eglDestroyContext" + egl.eglGetError())
         }
     }

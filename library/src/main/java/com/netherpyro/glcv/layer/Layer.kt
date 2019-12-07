@@ -4,7 +4,6 @@ import android.opengl.Matrix
 import com.netherpyro.glcv.Invalidator
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.shader.GlShader
-import timber.log.Timber
 
 /**
  * @author mmikhailov on 2019-11-30.
@@ -88,9 +87,6 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
         var right = 1.0f
         var bottom = -1.0f
         val viewportHorizontal: Boolean = viewportAspect >= 1f
-        val videoHorizontal = aspect > 1f
-
-        Timber.d("changeVideoSize::viewportHorizontal? $viewportHorizontal, videoHorizontal? $videoHorizontal")
 
         if (viewportHorizontal) { // horizontal viewport
             if (aspect <= 1f) { // vertical content

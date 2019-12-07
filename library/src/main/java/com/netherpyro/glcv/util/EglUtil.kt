@@ -5,8 +5,8 @@ import android.opengl.GLES20
 import android.opengl.GLES20.glGetShaderInfoLog
 import android.opengl.GLException
 import android.opengl.GLUtils
+import android.util.Log
 import com.netherpyro.glcv.BuildConfig
-import timber.log.Timber
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -27,7 +27,7 @@ object EglUtil {
         GLES20.glGetShaderiv(iShader, GLES20.GL_COMPILE_STATUS, compiled, 0)
 
         if (compiled[0] == 0) {
-            Timber.d("Load shader failed compilation\n${glGetShaderInfoLog(iShader)}")
+            Log.e("EglUtil", "Load shader failed compilation\n${glGetShaderInfoLog(iShader)}")
             return 0
         }
 

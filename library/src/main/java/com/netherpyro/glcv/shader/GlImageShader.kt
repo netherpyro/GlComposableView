@@ -22,7 +22,7 @@ internal class GlImageShader(private val bitmap: Bitmap) : GlShader(VERTEX_SHADE
                     "vec4 scaledPos = aPosition;\n" +
                     "scaledPos.x = scaledPos.x * uCRatio;\n" +
                     "gl_Position = uMVPMatrix * scaledPos;\n" +
-                    "vTextureCoord = aTextureCoord.xy;\n" +
+                    "vTextureCoord = vec2(aTextureCoord.x, 1.0 - aTextureCoord.y);\n" +
                 "}\n"
     }
 

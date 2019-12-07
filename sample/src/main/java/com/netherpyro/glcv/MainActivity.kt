@@ -28,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     private val minScale = 0.5f
     private val maxTranslation = 2f
     private val minTranslation = -2f
+    private val minRotationDeg = -180f
+    private val maxRotationDeg = 180f
 
     private var frontIndex = 0
 
@@ -161,7 +163,9 @@ class MainActivity : AppCompatActivity() {
         rotationSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                transformableList[frontIndex].setRotation(progress / 100f * 360f)
+                val f = progress / 100f
+                val value = minRotationDeg * (1f - f) + maxRotationDeg * f
+                transformableList[frontIndex].setRotation(value)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {

@@ -12,7 +12,6 @@ import com.netherpyro.glcv.extensions.alpha
 import com.netherpyro.glcv.extensions.blue
 import com.netherpyro.glcv.extensions.green
 import com.netherpyro.glcv.extensions.red
-import timber.log.Timber
 
 /**
  * @author mmikhailov on 2019-11-30.
@@ -34,8 +33,6 @@ internal class GlRenderer(
     }
 
     override fun onSurfaceChanged(width: Int, height: Int) {
-        Timber.d("onSurfaceChanged width = $width  height = $height")
-
         renderMediator.onSurfaceChanged(width, height)
     }
 

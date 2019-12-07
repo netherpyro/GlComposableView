@@ -78,6 +78,7 @@ object LibraryHelper {
         } catch (e: IOException) {
             bitmap = null
         }
+
         return bitmap
     }
 
