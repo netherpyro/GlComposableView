@@ -28,9 +28,9 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
         set(value) {
             field = value
 
-            if (!aspectCallbackFired) {
+            if (!aspectSet) {
+                aspectSet = true
                 aspectReadyAction?.invoke(value)
-                    ?.also { aspectCallbackFired = true }
             }
         }
 
@@ -41,7 +41,7 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
     private var viewportAspect = 1f
 
     private var aspectReadyAction: ((Float) -> Unit)? = null
-    private var aspectCallbackFired = false
+    private var aspectSet = false
 
     abstract fun onGlPrepared()
     abstract fun onDrawFrame()
@@ -82,7 +82,8 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
     }
 
     fun listenAspectRatioReady(onReadyAction: (Float) -> Unit) {
-        aspectReadyAction = onReadyAction
+        if (aspectSet) onReadyAction(aspect)
+        else aspectReadyAction = onReadyAction
     }
 
     protected fun recalculateMatrices() {
