@@ -15,6 +15,7 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
 
     private var nextId = 0
     private var surfaceReady = false
+    private var viewportAspect = 1f
 
     override fun invalidate() {
         renderHost.requestDraw()
@@ -43,8 +44,8 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
 
     @Synchronized
     fun onViewportChanged(viewport: GlViewport) {
-        val aspect = viewport.width / viewport.height.toFloat()
-        layers.forEach { it.onViewportAspectRatioChanged(aspect) }
+        viewportAspect = viewport.width / viewport.height.toFloat()
+        layers.forEach { it.onViewportAspectRatioChanged(viewportAspect) }
     }
 
     fun bringLayerToFront(transformable: Transformable) {
@@ -85,7 +86,10 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         layers.add(layer)
 
         if (surfaceReady) {
-            renderHost.postAction(Runnable { layer.setup() })
+            renderHost.postAction(Runnable {
+                layer.onViewportAspectRatioChanged(viewportAspect)
+                layer.setup()
+            })
         }
     }
 
