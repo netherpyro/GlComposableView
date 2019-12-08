@@ -19,7 +19,9 @@ internal class ImageLayer(
         aspect = bitmap.width / bitmap.height.toFloat()
     }
 
-    override fun onGlPrepared() {
+    override fun setup() {
+        release()
+
         shader.setup()
     }
 

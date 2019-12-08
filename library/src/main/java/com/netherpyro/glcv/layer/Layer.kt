@@ -43,7 +43,7 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
     private var aspectReadyAction: ((Float) -> Unit)? = null
     private var aspectSet = false
 
-    abstract fun onGlPrepared()
+    abstract fun setup()
     abstract fun onDrawFrame()
     abstract fun release()
 

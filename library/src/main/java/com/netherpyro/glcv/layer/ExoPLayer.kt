@@ -48,7 +48,9 @@ internal class ExoPLayer(
     /**
      * Should be called in GL thread
      * */
-    override fun onGlPrepared() {
+    override fun setup() {
+        release()
+
         val args = IntArray(1)
 
         glGenTextures(args.size, args, 0)

@@ -54,6 +54,10 @@ class GlComposableView @JvmOverloads constructor(
         queueEvent { requestRender() }
     }
 
+    override fun postAction(action: Runnable) {
+        queueEvent(action)
+    }
+
     override fun onSurfaceChanged(width: Int, height: Int) {
         post { holder.setFixedSize(width, height) }
 

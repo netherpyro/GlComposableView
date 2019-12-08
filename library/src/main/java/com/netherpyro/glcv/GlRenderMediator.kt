@@ -14,13 +14,17 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     private val layers = mutableListOf<Layer>()
 
     private var nextId = 0
+    private var surfaceReady = false
 
     override fun invalidate() {
         renderHost.requestDraw()
     }
 
+    @Synchronized
     fun onSurfaceCreated() {
-        layers.forEach { it.onGlPrepared() }
+        surfaceReady = true
+
+        layers.forEach { it.setup() }
     }
 
     fun onSurfaceChanged(width: Int, height: Int) {
@@ -37,6 +41,7 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
             .also { addLayer(it, applyLayerAspect) }
     }
 
+    @Synchronized
     fun onViewportChanged(viewport: GlViewport) {
         val aspect = viewport.width / viewport.height.toFloat()
         layers.forEach { it.onViewportAspectRatioChanged(aspect) }
@@ -46,33 +51,45 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         bringLayerToPosition(layers.lastIndex, transformable)
     }
 
+    @Synchronized
     fun restoreLayersOrder() {
         layers.sortBy { it.id }
 
         invalidate()
     }
 
+    @Synchronized
     fun removeLayer(transformable: Transformable) {
-        with(layers) { removeAt(indexOfFirst { it.id == transformable.id }) }
+        with(layers) { removeAt(indexOfFirst { it.id == transformable.id }).release() }
 
         invalidate()
     }
 
+    @Synchronized
     fun onDrawFrame(fbo: FramebufferObject) {
         // todo use FBOs
         layers.forEach { it.onDrawFrame() }
     }
 
+    @Synchronized
     fun release() {
+        surfaceReady = false
+
         layers.forEach { it.release() }
     }
 
+    @Synchronized
     private fun addLayer(layer: Layer, applyLayerAspect: Boolean) {
         if (applyLayerAspect) layer.listenAspectRatioReady { renderHost.onLayerAspectRatio(it) }
 
         layers.add(layer)
+
+        if (surfaceReady) {
+            renderHost.postAction(Runnable { layer.setup() })
+        }
     }
 
+    @Synchronized
     private fun bringLayerToPosition(position: Int, transformable: Transformable) {
         val index = layers.indexOfFirst { it.id == transformable.id }
         val layer = layers.removeAt(index)
