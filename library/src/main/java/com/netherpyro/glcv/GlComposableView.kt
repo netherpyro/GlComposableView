@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
+import android.util.Size
 import androidx.annotation.ColorInt
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_PADDING
@@ -36,6 +37,7 @@ class GlComposableView @JvmOverloads constructor(
     private val defaultViewportAspectRatio = 1f
 
     private var aspectRatioChooser: AspectRatioChooser? = null
+    private var viewportSizeChangedListener: ((Size) -> Unit)? = null
 
     init {
         setEGLContextFactory(this)
@@ -110,6 +112,10 @@ class GlComposableView @JvmOverloads constructor(
         renderMediator.restoreLayersOrder()
     }
 
+    fun listenViewportSizeChanged(listener: (Size) -> Unit) {
+        viewportSizeChangedListener = listener
+    }
+
     /**
      * Sets preferred aspects, one of them being apply automatically once one of layers has given its aspect
      *
@@ -149,18 +155,20 @@ class GlComposableView @JvmOverloads constructor(
         updateViewport(viewport)
     }
 
-    private fun updateViewport(vp: GlViewport) {
-        renderMediator.onViewportChanged(vp)
-        renderer.setViewport(vp)
-
-        requestDraw()
-    }
-
     private fun setAspectRatioInternal(aspect: Float, animated: Boolean, fromUser: Boolean) {
         val appliedAspect = if (fromUser) aspect else aspectRatioChooser?.selectNearestAspect(aspect) ?: aspect
 
         layoutHelper.changeAspectRatio(appliedAspect, animated) {
             updateViewport(it)
         }
+    }
+
+    private fun updateViewport(vp: GlViewport) {
+        renderMediator.onViewportChanged(vp)
+        renderer.setViewport(vp)
+
+        viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }
+
+        requestDraw()
     }
 }
