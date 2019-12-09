@@ -2,9 +2,6 @@ package com.netherpyro.glcv.layer
 
 import android.graphics.SurfaceTexture
 import android.graphics.SurfaceTexture.OnFrameAvailableListener
-import android.opengl.GLES20
-import android.opengl.GLES20.glBindTexture
-import android.opengl.GLES20.glGenTextures
 import android.view.Surface
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.video.VideoListener
@@ -21,15 +18,11 @@ internal class ExoPLayer(
         private val player: SimpleExoPlayer
 ) : Layer(id, invalidator), VideoListener, OnFrameAvailableListener {
 
-    init {
-        player.addVideoListener(this)
-    }
-
     override val shader = GlExtTextureShader()
 
     private lateinit var surfaceTexture: SurfaceTexture
 
-    private var updateSurface = false
+    private var updateTexImageCounter = 0
     private var texName = EglUtil.NO_TEXTURE
 
     private val transformMatrix = FloatArray(16)
@@ -41,53 +34,56 @@ internal class ExoPLayer(
     }
 
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
-        updateSurface = true
-        invalidator.invalidate()
+        synchronized(this) {
+            updateTexImageCounter++
+
+            invalidator.invalidate()
+        }
     }
 
     /**
-     * Should be called in GL thread
+     * Must be called in GL thread
      * */
     override fun setup() {
         release()
 
-        val args = IntArray(1)
-
-        glGenTextures(args.size, args, 0)
-        texName = args[0]
+        texName = EglUtil.genBlankTexture(textureTarget)
 
         surfaceTexture = SurfaceTexture(texName)
         surfaceTexture.setOnFrameAvailableListener(this)
 
-        glBindTexture(textureTarget, texName)
-        EglUtil.setupSampler(textureTarget, GLES20.GL_LINEAR, GLES20.GL_NEAREST)
-        glBindTexture(GLES20.GL_TEXTURE_2D, 0)
-
         shader.setup()
+
+        player.addVideoListener(this)
 
         val surface = Surface(surfaceTexture)
         player.setVideoSurface(surface)
 
-        synchronized(this) { updateSurface = false }
+        synchronized(this) { updateTexImageCounter = 0 }
     }
 
     /**
-     * Should be called in GL thread
+     * Must be called in GL thread
      * */
     override fun onDrawFrame() {
         synchronized(this) {
-            if (updateSurface) {
+            while (updateTexImageCounter != 0) {
                 surfaceTexture.updateTexImage()
                 surfaceTexture.getTransformMatrix(transformMatrix)
-                updateSurface = false
+                updateTexImageCounter--
             }
-        }
 
-        shader.draw(texName, mvpMatrix, transformMatrix, aspect)
+            shader.draw(texName, mvpMatrix, transformMatrix, aspect)
+        }
     }
 
+    /**
+     * Must be called in GL thread
+     * */
     override fun release() {
+        player.removeVideoListener(this)
         shader.release()
+
         EglUtil.deleteTextures(texName)
     }
 
