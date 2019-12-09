@@ -11,6 +11,9 @@ import com.netherpyro.glcv.layer.Layer
  */
 internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidator {
 
+    /**
+     * The list of ready for use layers
+     * */
     private val layers = mutableListOf<Layer>()
 
     private var nextId = 0
@@ -21,6 +24,10 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         renderHost.requestDraw()
     }
 
+    fun onSurfaceChanged(width: Int, height: Int) {
+        renderHost.onSurfaceChanged(width, height)
+    }
+
     @Synchronized
     fun onSurfaceCreated() {
         surfaceReady = true
@@ -28,8 +35,24 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         layers.forEach { it.setup() }
     }
 
-    fun onSurfaceChanged(width: Int, height: Int) {
-        renderHost.onSurfaceChanged(width, height)
+    @Synchronized
+    fun onViewportChanged(viewport: GlViewport) {
+        viewportAspect = viewport.width / viewport.height.toFloat()
+
+        layers.forEach { it.onViewportAspectRatio(viewportAspect) }
+    }
+
+    @Synchronized
+    fun onDrawFrame(fbo: FramebufferObject) {
+        // todo use FBOs
+        layers.forEach { it.onDrawFrame() }
+    }
+
+    @Synchronized
+    fun release() {
+        surfaceReady = false
+
+        layers.forEach { it.release() }
     }
 
     fun addVideoLayer(player: SimpleExoPlayer, applyLayerAspect: Boolean): Transformable {
@@ -40,12 +63,6 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     fun addImageLayer(bitmap: Bitmap, applyLayerAspect: Boolean): Transformable {
         return ImageLayer(nextId++, this, bitmap)
             .also { addLayer(it, applyLayerAspect) }
-    }
-
-    @Synchronized
-    fun onViewportChanged(viewport: GlViewport) {
-        viewportAspect = viewport.width / viewport.height.toFloat()
-        layers.forEach { it.onViewportAspectRatioChanged(viewportAspect) }
     }
 
     fun bringLayerToFront(transformable: Transformable) {
@@ -67,29 +84,19 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     }
 
     @Synchronized
-    fun onDrawFrame(fbo: FramebufferObject) {
-        // todo use FBOs
-        layers.forEach { it.onDrawFrame() }
-    }
-
-    @Synchronized
-    fun release() {
-        surfaceReady = false
-
-        layers.forEach { it.release() }
-    }
-
-    @Synchronized
     private fun addLayer(layer: Layer, applyLayerAspect: Boolean) {
         if (applyLayerAspect) layer.listenAspectRatioReady { renderHost.onLayerAspectRatio(it) }
 
-        layers.add(layer)
-
         if (surfaceReady) {
             renderHost.postAction(Runnable {
-                layer.onViewportAspectRatioChanged(viewportAspect)
                 layer.setup()
+                layer.onViewportAspectRatio(viewportAspect)
+                layers.add(layer)
+
+                invalidate()
             })
+        } else {
+            layers.add(layer)
         }
     }
 

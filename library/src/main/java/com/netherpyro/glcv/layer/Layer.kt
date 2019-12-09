@@ -75,7 +75,7 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
         invalidator.invalidate()
     }
 
-    fun onViewportAspectRatioChanged(aspect: Float) {
+    fun onViewportAspectRatio(aspect: Float) {
         viewportAspect = aspect
 
         recalculateMatrices()

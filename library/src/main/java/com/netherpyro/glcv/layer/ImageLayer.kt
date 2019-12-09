@@ -10,32 +10,25 @@ import com.netherpyro.glcv.shader.GlImageShader
 internal class ImageLayer(
         id: Int,
         invalidator: Invalidator,
-        bitmap: Bitmap
+        private val bitmap: Bitmap
 ): Layer(id, invalidator) {
 
     override val shader = GlImageShader(bitmap)
-
-    private var initialized = false
-
-    init {
-        aspect = bitmap.width / bitmap.height.toFloat()
-    }
 
     override fun setup() {
         release()
 
         shader.setup()
+        aspect = bitmap.width / bitmap.height.toFloat()
 
-        initialized = true
         invalidator.invalidate()
     }
 
     override fun onDrawFrame() {
-        if (initialized) shader.draw(mvpMatrix, aspect)
+        shader.draw(mvpMatrix, aspect)
     }
 
     override fun release() {
-        initialized = false
         shader.release()
     }
 }
