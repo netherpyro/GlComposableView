@@ -33,6 +33,12 @@ internal class ExoPLayer(
         onVideoSizeChanged(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
     }
 
+    override fun onRenderedFirstFrame() {
+    }
+
+    override fun onSurfaceSizeChanged(width: Int, height: Int) {
+    }
+
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
         synchronized(this) {
             updateTexImageCounter++

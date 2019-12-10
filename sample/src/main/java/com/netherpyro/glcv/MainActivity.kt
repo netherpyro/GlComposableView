@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         bottomView.alsoOnLaid { bottomView ->
             val maxHeight = container.height / 2
             bottomSeek.progress = ((bottomView.height / maxHeight.toFloat()) * 100).toInt()
-            glView.setViewportPadding(bottom = bottomView.height)
+            glView.setViewportMargin(bottom = bottomView.height)
 
             bottomSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
                         height = viewHeight
                     }
 
-                    glView.setViewportPadding(bottom = viewHeight)
+                    glView.setViewportMargin(bottom = viewHeight)
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity() {
         topView.alsoOnLaid { topView ->
             val maxHeight = container.height / 2
             topSeek.progress = ((topView.height / maxHeight.toFloat()) * 100).toInt()
-            glView.setViewportPadding(top = topView.height)
+            glView.setViewportMargin(top = topView.height)
 
             topSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity() {
                         height = viewHeight
                     }
 
-                    glView.setViewportPadding(top = viewHeight)
+                    glView.setViewportMargin(top = viewHeight)
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {

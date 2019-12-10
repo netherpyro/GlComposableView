@@ -32,7 +32,7 @@ internal class GlImageShader(private val bitmap: Bitmap) : GlShader(VERTEX_SHADE
         super.setup()
 
         if (!bitmap.isRecycled) {
-            texName = EglUtil.loadTexture(bitmap, texName, false)
+            texName = EglUtil.loadTexture(bitmap, texName, false) // todo recycle bitmap, retrieve new when shader re-created
         } else throw IllegalArgumentException("Provided bitmap is recycled!")
     }
 

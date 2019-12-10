@@ -9,7 +9,7 @@ import android.util.AttributeSet
 import android.util.Size
 import androidx.annotation.ColorInt
 import com.google.android.exoplayer2.SimpleExoPlayer
-import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_PADDING
+import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_MARGIN
 import com.netherpyro.glcv.util.AspectRatioChooser
 import com.netherpyro.glcv.util.EConfigChooser
 import javax.microedition.khronos.egl.EGL10
@@ -145,13 +145,13 @@ class GlComposableView @JvmOverloads constructor(
         layoutHelper.animDuration = duration
     }
 
-    fun setViewportPadding(
-            left: Int = NO_PADDING,
-            top: Int = NO_PADDING,
-            right: Int = NO_PADDING,
-            bottom: Int = NO_PADDING
+    fun setViewportMargin(
+            left: Int = NO_MARGIN,
+            top: Int = NO_MARGIN,
+            right: Int = NO_MARGIN,
+            bottom: Int = NO_MARGIN
     ) {
-        val viewport = layoutHelper.setViewportPadding(left, top, right, bottom)
+        val viewport = layoutHelper.setViewportMargin(left, top, right, bottom)
         updateViewport(viewport)
     }
 
