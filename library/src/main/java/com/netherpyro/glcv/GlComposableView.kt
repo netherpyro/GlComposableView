@@ -50,6 +50,7 @@ class GlComposableView @JvmOverloads constructor(
 
         setRenderer(renderer)
         renderMode = RENDERMODE_WHEN_DIRTY
+        preserveEGLContextOnPause = true
     }
 
     override fun requestDraw() {

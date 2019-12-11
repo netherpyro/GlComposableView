@@ -7,7 +7,6 @@ import com.netherpyro.glcv.shader.GlImageShader
 /**
  * @author mmikhailov on 2019-12-04.
  */
-// todo receive URI of image instead of a bitmap
 internal class ImageLayer(
         id: Int,
         invalidator: Invalidator,
@@ -19,8 +18,8 @@ internal class ImageLayer(
     override fun setup() {
         release()
 
-        shader.setup()
         aspect = bitmap.width / bitmap.height.toFloat()
+        shader.setup()
 
         invalidator.invalidate()
     }
