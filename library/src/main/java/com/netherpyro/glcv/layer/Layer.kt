@@ -1,8 +1,10 @@
 package com.netherpyro.glcv.layer
 
 import android.opengl.Matrix
+import androidx.annotation.ColorInt
 import com.netherpyro.glcv.Invalidator
 import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.shader.GlBorderShader
 import com.netherpyro.glcv.shader.GlShader
 
 /**
@@ -11,6 +13,7 @@ import com.netherpyro.glcv.shader.GlShader
 internal abstract class Layer(override val id: Int, protected val invalidator: Invalidator) : Transformable {
 
     protected abstract val shader: GlShader
+    private val borderShader = GlBorderShader()
 
     protected val mvpMatrix = FloatArray(16)
 
@@ -43,9 +46,27 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
     private var aspectReadyAction: ((Float) -> Unit)? = null
     private var aspectSet = false
 
-    abstract fun setup()
-    abstract fun onDrawFrame()
-    abstract fun release()
+    fun setup() {
+        onSetup()
+        borderShader.setup()
+    }
+
+    fun draw() {
+        onDrawFrame()
+
+        if (borderShader.width > 0f) {
+            borderShader.draw(mvpMatrix, aspect)
+        }
+    }
+
+    fun release() {
+        borderShader.release()
+        onRelease()
+    }
+
+    protected abstract fun onSetup()
+    protected abstract fun onDrawFrame()
+    protected abstract fun onRelease()
 
     override fun setScale(scaleFactor: Float) {
         this.scaleFactor = scaleFactor
@@ -71,6 +92,13 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
 
     override fun setOpacity(opacity: Float) {
         shader.opacity = opacity
+
+        invalidator.invalidate()
+    }
+
+    override fun setBorder(width: Float, @ColorInt color: Int) {
+        borderShader.width = width
+        borderShader.color = color
 
         invalidator.invalidate()
     }
@@ -130,6 +158,7 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
                 }
             }
         }
+
         Matrix.frustumM(pMatrix, 0, left, right, bottom, top, 5f, 7f)
         Matrix.setIdentityM(mMatrix, 0)
         Matrix.scaleM(mMatrix, 0, scaleFactor, scaleFactor, 0f)

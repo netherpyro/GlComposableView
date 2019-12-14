@@ -15,7 +15,7 @@ internal class ImageLayer(
 
     override val shader = GlImageShader(bitmap)
 
-    override fun setup() {
+    override fun onSetup() {
         release()
 
         aspect = bitmap.width / bitmap.height.toFloat()
@@ -28,7 +28,7 @@ internal class ImageLayer(
         shader.draw(mvpMatrix, aspect)
     }
 
-    override fun release() {
+    override fun onRelease() {
         shader.release()
     }
 }

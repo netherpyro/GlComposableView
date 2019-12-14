@@ -50,7 +50,7 @@ internal class ExoPLayer(
     /**
      * Must be called in GL thread
      * */
-    override fun setup() {
+    override fun onSetup() {
         release()
 
         texName = EglUtil.genBlankTexture(textureTarget)
@@ -86,7 +86,7 @@ internal class ExoPLayer(
     /**
      * Must be called in GL thread
      * */
-    override fun release() {
+    override fun onRelease() {
         player.removeVideoListener(this)
         shader.release()
 

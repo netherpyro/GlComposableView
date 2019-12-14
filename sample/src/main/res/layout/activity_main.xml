@@ -154,7 +154,7 @@
 
     <View android:id="@+id/topView"
         android:layout_width="match_parent"
-        android:layout_height="170dp"
+        android:layout_height="194dp"
         android:layout_gravity="top"
         android:background="#5500ff00" />
 
@@ -165,11 +165,18 @@
         android:layout_marginBottom="24dp"
         android:max="100" />
 
-    <SeekBar android:id="@+id/topSeek"
+    <SeekBar android:id="@+id/borderSeek"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
         android:layout_marginTop="150dp"
+        android:max="100" />
+
+    <SeekBar android:id="@+id/topSeek"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginTop="174dp"
         android:max="100" />
 
     <SeekBar android:id="@+id/scaleSeek"

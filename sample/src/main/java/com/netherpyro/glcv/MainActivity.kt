@@ -1,5 +1,6 @@
 package com.netherpyro.glcv
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
@@ -219,6 +220,19 @@ class MainActivity : AppCompatActivity() {
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 transformableList.forEach { it.setOpacity(1f) }
+            }
+        })
+
+        borderSeek.progress = 0
+        borderSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                transformableList[frontIndex].setBorder(progress / 10f, Color.GREEN)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
             }
         })
     }

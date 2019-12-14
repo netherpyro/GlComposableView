@@ -45,7 +45,7 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     @Synchronized
     fun onDrawFrame(fbo: FramebufferObject) {
         // todo use FBOs
-        layers.forEach { it.onDrawFrame() }
+        layers.forEach { it.draw() }
     }
 
     @Synchronized
