@@ -52,33 +52,15 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
             // todo recalculate 'vertices' values
         }
 
+    private val borderMarginCoefficient = 0.05f
+    private val borderWidthCoefficient = 0.05f
+
+    private var aspectCoefficient: Float = 0f
     private var mvpLoc = -1
     private var ratioLoc = -1
     private var aPosLoc = -1
     private var uColorLoc = -1
-    private var vertices = floatArrayOf(
-            -1.1f, 1.05f,
-            -1.1f, 1.1f,
-            -1.05f, 1.05f,
-            -1.05f, 1.1f,
-            1.05f, 1.05f,
-            1.05f, 1.1f,
-            1.1f, 1.1f,
-            1.1f, 1.05f,
-            1.05f, 1.05f,
-            1.1f, -1.05f,
-            1.05f, -1.05f,
-            1.1f, -1.1f,
-            1.05f, -1.1f,
-            1.05f, -1.05f,
-            -1.05f, -1.1f,
-            -1.05f, -1.05f,
-            -1.1f, -1.1f,
-            -1.1f, -1.05f,
-            -1.05f, -1.05f,
-            -1.1f, 1.05f,
-            -1.05f, 1.05f
-    )
+    private var vertices = createVertices()
 
     private var vertexData = ByteBuffer.allocateDirect(vertices.size * 4)
         .order(ByteOrder.nativeOrder())
@@ -107,8 +89,47 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
         glVertexAttribPointer(aPosLoc, 2, GL_FLOAT, false, 0, vertexData)
 
         glUniform4f(uColorLoc, color.red(), color.green(), color.blue(), 1.0f)
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 21)
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size / 2)
 
         glDisableVertexAttribArray(aPosLoc)
+    }
+
+    fun setAspect(aspect: Float) {
+        aspectCoefficient = when {
+            aspect > 1f -> (1f / aspect) * borderMarginCoefficient
+            aspect < 1f -> -aspect * borderMarginCoefficient
+            else -> 0f
+        }
+
+        vertices = createVertices()
+        vertexData.clear()
+        vertexData.put(vertices)
+        vertexData.position(0)
+    }
+
+    private fun createVertices(): FloatArray {
+        return floatArrayOf(
+                /*v1*/   -1.1f, 1.0f + borderMarginCoefficient + aspectCoefficient,
+                /*v2*/   -1.1f, 1.1f + (2 * aspectCoefficient),
+                /*v3*/   -1.05f, 1.0f + borderMarginCoefficient + aspectCoefficient,
+                /*v4*/   -1.05f, 1.1f + (2 * aspectCoefficient),
+                /*v5*/   1.05f, 1.0f + borderMarginCoefficient + aspectCoefficient,
+                /*v6*/   1.05f, 1.1f + (2 * aspectCoefficient),
+                /*v7*/   1.1f, 1.1f + (2 * aspectCoefficient),
+                /*v8*/   1.1f, 1.0f + borderMarginCoefficient + aspectCoefficient,
+                /*v9*/   1.05f, 1.0f + borderMarginCoefficient + aspectCoefficient,
+                /*v10*/   1.1f, -1.05f - aspectCoefficient,
+                /*v11*/   1.05f, -1.05f - aspectCoefficient,
+                /*v12*/   1.1f, -1.1f - (2 * aspectCoefficient),
+                /*v13*/   1.05f, -1.1f - (2 * aspectCoefficient),
+                /*v14*/   1.05f, -1.05f - aspectCoefficient,
+                /*v15*/   -1.05f, -1.1f - (2 * aspectCoefficient),
+                /*v16*/   -1.05f, -1.05f - aspectCoefficient,
+                /*v17*/   -1.1f, -1.1f - (2 * aspectCoefficient),
+                /*v18*/   -1.1f, -1.05f - aspectCoefficient,
+                /*v19*/   -1.05f, -1.05f - aspectCoefficient,
+                /*v20*/   -1.1f, 1.0f + borderMarginCoefficient + aspectCoefficient,
+                /*v21*/   -1.05f, 1.0f + borderMarginCoefficient + aspectCoefficient
+        )
     }
 }

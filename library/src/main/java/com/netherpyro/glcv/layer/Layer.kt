@@ -30,6 +30,7 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
     protected var aspect: Float = 1f
         set(value) {
             field = value
+            borderShader.setAspect(value)
 
             if (!aspectSet) {
                 aspectSet = true
@@ -121,9 +122,8 @@ internal abstract class Layer(override val id: Int, protected val invalidator: I
         var top = 1.0f
         var right = 1.0f
         var bottom = -1.0f
-        val viewportHorizontal: Boolean = viewportAspect >= 1f
 
-        if (viewportHorizontal) { // horizontal viewport
+        if (viewportAspect >= 1f) { // horizontal viewport
             if (aspect <= 1f) { // vertical content
                 left *= viewportAspect
                 right *= viewportAspect
