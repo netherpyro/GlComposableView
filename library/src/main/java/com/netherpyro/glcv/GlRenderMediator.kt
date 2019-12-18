@@ -9,7 +9,7 @@ import com.netherpyro.glcv.layer.Layer
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidator {
+internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidator, Observable {
 
     /**
      * The list of ready for use layers
@@ -19,9 +19,18 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     private var nextId = 0
     private var surfaceReady = false
     private var viewportAspect = 1f
+    private var addLayerAction: ((Transformable) -> Unit)? = null
+    private var removeLayerAction: ((Int) -> Unit)? = null
 
     override fun invalidate() {
         renderHost.requestDraw()
+    }
+
+    override fun subscribe(addAction: (Transformable) -> Unit, removeAction: (Int) -> Unit): List<Transformable> {
+        this.addLayerAction = addAction
+        this.removeLayerAction = removeAction
+
+        return layers.toList()
     }
 
     fun onSurfaceChanged(width: Int, height: Int) {
@@ -78,7 +87,10 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
 
     @Synchronized
     fun removeLayer(transformable: Transformable) {
-        with(layers) { removeAt(indexOfFirst { it.id == transformable.id }).release() }
+        with(layers) {
+            removeAt(indexOfFirst { it.id == transformable.id }).release()
+            removeLayerAction?.invoke(transformable.id)
+        }
 
         invalidate()
     }
@@ -92,11 +104,13 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
                 layer.setup()
                 layer.onViewportAspectRatio(viewportAspect)
                 layers.add(layer)
+                addLayerAction?.invoke(layer)
 
                 invalidate()
             })
         } else {
             layers.add(layer)
+            addLayerAction?.invoke(layer)
         }
     }
 

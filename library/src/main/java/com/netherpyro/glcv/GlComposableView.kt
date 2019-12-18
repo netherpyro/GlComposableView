@@ -1,5 +1,6 @@
 package com.netherpyro.glcv
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -7,9 +8,11 @@ import android.graphics.PixelFormat
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.util.Size
+import android.view.MotionEvent
 import androidx.annotation.ColorInt
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_MARGIN
+import com.netherpyro.glcv.touches.GlTouchHelper
 import com.netherpyro.glcv.util.AspectRatioChooser
 import com.netherpyro.glcv.util.EConfigChooser
 import javax.microedition.khronos.egl.EGL10
@@ -29,6 +32,7 @@ class GlComposableView @JvmOverloads constructor(
     private val renderer: GlRenderer
     private val renderMediator: GlRenderMediator
     private val layoutHelper: GlLayoutHelper
+    private val touchHelper: GlTouchHelper
 
     @ColorInt
     private val defaultBaseColor: Int = Color.parseColor("#5555ff")
@@ -47,6 +51,7 @@ class GlComposableView @JvmOverloads constructor(
         layoutHelper = GlLayoutHelper(defaultViewportAspectRatio)
         renderMediator = GlRenderMediator(this)
         renderer = GlRenderer(renderMediator, defaultBaseColor, defaultViewportColor)
+        touchHelper = GlTouchHelper(context, renderMediator)
 
         setRenderer(renderer)
         renderMode = RENDERMODE_WHEN_DIRTY
@@ -91,6 +96,11 @@ class GlComposableView @JvmOverloads constructor(
                 animated = false,
                 fromUser = false
         )
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        return touchHelper.onTouchEvent(event)
     }
 
     fun addVideoLayer(tag: String? = null, player: SimpleExoPlayer, applyLayerAspect: Boolean = false): Transformable {

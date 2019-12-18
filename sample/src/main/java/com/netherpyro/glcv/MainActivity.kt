@@ -25,12 +25,8 @@ class MainActivity : AppCompatActivity() {
 
     private val transformableList = mutableListOf<Transformable>()
 
-    private val maxScale = 2f
-    private val minScale = 0.5f
     private val maxTranslation = 2f
     private val minTranslation = -2f
-    private val minRotationDeg = -180f
-    private val maxRotationDeg = 180f
 
     private var frontIndex = 0
 
@@ -146,42 +142,6 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         }
-
-        scaleSeek.progress = ((1f - minScale) / maxScale * 100f).toInt()
-        scaleSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                transformableList[frontIndex].setScale(progress / 100f * maxScale + minScale)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                transformableList.forEachIndexed { index, transformable ->
-                    if (index != frontIndex) transformable.setOpacity(0.3f)
-                }
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                transformableList.forEach { it.setOpacity(1f) }
-            }
-        })
-
-        rotationSeek.progress = 50
-        rotationSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val f = progress / 100f
-                val value = minRotationDeg * (1f - f) + maxRotationDeg * f
-                transformableList[frontIndex].setRotation(value)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                transformableList.forEachIndexed { index, transformable ->
-                    if (index != frontIndex) transformable.setOpacity(0.3f)
-                }
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                transformableList.forEach { it.setOpacity(1f) }
-            }
-        })
 
         translationXSeek.progress = 50
         translationXSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
