@@ -61,13 +61,13 @@ class MainActivity : AppCompatActivity() {
         glView.setAspectsPreset(AspectRatio.values().map { it.value })
 
         // add video layer
-        transformableList.add(glView.addVideoLayer(player, applyLayerAspect = true))
+        transformableList.add(glView.addVideoLayer(player = player, applyLayerAspect = true))
         // add image 1 layer
         LibraryHelper.image1()
-            ?.also { transformableList.add(glView.addImageLayer(it)) }
+            ?.also { transformableList.add(glView.addImageLayer(bitmap = it)) }
         // add image 2 layer
         LibraryHelper.image2()
-            ?.also { transformableList.add(glView.addImageLayer(it)) }
+            ?.also { transformableList.add(glView.addImageLayer(bitmap = it)) }
 
         frontIndex = transformableList.lastIndex
 

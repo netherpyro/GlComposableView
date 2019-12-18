@@ -8,6 +8,7 @@ import androidx.annotation.ColorInt
 interface Transformable {
 
     val id: Int
+    val tag: String?
 
     fun setRotation(rotationDeg: Float)
     fun setScale(scaleFactor: Float)

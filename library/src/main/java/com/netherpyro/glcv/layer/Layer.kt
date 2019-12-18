@@ -10,7 +10,11 @@ import com.netherpyro.glcv.shader.GlShader
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal abstract class Layer(override val id: Int, protected val invalidator: Invalidator) : Transformable {
+internal abstract class Layer(
+        override val id: Int,
+        override val tag: String? = null,
+        protected val invalidator: Invalidator
+) : Transformable {
 
     protected abstract val shader: GlShader
     private val borderShader = GlBorderShader()

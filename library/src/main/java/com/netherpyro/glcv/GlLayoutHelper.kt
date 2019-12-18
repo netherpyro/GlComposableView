@@ -3,6 +3,7 @@ package com.netherpyro.glcv
 import android.animation.ValueAnimator
 import android.view.animation.AccelerateInterpolator
 import androidx.core.animation.doOnEnd
+import kotlin.math.abs
 import kotlin.math.min
 
 /**
@@ -32,7 +33,7 @@ internal class GlLayoutHelper(private var viewportAspect: Float) {
     }
 
     fun changeAspectRatio(aspect: Float, animated: Boolean = false, onViewportReady: (GlViewport) -> Unit) {
-        if (!animated /*|| abs(viewportAspect - aspect) > 1f */) {
+        if (!animated || abs(viewportAspect - aspect) > 1f ) {
             viewportAspect = aspect
             onViewportReady(recalculateViewport())
         } else {

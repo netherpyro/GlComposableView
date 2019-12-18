@@ -14,9 +14,10 @@ import com.netherpyro.glcv.util.EglUtil
  */
 internal class ExoPLayer(
         id: Int,
+        tag: String?,
         invalidator: Invalidator,
         private val player: SimpleExoPlayer
-) : Layer(id, invalidator), VideoListener, OnFrameAvailableListener {
+) : Layer(id, tag, invalidator), VideoListener, OnFrameAvailableListener {
 
     override val shader = GlExtTextureShader()
 

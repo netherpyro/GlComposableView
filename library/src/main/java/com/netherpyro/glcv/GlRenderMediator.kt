@@ -55,13 +55,13 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
         layers.forEach { it.release() }
     }
 
-    fun addVideoLayer(player: SimpleExoPlayer, applyLayerAspect: Boolean): Transformable {
-        return ExoPLayer(nextId++, this, player)
+    fun addVideoLayer(tag: String?, player: SimpleExoPlayer, applyLayerAspect: Boolean): Transformable {
+        return ExoPLayer(nextId++, tag, this, player)
             .also { addLayer(it, applyLayerAspect) }
     }
 
-    fun addImageLayer(bitmap: Bitmap, applyLayerAspect: Boolean): Transformable {
-        return ImageLayer(nextId++, this, bitmap)
+    fun addImageLayer(tag: String?, bitmap: Bitmap, applyLayerAspect: Boolean): Transformable {
+        return ImageLayer(nextId++, tag, this, bitmap)
             .also { addLayer(it, applyLayerAspect) }
     }
 
