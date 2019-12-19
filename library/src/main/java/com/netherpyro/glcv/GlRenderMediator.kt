@@ -115,11 +115,13 @@ internal class GlRenderMediator(private val renderHost: RenderHost) : Invalidato
     }
 
     @Synchronized
-    private fun bringLayerToPosition(position: Int, transformable: Transformable) {
-        val index = layers.indexOfFirst { it.id == transformable.id }
-        val layer = layers.removeAt(index)
-        layers.add(position, layer)
+    fun bringLayerToPosition(position: Int, transformable: Transformable) {
+        if (position >= 0) {
+            val index = layers.indexOfFirst { it.id == transformable.id }
+            val layer = layers.removeAt(index)
+            layers.add(position, layer)
 
-        invalidate()
+            invalidate()
+        }
     }
 }

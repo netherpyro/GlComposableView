@@ -29,18 +29,21 @@ class GlComposableView @JvmOverloads constructor(
         attrs: AttributeSet? = null
 ) : GLSurfaceView(context, attrs), RenderHost, GLSurfaceView.EGLContextFactory {
 
+    var enableGestures = false
+
     private val renderer: GlRenderer
     private val renderMediator: GlRenderMediator
     private val layoutHelper: GlLayoutHelper
-    private val touchHelper: GlTouchHelper
 
+    private val touchHelper: GlTouchHelper
     @ColorInt
     private val defaultBaseColor: Int = Color.parseColor("#5555ff")
     @ColorInt
     private val defaultViewportColor: Int = Color.parseColor("#ff5555")
-    private val defaultViewportAspectRatio = 1f
 
+    private val defaultViewportAspectRatio = 1f
     private var aspectRatioChooser: AspectRatioChooser? = null
+
     private var viewportSizeChangedListener: ((Size) -> Unit)? = null
 
     init {
@@ -55,7 +58,6 @@ class GlComposableView @JvmOverloads constructor(
 
         setRenderer(renderer)
         renderMode = RENDERMODE_WHEN_DIRTY
-        preserveEGLContextOnPause = true
     }
 
     override fun requestDraw() {
@@ -100,7 +102,9 @@ class GlComposableView @JvmOverloads constructor(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        return touchHelper.onTouchEvent(event)
+        return if (enableGestures) {
+            return touchHelper.onTouchEvent(event)
+        } else super.onTouchEvent(event)
     }
 
     fun addVideoLayer(tag: String? = null, player: SimpleExoPlayer, applyLayerAspect: Boolean = false): Transformable {
@@ -113,6 +117,10 @@ class GlComposableView @JvmOverloads constructor(
 
     fun bringToFront(transformable: Transformable) {
         renderMediator.bringLayerToFront(transformable)
+    }
+
+    fun bringToPosition(position: Int, transformable: Transformable) {
+        renderMediator.bringLayerToPosition(position, transformable)
     }
 
     fun remove(transformable: Transformable) {

@@ -19,10 +19,10 @@ internal class GlImageShader(private val bitmap: Bitmap) : GlShader(VERTEX_SHADE
                 "varying highp vec2 vTextureCoord;\n" +
 
                 "void main() {\n" +
-                    "vec4 scaledPos = aPosition;\n" +
-                    "scaledPos.x = scaledPos.x * uCRatio;\n" +
-                    "gl_Position = uMVPMatrix * scaledPos;\n" +
-                    "vTextureCoord = vec2(aTextureCoord.x, 1.0 - aTextureCoord.y);\n" +
+                "   vec4 scaledPos = aPosition;\n" +
+                "   scaledPos.x = scaledPos.x * uCRatio;\n" +
+                "   gl_Position = uMVPMatrix * scaledPos;\n" +
+                "   vTextureCoord = vec2(aTextureCoord.x, 1.0 - aTextureCoord.y);\n" +
                 "}\n"
     }
 
@@ -32,7 +32,7 @@ internal class GlImageShader(private val bitmap: Bitmap) : GlShader(VERTEX_SHADE
         super.setup()
 
         if (!bitmap.isRecycled) {
-            texName = EglUtil.loadTexture(bitmap, texName, true)
+            texName = EglUtil.loadTexture(bitmap, texName, false)
         } else throw IllegalArgumentException("Provided bitmap is recycled!")
     }
 
