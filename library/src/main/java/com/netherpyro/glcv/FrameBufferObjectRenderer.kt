@@ -48,6 +48,8 @@ internal abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
     fun release() {
         normalShader.release()
         mFramebufferObject.release()
+
+        onRelease()
     }
 
     @Throws(Throwable::class)
@@ -57,4 +59,5 @@ internal abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
     abstract fun onSurfaceCreated()
     abstract fun onSurfaceChanged(width: Int, height: Int)
     abstract fun onDrawFrame(fbo: FramebufferObject)
+    abstract fun onRelease()
 }

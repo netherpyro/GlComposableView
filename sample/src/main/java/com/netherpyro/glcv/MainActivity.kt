@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         player.prepare(concatenatedSource)
         player.playWhenReady = true
 
+        glView.enableGestures = true
         glView.setAspectsPreset(AspectRatio.values().map { it.value })
 
         // add video layer

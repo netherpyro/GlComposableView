@@ -32,7 +32,6 @@ class GlComposableView @JvmOverloads constructor(
     var enableGestures = false
 
     private val renderer: GlRenderer
-    private val renderMediator: GlRenderMediator
     private val layoutHelper: GlLayoutHelper
 
     private val touchHelper: GlTouchHelper
@@ -51,10 +50,9 @@ class GlComposableView @JvmOverloads constructor(
         setEGLConfigChooser(EConfigChooser())
         holder.setFormat(PixelFormat.RGBA_8888)
 
+        renderer = GlRenderer(this, defaultBaseColor, defaultViewportColor)
         layoutHelper = GlLayoutHelper(defaultViewportAspectRatio)
-        renderMediator = GlRenderMediator(this)
-        renderer = GlRenderer(renderMediator, defaultBaseColor, defaultViewportColor)
-        touchHelper = GlTouchHelper(context, renderMediator)
+        touchHelper = GlTouchHelper(context, renderer)
 
         setRenderer(renderer)
         renderMode = RENDERMODE_WHEN_DIRTY
@@ -85,7 +83,6 @@ class GlComposableView @JvmOverloads constructor(
     override fun destroyContext(egl: EGL10, display: EGLDisplay,
                                 context: EGLContext) {
         renderer.release()
-        renderMediator.release()
 
         if (!egl.eglDestroyContext(display, context)) {
             throw RuntimeException("eglDestroyContext" + egl.eglGetError())
@@ -108,27 +105,27 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     fun addVideoLayer(tag: String? = null, player: SimpleExoPlayer, applyLayerAspect: Boolean = false): Transformable {
-        return renderMediator.addVideoLayer(tag, player, applyLayerAspect)
+        return renderer.addVideoLayer(tag, player, applyLayerAspect)
     }
 
     fun addImageLayer(tag: String? = null, bitmap: Bitmap, applyLayerAspect: Boolean = false): Transformable {
-        return renderMediator.addImageLayer(tag, bitmap, applyLayerAspect)
+        return renderer.addImageLayer(tag, bitmap, applyLayerAspect)
     }
 
     fun bringToFront(transformable: Transformable) {
-        renderMediator.bringLayerToFront(transformable)
+        renderer.bringLayerToFront(transformable)
     }
 
     fun bringToPosition(position: Int, transformable: Transformable) {
-        renderMediator.bringLayerToPosition(position, transformable)
+        renderer.bringLayerToPosition(position, transformable)
     }
 
     fun remove(transformable: Transformable) {
-        renderMediator.removeLayer(transformable)
+        renderer.removeLayer(transformable)
     }
 
     fun restoreOrder() {
-        renderMediator.restoreLayersOrder()
+        renderer.restoreLayersOrder()
     }
 
     fun listenViewportSizeChanged(listener: (Size) -> Unit) {
@@ -183,7 +180,6 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     private fun updateViewport(vp: GlViewport) {
-        renderMediator.onViewportChanged(vp)
         renderer.setViewport(vp)
 
         viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }

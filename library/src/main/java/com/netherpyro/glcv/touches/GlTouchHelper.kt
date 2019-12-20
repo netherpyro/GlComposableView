@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import com.netherpyro.glcv.Observable
+import com.netherpyro.glcv.Transformable
 
 /**
  * @author mmikhailov on 2019-12-18.
@@ -15,24 +16,31 @@ internal class GlTouchHelper(context: Context, transformableObservable: Observab
     private val minScale = 0.5f
 
     init {
-        val existingTransformables = transformableObservable.subscribe(
-                addAction = { touchables[it.id] = Touchable(transformable = it) },
-                removeAction = { touchables.remove(it) }
-        )
+        val existingTransformables: List<Transformable>
 
-        touchables.putAll(existingTransformables.map { it.id to Touchable(transformable = it) })
+        transformableObservable.subscribeLayersChange(
+                addAction = { transformable ->
+                    touchables[transformable.id] = Touchable(transformable = transformable)
+                },
+                removeAction = { transformable -> touchables.remove(transformable) }
+        )
+            .also { transformables -> existingTransformables = transformables }
+
+        touchables.putAll(existingTransformables.map { transformable ->
+            transformable.id to Touchable(transformable = transformable)
+        })
     }
 
-    private val rotationGestureDetector = RotationGestureDetector {
-        touchables[currentTransformableId]?.rotationAngle = it
-        touchables[currentTransformableId]?.transformable?.setRotation(it)
+    private val rotationGestureDetector = RotationGestureDetector { angle ->
+        touchables[currentTransformableId]?.rotationAngle = angle
+        touchables[currentTransformableId]?.transformable?.setRotation(angle)
     }
 
     private val scaleGestureDetector = ScaleGestureDetector(context,
             object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
                 override fun onScale(detector: ScaleGestureDetector): Boolean {
                     val scaleFactor = touchables[currentTransformableId]?.scaleFactor
-                        ?.let { (it * detector.scaleFactor).coerceIn(minScale, maxScale) }
+                        ?.let { scaleFactor -> (scaleFactor * detector.scaleFactor).coerceIn(minScale, maxScale) }
                         ?: 1f
 
                     touchables[currentTransformableId]?.scaleFactor = scaleFactor
