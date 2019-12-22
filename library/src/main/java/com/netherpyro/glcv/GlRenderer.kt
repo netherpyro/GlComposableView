@@ -33,7 +33,6 @@ internal class GlRenderer(
     private val layers = mutableListOf<Layer>()
 
     private var viewport = GlViewport()
-    private var viewportAspect = 1f
 
     private var addLayerAction: ((Transformable) -> Unit)? = null
     private var removeLayerAction: ((Int) -> Unit)? = null
@@ -95,8 +94,7 @@ internal class GlRenderer(
     @Synchronized
     fun setViewport(viewport: GlViewport) {
         this.viewport = viewport
-        this.viewportAspect = viewport.width / viewport.height.toFloat()
-        this.layers.forEach { it.onViewportAspectRatio(viewportAspect) }
+        this.layers.forEach { it.onViewportUpdated(viewport) }
     }
 
     fun addVideoLayer(tag: String?, player: SimpleExoPlayer, applyLayerAspect: Boolean): Transformable {
@@ -148,7 +146,7 @@ internal class GlRenderer(
         if (surfaceReady) {
             renderHost.postAction(Runnable {
                 layer.setup()
-                layer.onViewportAspectRatio(viewportAspect)
+                layer.onViewportUpdated(viewport)
                 layers.add(layer)
                 addLayerAction?.invoke(layer)
 

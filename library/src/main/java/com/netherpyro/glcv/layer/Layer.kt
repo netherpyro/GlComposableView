@@ -1,11 +1,15 @@
 package com.netherpyro.glcv.layer
 
+import android.graphics.RectF
 import android.opengl.Matrix
+import android.util.Log
 import androidx.annotation.ColorInt
+import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Invalidator
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.shader.GlBorderShader
 import com.netherpyro.glcv.shader.GlShader
+import kotlin.math.abs
 
 /**
  * @author mmikhailov on 2019-11-30.
@@ -18,6 +22,8 @@ internal abstract class Layer(
 
     protected abstract val shader: GlShader
     private val borderShader = GlBorderShader()
+
+    private val frustumRect = RectF()
 
     protected val mvpMatrix = FloatArray(16)
 
@@ -42,14 +48,18 @@ internal abstract class Layer(
             }
         }
 
+    private var glTranslationX = 0f
+    private var glTranslationY = 0f
+
     private var scaleFactor = 1f
     private var rotationDeg = 0f
-    private var translationX = 0f
-    private var translationY = 0f
-    private var viewportAspect = 1f
+    private var translationX = 0f // pixels
+    private var translationY = 0f // pixels
 
     private var aspectReadyAction: ((Float) -> Unit)? = null
     private var aspectSet = false
+
+    private lateinit var viewport: GlViewport
 
     fun setup() {
         onSetup()
@@ -90,6 +100,8 @@ internal abstract class Layer(
     override fun setTranslation(x: Float, y: Float) {
         this.translationX = x
         this.translationY = y
+        this.glTranslationX = x.toGlTranslationX()
+        this.glTranslationY = y.toGlTranslationY()
 
         recalculateMatrices()
         invalidator.invalidate()
@@ -108,8 +120,14 @@ internal abstract class Layer(
         invalidator.invalidate()
     }
 
-    fun onViewportAspectRatio(aspect: Float) {
-        viewportAspect = aspect
+    override fun getRotation() = rotationDeg
+    override fun getScale() = scaleFactor
+    override fun getTranslation() = translationX to translationY
+    override fun getFrustumRect() = frustumRect
+    override fun getLayerAspect() = aspect
+
+    fun onViewportUpdated(viewport: GlViewport) {
+        this.viewport = viewport
 
         recalculateMatrices()
     }
@@ -119,7 +137,9 @@ internal abstract class Layer(
         else aspectReadyAction = onReadyAction
     }
 
+    // todo divide into 2 functions
     protected fun recalculateMatrices() {
+        val viewportAspect = viewport.width / viewport.height.toFloat()
         val s: Float = aspect / viewportAspect
 
         var left = -1.0f
@@ -135,8 +155,8 @@ internal abstract class Layer(
                 if (s > 1.0f) {
                     left *= aspect
                     right *= aspect
-                    top *= aspect * 1f / viewportAspect
-                    bottom *= aspect * 1f / viewportAspect
+                    top *= s
+                    bottom *= s
                 } else {
                     left *= viewportAspect
                     right *= viewportAspect
@@ -150,26 +170,44 @@ internal abstract class Layer(
                 } else {
                     left *= aspect
                     right *= aspect
-                    top *= aspect * 1f / viewportAspect
-                    bottom *= aspect * 1f / viewportAspect
+                    top *= s
+                    bottom *= s
                 }
             } else { // horizontal content
                 left *= aspect
                 right *= aspect
+
                 if (s > 1.0f) {
-                    top *= aspect * 1f / viewportAspect
-                    bottom *= aspect * 1f / viewportAspect
+                    top *= s
+                    bottom *= s
                 }
             }
         }
+
+        frustumRect.left = left
+        frustumRect.top = top
+        frustumRect.right = right
+        frustumRect.bottom = bottom
+
+        Log.d("Layer", "l=$left, t=$top, r=$right, b=$bottom")
+        Log.i("Layer", "glTrX=$glTranslationX, glTrY=$glTranslationY")
 
         Matrix.frustumM(pMatrix, 0, left, right, bottom, top, 5f, 7f)
         Matrix.setIdentityM(mMatrix, 0)
         Matrix.scaleM(mMatrix, 0, scaleFactor, scaleFactor, 0f)
         Matrix.rotateM(mMatrix, 0, rotationDeg, 0f, 0f, 1f)
-        Matrix.translateM(mMatrix, 0, translationX, translationY, 0f)
+        Matrix.translateM(mMatrix, 0, glTranslationX, glTranslationY, 0f)
 
         Matrix.multiplyMM(mvpMatrix, 0, vMatrix, 0, mMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, pMatrix, 0, mvpMatrix, 0)
+    }
+
+    // todo consider scale factor
+    private fun Float.toGlTranslationX(): Float {
+        return -(this * (abs(frustumRect.right) + abs(frustumRect.left)) / viewport.width)
+    }
+
+    private fun Float.toGlTranslationY(): Float {
+        return (this * (abs(frustumRect.top) + abs(frustumRect.bottom)) / viewport.height)
     }
 }

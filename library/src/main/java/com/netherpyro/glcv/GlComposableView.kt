@@ -174,13 +174,14 @@ class GlComposableView @JvmOverloads constructor(
     private fun setAspectRatioInternal(aspect: Float, animated: Boolean, fromUser: Boolean) {
         val appliedAspect = if (fromUser) aspect else aspectRatioChooser?.selectNearestAspect(aspect) ?: aspect
 
-        layoutHelper.changeAspectRatio(appliedAspect, animated) {
-            updateViewport(it)
+        layoutHelper.changeAspectRatio(appliedAspect, animated) { viewport ->
+            updateViewport(viewport)
         }
     }
 
     private fun updateViewport(vp: GlViewport) {
         renderer.setViewport(vp)
+        touchHelper.viewportSize = vp.toSizeF()
 
         viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }
 
