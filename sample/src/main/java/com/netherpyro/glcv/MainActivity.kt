@@ -25,9 +25,6 @@ class MainActivity : AppCompatActivity() {
 
     private val transformableList = mutableListOf<Transformable>()
 
-    private val maxTranslation = 2f
-    private val minTranslation = -2f
-
     private var frontIndex = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,46 +140,6 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         }
-
-        translationXSeek.progress = 50
-        translationXSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val f = progress / 100f
-                val value = minTranslation * (1f - f) + maxTranslation * f
-                translationYSeek.progress = 50
-                transformableList[frontIndex].setTranslation(value, 0f)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                transformableList.forEachIndexed { index, transformable ->
-                    if (index != frontIndex) transformable.setOpacity(0.3f)
-                }
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                transformableList.forEach { it.setOpacity(1f) }
-            }
-        })
-
-        translationYSeek.progress = 50
-        translationYSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val f = progress / 100f
-                val value = minTranslation * (1f - f) + maxTranslation * f
-                translationXSeek.progress = 50
-                transformableList[frontIndex].setTranslation(0f, value)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                transformableList.forEachIndexed { index, transformable ->
-                    if (index != frontIndex) transformable.setOpacity(0.3f)
-                }
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                transformableList.forEach { it.setOpacity(1f) }
-            }
-        })
 
         borderSeek.progress = 0
         borderSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

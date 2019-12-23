@@ -48,6 +48,8 @@ internal abstract class Layer(
             }
         }
 
+    private var shouldDraw = true
+
     private var glTranslationX = 0f
     private var glTranslationY = 0f
 
@@ -67,10 +69,12 @@ internal abstract class Layer(
     }
 
     fun draw() {
-        onDrawFrame()
+        if (shouldDraw) {
+            onDrawFrame()
 
-        if (borderShader.width > 0f) {
-            borderShader.draw(mvpMatrix, aspect)
+            if (borderShader.width > 0f) {
+                borderShader.draw(mvpMatrix, aspect)
+            }
         }
     }
 
@@ -118,6 +122,10 @@ internal abstract class Layer(
         borderShader.color = color
 
         invalidator.invalidate()
+    }
+
+    override fun setSkipDraw(skip: Boolean) {
+        shouldDraw = !skip
     }
 
     override fun getRotation() = rotationDeg

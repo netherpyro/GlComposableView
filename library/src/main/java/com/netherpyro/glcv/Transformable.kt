@@ -12,6 +12,8 @@ interface Transformable {
     val id: Int
     val tag: String?
 
+    fun setSkipDraw(skip: Boolean)
+
     fun setRotation(rotationDeg: Float)
     fun setScale(scaleFactor: Float)
     fun setTranslation(@Px x: Float, @Px y: Float)
