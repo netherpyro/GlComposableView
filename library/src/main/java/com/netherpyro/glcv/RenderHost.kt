@@ -6,6 +6,6 @@ package com.netherpyro.glcv
 internal interface RenderHost {
     fun requestDraw()
     fun onSurfaceChanged(width: Int, height: Int)
-    fun onLayerAspectRatio(aspect: Float)
+    fun onLayerAspectRatio(aspectValue: Float)
     fun postAction(action: Runnable)
 }

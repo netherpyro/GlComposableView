@@ -5,11 +5,11 @@ import kotlin.math.abs
 /**
  * @author mmikhailov on 2019-12-06.
  */
-internal class AspectRatioChooser(private vararg val presetAspects: Float) {
+internal class AspectRatioChooser(private val presetAspects: List<GlAspectRatio>) {
 
-    fun selectNearestAspect(aspect: Float): Float? =
+    fun selectNearestAspect(aspect: Float): GlAspectRatio? =
             presetAspects
-                .map { it to abs(aspect - it) }
+                .map { it to abs(aspect - it.value) }
                 .minBy { it.second }
                 ?.first
 }

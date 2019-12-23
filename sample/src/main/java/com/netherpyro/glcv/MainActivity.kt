@@ -2,6 +2,7 @@ package com.netherpyro.glcv
 
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.SeekBar
@@ -14,6 +15,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.netherpyro.glcv.util.GlAspectRatio
 import kotlinx.android.synthetic.main.activity_main.*
 
 /**
@@ -52,7 +54,9 @@ class MainActivity : AppCompatActivity() {
         player.playWhenReady = true
 
         glView.enableGestures = true
-        glView.setAspectsPreset(AspectRatio.values().map { it.value })
+        glView.setAspectsPreset(AspectRatio.values().map { GlAspectRatio(it.name, it.value) }) {
+            Log.d("MainActivity", "initial aspect = $it")
+        }
 
         // add video layer
         transformableList.add(glView.addVideoLayer(player = player, applyLayerAspect = true))

@@ -15,6 +15,7 @@ import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_MARGIN
 import com.netherpyro.glcv.touches.GlTouchHelper
 import com.netherpyro.glcv.util.AspectRatioChooser
 import com.netherpyro.glcv.util.EConfigChooser
+import com.netherpyro.glcv.util.GlAspectRatio
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLContext
@@ -44,6 +45,7 @@ class GlComposableView @JvmOverloads constructor(
     private var aspectRatioChooser: AspectRatioChooser? = null
 
     private var viewportSizeChangedListener: ((Size) -> Unit)? = null
+    private var initialAspectRatioListener: ((GlAspectRatio) -> Unit)? = null
 
     init {
         setEGLContextFactory(this)
@@ -89,11 +91,13 @@ class GlComposableView @JvmOverloads constructor(
         }
     }
 
-    override fun onLayerAspectRatio(aspect: Float) {
+    override fun onLayerAspectRatio(aspectValue: Float) {
+        val glAspectRatio = aspectRatioChooser?.selectNearestAspect(aspectValue) ?: GlAspectRatio("", aspectValue)
+        initialAspectRatioListener?.invoke(glAspectRatio)
+
         setAspectRatioInternal(
-                aspect = aspectRatioChooser?.selectNearestAspect(aspect) ?: aspect,
-                animated = false,
-                fromUser = false
+                aspectValue = glAspectRatio.value,
+                animated = false
         )
     }
 
@@ -137,12 +141,14 @@ class GlComposableView @JvmOverloads constructor(
      *
      * Make sure this function called before layers being added for proper initial aspect installation
      * */
-    fun setAspectsPreset(aspectRatioPresetList: List<Float>) {
-        aspectRatioChooser = AspectRatioChooser(*aspectRatioPresetList.toFloatArray())
+    fun setAspectsPreset(aspectRatioPresetList: List<GlAspectRatio>,
+                         initialAspectRatioListener: ((GlAspectRatio) -> Unit)? = null) {
+        this.aspectRatioChooser = AspectRatioChooser(aspectRatioPresetList)
+        this.initialAspectRatioListener = initialAspectRatioListener
     }
 
     fun setAspectRatio(aspect: Float, animated: Boolean = false) {
-        setAspectRatioInternal(aspect, animated, fromUser = true)
+        setAspectRatioInternal(aspect, animated)
     }
 
     fun setBaseColor(@ColorInt color: Int) {
@@ -171,10 +177,8 @@ class GlComposableView @JvmOverloads constructor(
         updateViewport(viewport)
     }
 
-    private fun setAspectRatioInternal(aspect: Float, animated: Boolean, fromUser: Boolean) {
-        val appliedAspect = if (fromUser) aspect else aspectRatioChooser?.selectNearestAspect(aspect) ?: aspect
-
-        layoutHelper.changeAspectRatio(appliedAspect, animated) { viewport ->
+    private fun setAspectRatioInternal(aspectValue: Float, animated: Boolean) {
+        layoutHelper.changeAspectRatio(aspectValue, animated) { viewport ->
             updateViewport(viewport)
         }
     }
