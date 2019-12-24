@@ -12,9 +12,11 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.source.SilenceMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.google.android.exoplayer2.video.VideoListener
 import com.netherpyro.glcv.util.GlAspectRatio
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -28,6 +30,20 @@ class MainActivity : AppCompatActivity() {
     private val transformableList = mutableListOf<Transformable>()
 
     private var frontIndex = 0
+
+    private val videoListener = object : VideoListener {
+        override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int,
+                                        pixelWidthHeightRatio: Float) {
+            (transformableList.firstOrNull { it is VideoTransformable } as? VideoTransformable)
+                ?.setVideoSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
+        }
+
+        override fun onRenderedFirstFrame() {
+        }
+
+        override fun onSurfaceSizeChanged(width: Int, height: Int) {
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,9 +61,11 @@ class MainActivity : AppCompatActivity() {
             .createMediaSource(LibraryHelper.video2())
         val videoSource3: MediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(LibraryHelper.video3())
-        val concatenatedSource = ConcatenatingMediaSource(videoSource1, videoSource2, videoSource3)
+        val silenceSource: MediaSource = SilenceMediaSource(5_000_000)
+        val concatenatedSource = ConcatenatingMediaSource(videoSource3, videoSource2, videoSource1, silenceSource)
 
         player = ExoPlayerFactory.newSimpleInstance(this)
+        player.addVideoListener(videoListener)
 
         controlView.player = player
         player.prepare(concatenatedSource)
@@ -59,7 +77,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         // add video layer
-        transformableList.add(glView.addVideoLayer(player = player, applyLayerAspect = true))
+        glView.addVideoLayer(
+                onSurfaceAvailable = { surface ->
+                    player.setVideoSurface(surface)
+                }, applyLayerAspect = true)
+            .also { transformableList.add(it) }
+
         // add image 1 layer
         LibraryHelper.image1()
             ?.also { transformableList.add(glView.addImageLayer(bitmap = it)) }

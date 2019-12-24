@@ -9,8 +9,8 @@ import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.util.Size
 import android.view.MotionEvent
+import android.view.Surface
 import androidx.annotation.ColorInt
-import com.google.android.exoplayer2.SimpleExoPlayer
 import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_MARGIN
 import com.netherpyro.glcv.touches.GlTouchHelper
 import com.netherpyro.glcv.util.AspectRatioChooser
@@ -108,8 +108,8 @@ class GlComposableView @JvmOverloads constructor(
         } else super.onTouchEvent(event)
     }
 
-    fun addVideoLayer(tag: String? = null, player: SimpleExoPlayer, applyLayerAspect: Boolean = false): Transformable {
-        return renderer.addVideoLayer(tag, player, applyLayerAspect)
+    fun addVideoLayer(tag: String? = null, onSurfaceAvailable: (Surface) -> Unit, applyLayerAspect: Boolean = false): VideoTransformable {
+        return renderer.addVideoLayer(tag, onSurfaceAvailable, applyLayerAspect)
     }
 
     fun addImageLayer(tag: String? = null, bitmap: Bitmap, applyLayerAspect: Boolean = false): Transformable {

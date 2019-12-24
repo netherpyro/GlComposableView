@@ -9,15 +9,15 @@ import android.opengl.GLES20.glDisable
 import android.opengl.GLES20.glEnable
 import android.opengl.GLES20.glScissor
 import android.opengl.GLES20.glViewport
+import android.view.Surface
 import androidx.annotation.ColorInt
-import com.google.android.exoplayer2.SimpleExoPlayer
 import com.netherpyro.glcv.extensions.alpha
 import com.netherpyro.glcv.extensions.blue
 import com.netherpyro.glcv.extensions.green
 import com.netherpyro.glcv.extensions.red
-import com.netherpyro.glcv.layer.ExoPLayer
 import com.netherpyro.glcv.layer.ImageLayer
 import com.netherpyro.glcv.layer.Layer
+import com.netherpyro.glcv.layer.VideoLayer
 
 /**
  * @author mmikhailov on 2019-11-30.
@@ -97,8 +97,8 @@ internal class GlRenderer(
         this.layers.forEach { it.onViewportUpdated(viewport) }
     }
 
-    fun addVideoLayer(tag: String?, player: SimpleExoPlayer, applyLayerAspect: Boolean): Transformable {
-        return ExoPLayer(nextId++, tag, this, player)
+    fun addVideoLayer(tag: String?, onSurfaceAvailable: (Surface) -> Unit, applyLayerAspect: Boolean): VideoTransformable {
+        return VideoLayer(nextId++, tag, this, onSurfaceAvailable)
             .also { addLayer(it, applyLayerAspect) }
     }
 

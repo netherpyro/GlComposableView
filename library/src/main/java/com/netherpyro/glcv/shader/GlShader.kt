@@ -56,6 +56,7 @@ internal open class GlShader @JvmOverloads constructor(
     }
 
     var opacity = 1f
+    var dissolve = false
 
     private var program = 0
     private var vertexShader = 0
@@ -100,7 +101,7 @@ internal open class GlShader @JvmOverloads constructor(
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texName)
         GLES20.glUniform1i(getHandle("sTexture"), 0)
-        GLES20.glUniform1f(getHandle(UNIFORM_OPACITY), opacity)
+        GLES20.glUniform1f(getHandle(UNIFORM_OPACITY), if (dissolve) 0f else opacity)
 
         onDraw()
 
