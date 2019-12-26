@@ -22,11 +22,6 @@ internal class VideoLayer(
 
     private lateinit var surfaceTexture: SurfaceTexture
 
-    private var drawLastFrameIfNoFramesAvailable = false
-
-    private val noFrameThreshold = 16
-    private var noFrameCounter = 0
-
     private var updateTexImageCounter = 0
     private var texName = EglUtil.NO_TEXTURE
 
@@ -54,8 +49,6 @@ internal class VideoLayer(
     @Synchronized
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
         updateTexImageCounter++
-        noFrameCounter = 0
-        shader.dissolve = false
 
         invalidator.invalidate()
     }
@@ -65,22 +58,10 @@ internal class VideoLayer(
      * */
     @Synchronized
     override fun onDrawFrame() {
-        val beforeImages = updateTexImageCounter
-
         while (updateTexImageCounter != 0) {
             surfaceTexture.updateTexImage()
             surfaceTexture.getTransformMatrix(transformMatrix)
             updateTexImageCounter--
-        }
-
-        val afterImages = updateTexImageCounter
-
-        if (beforeImages == afterImages) {
-            noFrameCounter++
-        }
-
-        if (!drawLastFrameIfNoFramesAvailable) {
-            shader.dissolve = noFrameCounter >= noFrameThreshold
         }
 
         shader.draw(texName, mvpMatrix, transformMatrix, aspect)
@@ -100,9 +81,5 @@ internal class VideoLayer(
 
         recalculateMatrices()
         invalidator.invalidate()
-    }
-
-    override fun setDrawLastFrameIfNoFramesAvailable(draw: Boolean) {
-        drawLastFrameIfNoFramesAvailable = draw
     }
 }

@@ -8,11 +8,13 @@ import android.view.ViewTreeObserver
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.exoplayer2.ExoPlayerFactory
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.source.SilenceMediaSource
+import com.google.android.exoplayer2.source.TrackGroupArray
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
@@ -34,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private val videoListener = object : VideoListener {
         override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int,
                                         pixelWidthHeightRatio: Float) {
-            (transformableList.firstOrNull { it is VideoTransformable } as? VideoTransformable)
+            transformableList.findVideoTransformable()
                 ?.setVideoSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
         }
 
@@ -61,7 +63,7 @@ class MainActivity : AppCompatActivity() {
             .createMediaSource(LibraryHelper.video2())
         val videoSource3: MediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(LibraryHelper.video3())
-        val silenceSource: MediaSource = SilenceMediaSource(5_000_000)
+        val silenceSource: MediaSource = MySilenceMediaSource(10_000_000)
         val concatenatedSource = ConcatenatingMediaSource(videoSource3, videoSource2, videoSource1, silenceSource)
 
         player = ExoPlayerFactory.newSimpleInstance(this)
@@ -70,6 +72,15 @@ class MainActivity : AppCompatActivity() {
         controlView.player = player
         player.prepare(concatenatedSource)
         player.playWhenReady = true
+        player.addListener(object : Player.EventListener {
+
+            override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray?) {
+                transformableList.findVideoTransformable()
+                    ?.setSkipDraw(trackGroups.isSilence())
+
+                glView.requestRender()
+            }
+        })
 
         glView.enableGestures = true
         glView.setAspectsPreset(AspectRatio.values().map { GlAspectRatio(it.name, it.value) }) {
@@ -207,4 +218,10 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
+    private fun List<Transformable>.findVideoTransformable(): VideoTransformable? =
+            (this.firstOrNull { it is VideoTransformable } as? VideoTransformable)
+
+    private fun TrackGroupArray.isSilence() =
+            !this.isEmpty && this[0].getFormat(0).id == MySilenceMediaSource.SILENCE_ID
 }

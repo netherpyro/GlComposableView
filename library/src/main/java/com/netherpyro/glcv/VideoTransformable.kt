@@ -6,5 +6,4 @@ package com.netherpyro.glcv
 interface VideoTransformable : Transformable {
 
     fun setVideoSize(width: Float, height: Float)
-    fun setDrawLastFrameIfNoFramesAvailable(draw: Boolean)
 }
