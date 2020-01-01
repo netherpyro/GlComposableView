@@ -10,9 +10,10 @@ import com.netherpyro.glcv.shader.GlImageShader
 internal class ImageLayer(
         id: Int,
         tag: String?,
+        position: Int,
         invalidator: Invalidator,
         private val bitmap: Bitmap
-): Layer(id, tag, invalidator) {
+): Layer(id, tag, position, invalidator) {
 
     override val shader = GlImageShader(bitmap)
 

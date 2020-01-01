@@ -12,6 +12,8 @@ interface Transformable {
     val id: Int
     val tag: String?
 
+    fun setLayerPosition(position: Int)
+
     fun setSkipDraw(skip: Boolean)
 
     fun setRotation(rotationDeg: Float)

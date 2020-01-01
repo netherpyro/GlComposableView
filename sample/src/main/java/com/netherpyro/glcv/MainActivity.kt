@@ -117,19 +117,15 @@ class MainActivity : AppCompatActivity() {
         v3.setOnClickListener { player.seekTo(2, 3000) }
         layer1ToFront.setOnClickListener {
             frontIndex = 0
-            glView.bringToFront(transformableList[frontIndex])
+            transformableList[frontIndex].setLayerPosition(transformableList.lastIndex)
         }
         layer2ToFront.setOnClickListener {
             frontIndex = 1
-            glView.bringToFront(transformableList[frontIndex])
+            transformableList[frontIndex].setLayerPosition(transformableList.lastIndex)
         }
         layer3ToFront.setOnClickListener {
             frontIndex = 2
-            glView.bringToFront(transformableList[frontIndex])
-        }
-        restoreReordering.setOnClickListener {
-            frontIndex = transformableList.lastIndex
-            glView.restoreOrder()
+            transformableList[frontIndex].setLayerPosition(transformableList.lastIndex)
         }
 
         bottomView.alsoOnLaid { bottomView ->

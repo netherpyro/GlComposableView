@@ -135,13 +135,6 @@
                 android:text="Layer 3 to front"
                 android:textSize="12sp" />
 
-            <Button android:id="@+id/restoreReordering"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Restore order"
-                android:textSize="12sp" />
-
         </LinearLayout>
 
     </LinearLayout>

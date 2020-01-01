@@ -17,6 +17,7 @@ import kotlin.math.abs
 internal abstract class Layer(
         override val id: Int,
         override val tag: String? = null,
+        var position: Int,
         protected val invalidator: Invalidator
 ) : Transformable {
 
@@ -128,11 +129,27 @@ internal abstract class Layer(
         shouldDraw = !skip
     }
 
+    override fun setLayerPosition(position: Int) {
+        invalidator.claimPosition(this, position)
+    }
+
     override fun getRotation() = rotationDeg
     override fun getScale() = scaleFactor
     override fun getTranslation() = translationX to translationY
     override fun getFrustumRect() = frustumRect
     override fun getLayerAspect() = aspect
+
+    override fun toString(): String {
+        return """
+            
+            /////////////
+            class:      ${this.javaClass.name}
+            id:         $id,
+            tag:        $tag,
+            position:   $position
+            
+        """.trimIndent()
+    }
 
     fun onViewportUpdated(viewport: GlViewport) {
         this.viewport = viewport

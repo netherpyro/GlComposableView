@@ -108,28 +108,30 @@ class GlComposableView @JvmOverloads constructor(
         } else super.onTouchEvent(event)
     }
 
-    fun addVideoLayer(tag: String? = null, onSurfaceAvailable: (Surface) -> Unit, applyLayerAspect: Boolean = false): VideoTransformable {
-        return renderer.addVideoLayer(tag, onSurfaceAvailable, applyLayerAspect)
+    fun listLayers() {
+        renderer.listLayers()
     }
 
-    fun addImageLayer(tag: String? = null, bitmap: Bitmap, applyLayerAspect: Boolean = false): Transformable {
-        return renderer.addImageLayer(tag, bitmap, applyLayerAspect)
+    fun addVideoLayer(
+            tag: String? = null,
+            onSurfaceAvailable: (Surface) -> Unit,
+            applyLayerAspect: Boolean = false,
+            position: Int = GlRenderer.NO_POSITION
+    ): VideoTransformable {
+        return renderer.addVideoLayer(tag, onSurfaceAvailable, applyLayerAspect, position)
     }
 
-    fun bringToFront(transformable: Transformable) {
-        renderer.bringLayerToFront(transformable)
-    }
-
-    fun bringToPosition(position: Int, transformable: Transformable) {
-        renderer.bringLayerToPosition(position, transformable)
+    fun addImageLayer(
+            tag: String? = null,
+            bitmap: Bitmap,
+            applyLayerAspect: Boolean = false,
+            position: Int = GlRenderer.NO_POSITION
+    ): Transformable {
+        return renderer.addImageLayer(tag, bitmap, applyLayerAspect, position)
     }
 
     fun remove(transformable: Transformable) {
         renderer.removeLayer(transformable)
-    }
-
-    fun restoreOrder() {
-        renderer.restoreLayersOrder()
     }
 
     fun listenViewportSizeChanged(listener: (Size) -> Unit) {

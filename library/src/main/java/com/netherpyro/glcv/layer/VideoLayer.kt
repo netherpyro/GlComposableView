@@ -14,9 +14,10 @@ import com.netherpyro.glcv.util.EglUtil
 internal class VideoLayer(
         id: Int,
         tag: String?,
+        position: Int,
         invalidator: Invalidator,
         private val onSurfaceAvailable: (Surface) -> Unit
-) : Layer(id, tag, invalidator), VideoTransformable, OnFrameAvailableListener {
+) : Layer(id, tag, position, invalidator), VideoTransformable, OnFrameAvailableListener {
 
     override val shader = GlExtTextureShader()
 
@@ -27,6 +28,9 @@ internal class VideoLayer(
 
     private val transformMatrix = FloatArray(16)
     private val textureTarget = GlExtTextureShader.GL_TEXTURE_EXTERNAL_OES
+
+    private var initialized = false
+    private var pendingCalculate = false
 
     /**
      * Must be called in GL thread
@@ -43,7 +47,16 @@ internal class VideoLayer(
 
         onSurfaceAvailable(Surface(surfaceTexture))
 
-        synchronized(this) { updateTexImageCounter = 0 }
+        synchronized(this) {
+            updateTexImageCounter = 0
+            initialized = true
+
+            if (pendingCalculate) {
+                pendingCalculate = false
+                recalculateMatrices()
+                invalidator.invalidate()
+            }
+        }
     }
 
     @Synchronized
@@ -71,6 +84,7 @@ internal class VideoLayer(
      * Must be called in GL thread
      * */
     override fun onRelease() {
+        initialized = false
         shader.release()
 
         EglUtil.deleteTextures(texName)
@@ -79,7 +93,11 @@ internal class VideoLayer(
     override fun setVideoSize(width: Float, height: Float) {
         aspect = width / height
 
-        recalculateMatrices()
-        invalidator.invalidate()
+        if (initialized) {
+            recalculateMatrices()
+            invalidator.invalidate()
+        } else {
+            pendingCalculate = true
+        }
     }
 }
