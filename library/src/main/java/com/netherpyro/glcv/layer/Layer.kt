@@ -231,12 +231,11 @@ internal abstract class Layer(
         Matrix.multiplyMM(mvpMatrix, 0, pMatrix, 0, mvpMatrix, 0)
     }
 
-    // todo consider scale factor
     private fun Float.toGlTranslationX(): Float {
-        return -(this * (abs(frustumRect.right) + abs(frustumRect.left)) / viewport.width)
+        return -(this * (abs(frustumRect.right) + abs(frustumRect.left)) / viewport.width) / scaleFactor
     }
 
     private fun Float.toGlTranslationY(): Float {
-        return (this * (abs(frustumRect.top) + abs(frustumRect.bottom)) / viewport.height)
+        return (this * (abs(frustumRect.top) + abs(frustumRect.bottom)) / viewport.height) / scaleFactor
     }
 }
