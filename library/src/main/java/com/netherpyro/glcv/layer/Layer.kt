@@ -2,7 +2,6 @@ package com.netherpyro.glcv.layer
 
 import android.graphics.RectF
 import android.opengl.Matrix
-import android.util.Log
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Invalidator
@@ -213,19 +212,15 @@ internal abstract class Layer(
         frustumRect.right = right
         frustumRect.bottom = bottom
 
-        Log.d("Layer", "l=$left, t=$top, r=$right, b=$bottom")
-
         recalculateMatrices()
     }
 
     private fun recalculateMatrices() {
-        Log.i("Layer", "glTrX=$glTranslationX, glTrY=$glTranslationY")
-
         Matrix.frustumM(pMatrix, 0, frustumRect.left, frustumRect.right, frustumRect.bottom, frustumRect.top, 5f, 7f)
         Matrix.setIdentityM(mMatrix, 0)
         Matrix.scaleM(mMatrix, 0, scaleFactor, scaleFactor, 0f)
-        Matrix.rotateM(mMatrix, 0, rotationDeg, 0f, 0f, 1f)
         Matrix.translateM(mMatrix, 0, glTranslationX, glTranslationY, 0f)
+        Matrix.rotateM(mMatrix, 0, rotationDeg, 0f, 0f, 1f)
 
         Matrix.multiplyMM(mvpMatrix, 0, vMatrix, 0, mMatrix, 0)
         Matrix.multiplyMM(mvpMatrix, 0, pMatrix, 0, mvpMatrix, 0)

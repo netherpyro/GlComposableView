@@ -57,11 +57,12 @@ internal class GlTouchHelper(context: Context, transformableObservable: Observab
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
             val transformable = transformables[currentTransformableId]!!
             val (curX, curY) = transformable.getTranslation()
+            val scaleFactor = transformable.getScale()
 
             val layerFrustum = transformable.getFrustumRect()
             val layerAspect = transformable.getLayerAspect()
-            val leftRightCoeff = 0.5f + 1f / (layerFrustum.right - layerFrustum.left) * layerAspect
-            val topBottomCoeff = 0.5f + 1f / (layerFrustum.top - layerFrustum.bottom)
+            val leftRightCoeff = 0.5f + 1f / (layerFrustum.right - layerFrustum.left) * layerAspect * scaleFactor
+            val topBottomCoeff = 0.5f + 1f / (layerFrustum.top - layerFrustum.bottom) * scaleFactor
 
             // todo add option to set restriction factor
             val xRestrictPx = viewportSize.width * leftRightCoeff
