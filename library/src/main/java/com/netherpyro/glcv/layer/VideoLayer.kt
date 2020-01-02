@@ -53,7 +53,7 @@ internal class VideoLayer(
 
             if (pendingCalculate) {
                 pendingCalculate = false
-                recalculateMatrices()
+                recalculateFrustum()
                 invalidator.invalidate()
             }
         }
@@ -94,7 +94,7 @@ internal class VideoLayer(
         aspect = width / height
 
         if (initialized) {
-            recalculateMatrices()
+            recalculateFrustum()
             invalidator.invalidate()
         } else {
             pendingCalculate = true

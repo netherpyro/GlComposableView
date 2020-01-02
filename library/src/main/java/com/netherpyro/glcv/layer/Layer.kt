@@ -154,7 +154,7 @@ internal abstract class Layer(
     fun onViewportUpdated(viewport: GlViewport) {
         this.viewport = viewport
 
-        recalculateMatrices()
+        recalculateFrustum()
     }
 
     fun listenAspectRatioReady(onReadyAction: (Float) -> Unit) {
@@ -162,8 +162,7 @@ internal abstract class Layer(
         else aspectReadyAction = onReadyAction
     }
 
-    // todo divide into 2 functions
-    protected fun recalculateMatrices() {
+    protected fun recalculateFrustum() {
         val viewportAspect = viewport.width / viewport.height.toFloat()
         val s: Float = aspect / viewportAspect
 
@@ -215,9 +214,14 @@ internal abstract class Layer(
         frustumRect.bottom = bottom
 
         Log.d("Layer", "l=$left, t=$top, r=$right, b=$bottom")
+
+        recalculateMatrices()
+    }
+
+    private fun recalculateMatrices() {
         Log.i("Layer", "glTrX=$glTranslationX, glTrY=$glTranslationY")
 
-        Matrix.frustumM(pMatrix, 0, left, right, bottom, top, 5f, 7f)
+        Matrix.frustumM(pMatrix, 0, frustumRect.left, frustumRect.right, frustumRect.bottom, frustumRect.top, 5f, 7f)
         Matrix.setIdentityM(mMatrix, 0)
         Matrix.scaleM(mMatrix, 0, scaleFactor, scaleFactor, 0f)
         Matrix.rotateM(mMatrix, 0, rotationDeg, 0f, 0f, 1f)
