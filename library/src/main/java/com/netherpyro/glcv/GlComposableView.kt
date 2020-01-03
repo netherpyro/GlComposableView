@@ -187,7 +187,7 @@ class GlComposableView @JvmOverloads constructor(
 
     private fun updateViewport(vp: GlViewport) {
         renderer.setViewport(vp)
-        touchHelper.viewportSize = vp.toSizeF()
+        touchHelper.viewport = vp
 
         viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }
 
