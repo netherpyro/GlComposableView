@@ -20,6 +20,8 @@ internal abstract class Layer(
         protected val invalidator: Invalidator
 ) : Transformable {
 
+    override var enableGesturesTransform: Boolean = false
+
     protected abstract val shader: GlShader
     private val borderShader = GlBorderShader()
 
@@ -137,6 +139,7 @@ internal abstract class Layer(
     override fun getTranslation() = translationX to translationY
     override fun getFrustumRect() = frustumRect
     override fun getLayerAspect() = aspect
+    override fun getLayerPosition() = position
 
     override fun toString(): String {
         return """

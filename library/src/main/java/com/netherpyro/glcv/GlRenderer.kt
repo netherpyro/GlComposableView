@@ -29,7 +29,7 @@ internal class GlRenderer(
         var backgroundColor: Int,
         @ColorInt
         var viewportColor: Int
-) : FrameBufferObjectRenderer(), Invalidator, Observable {
+) : FrameBufferObjectRenderer(), Invalidator, TransformableObservable {
 
     companion object {
         const val NO_POSITION = -1
@@ -41,6 +41,7 @@ internal class GlRenderer(
 
     private var addLayerAction: ((Transformable) -> Unit)? = null
     private var removeLayerAction: ((Int) -> Unit)? = null
+    private var changeLayerPositionsAction: (() -> Unit)? = null
 
     private var surfaceReady = false
     private var nextId = 0
@@ -111,13 +112,20 @@ internal class GlRenderer(
         layer.position = finalPosition
         layers.sortBy { it.position }
 
+        changeLayerPositionsAction?.invoke()
+
         invalidate()
     }
 
-    override fun subscribeLayersChange(addAction: (Transformable) -> Unit,
-                                       removeAction: (Int) -> Unit): List<Transformable> {
+    override fun subscribeLayersChange(
+            addAction: (Transformable) -> Unit,
+            removeAction: (Int) -> Unit,
+            changeLayerPositionsAction: () -> Unit
+    ): List<Transformable> {
+
         this.addLayerAction = addAction
         this.removeLayerAction = removeAction
+        this.changeLayerPositionsAction = changeLayerPositionsAction
 
         return layers.toList()
     }
@@ -155,8 +163,6 @@ internal class GlRenderer(
                 removedLayer.release()
             }
 
-        removeLayerAction?.invoke(transformable.id)
-
         layers.forEach {
             if (it.position > removedPosition) {
                 it.position -= 1
@@ -164,6 +170,8 @@ internal class GlRenderer(
         }
 
         layers.sortBy { it.position }
+
+        removeLayerAction?.invoke(transformable.id)
 
         invalidate()
     }

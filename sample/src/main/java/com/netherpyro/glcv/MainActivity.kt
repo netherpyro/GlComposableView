@@ -19,6 +19,7 @@ import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoListener
+import com.netherpyro.glcv.touches.LayerTouchListener
 import com.netherpyro.glcv.util.GlAspectRatio
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -30,8 +31,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var player: SimpleExoPlayer
 
     private val transformableList = mutableListOf<Transformable>()
-
-    private var frontIndex = 0
 
     private val videoListener = object : VideoListener {
         override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int,
@@ -53,8 +52,6 @@ class MainActivity : AppCompatActivity() {
 
         LibraryHelper.setContext(applicationContext)
 
-        controlView.showTimeoutMs = -1
-        controlView.setShowMultiWindowTimeBar(true)
         val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(
                 this, Util.getUserAgent(this, "GlComposableView"))
         val videoSource1: MediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
@@ -69,7 +66,6 @@ class MainActivity : AppCompatActivity() {
         player = ExoPlayerFactory.newSimpleInstance(this)
         player.addVideoListener(videoListener)
 
-        controlView.player = player
         player.prepare(concatenatedSource)
         player.playWhenReady = true
         player.addListener(object : Player.EventListener {
@@ -89,9 +85,9 @@ class MainActivity : AppCompatActivity() {
 
         // add video layer
         glView.addVideoLayer(
-                onSurfaceAvailable = { surface ->
-                    player.setVideoSurface(surface)
-                }, applyLayerAspect = true)
+                onSurfaceAvailable = { surface -> player.setVideoSurface(surface) },
+                applyLayerAspect = true
+        )
             .also { transformableList.add(it) }
 
         // add image 1 layer
@@ -100,8 +96,6 @@ class MainActivity : AppCompatActivity() {
         // add image 2 layer
         LibraryHelper.image2()
             ?.also { transformableList.add(glView.addImageLayer(bitmap = it)) }
-
-        frontIndex = transformableList.lastIndex
 
         a1_1.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
         a3_2.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
@@ -115,18 +109,6 @@ class MainActivity : AppCompatActivity() {
         v1.setOnClickListener { player.seekTo(0, 0) }
         v2.setOnClickListener { player.seekTo(1, 0) }
         v3.setOnClickListener { player.seekTo(2, 3000) }
-        layer1ToFront.setOnClickListener {
-            frontIndex = 0
-            transformableList[frontIndex].setLayerPosition(transformableList.lastIndex)
-        }
-        layer2ToFront.setOnClickListener {
-            frontIndex = 1
-            transformableList[frontIndex].setLayerPosition(transformableList.lastIndex)
-        }
-        layer3ToFront.setOnClickListener {
-            frontIndex = 2
-            transformableList[frontIndex].setLayerPosition(transformableList.lastIndex)
-        }
 
         bottomView.alsoOnLaid { bottomView ->
             val maxHeight = container.height / 2
@@ -175,16 +157,36 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
-        borderSeek.progress = 0
-        borderSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                transformableList[frontIndex].setBorder(progress / 10f, Color.GREEN)
+        glView.listenTouches(object : LayerTouchListener {
+            override fun onLayerTap(transformable: Transformable): Boolean {
+                transformableList.forEach {
+                    val clicked = it.id == transformable.id
+                    it.enableGesturesTransform = clicked
+                    it.setBorder(if (clicked) 1f else 0f, Color.GREEN)
+
+                    if (clicked) it.setLayerPosition(transformableList.lastIndex)
+                }
+
+                return true
             }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            override fun onViewportInsideTap(): Boolean {
+                transformableList.forEach {
+                    it.enableGesturesTransform = false
+                    it.setBorder(0f, Color.GREEN)
+                }
+
+                return true
             }
 
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            override fun onViewportOutsideTap(): Boolean {
+                transformableList.forEach {
+                    if (it.enableGesturesTransform) {
+                        it.setBorder(1f, Color.BLUE)
+                    }
+                }
+
+                return true
             }
         })
     }

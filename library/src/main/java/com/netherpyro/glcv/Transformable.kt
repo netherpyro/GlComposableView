@@ -12,6 +12,8 @@ interface Transformable {
     val id: Int
     val tag: String?
 
+    var enableGesturesTransform: Boolean
+
     fun setLayerPosition(position: Int)
 
     fun setSkipDraw(skip: Boolean)
@@ -27,4 +29,5 @@ interface Transformable {
     fun getTranslation(): Pair<Float, Float>
     fun getFrustumRect(): RectF
     fun getLayerAspect(): Float
+    fun getLayerPosition(): Int
 }

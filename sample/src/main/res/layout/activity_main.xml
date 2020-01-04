@@ -9,12 +9,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.google.android.exoplayer2.ui.PlayerControlView android:id="@+id/controlView"
+    <View android:id="@+id/topView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="194dp"
         android:layout_gravity="top"
-        android:layout_marginTop="48dp"
-        android:visibility="gone" />
+        android:background="@color/colorPrimaryDark" />
 
     <LinearLayout android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -111,58 +110,19 @@
 
         </LinearLayout>
 
-        <LinearLayout android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <Button android:id="@+id/layer1ToFront"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Layer 1 to front"
-                android:textSize="12sp" />
-
-            <Button android:id="@+id/layer2ToFront"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Layer 2 to front"
-                android:textSize="12sp" />
-
-            <Button android:id="@+id/layer3ToFront"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Layer 3 to front"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
     </LinearLayout>
 
     <View android:id="@+id/bottomView"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:layout_gravity="bottom"
-        android:background="#5500ff00" />
-
-    <View android:id="@+id/topView"
-        android:layout_width="match_parent"
-        android:layout_height="194dp"
-        android:layout_gravity="top"
-        android:background="#5500ff00" />
+        android:background="@color/colorPrimaryDark" />
 
     <SeekBar android:id="@+id/bottomSeek"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_marginBottom="24dp"
-        android:max="100" />
-
-    <SeekBar android:id="@+id/borderSeek"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:layout_marginTop="150dp"
         android:max="100" />
 
     <SeekBar android:id="@+id/topSeek"

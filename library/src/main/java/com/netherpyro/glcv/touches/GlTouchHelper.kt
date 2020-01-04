@@ -8,101 +8,125 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import com.netherpyro.glcv.GlViewport
-import com.netherpyro.glcv.Observable
 import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.TransformableObservable
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
  * @author mmikhailov on 2019-12-18.
  */
-internal class GlTouchHelper(context: Context, transformableObservable: Observable) {
+internal class GlTouchHelper(context: Context, observable: TransformableObservable) {
 
     var viewport = GlViewport()
+    var viewHeight: Int = 0
 
-    private var currentTransformableId = 0
+    var touchesListener: LayerTouchListener? = null
 
-    private val transformables = mutableMapOf<Int, Transformable>()
+    private val transformables = mutableListOf<Transformable>()
     private val maxScale = 2f
     private val minScale = 0.5f
 
     init {
         val existingTransformables: List<Transformable>
 
-        transformableObservable.subscribeLayersChange(
-                addAction = { transformable -> transformables[transformable.id] = transformable },
-                removeAction = { transformable -> transformables.remove(transformable) }
+        observable.subscribeLayersChange(
+                addAction = { transformable ->
+                    transformables.add(transformable)
+                    transformables.sortByDescending { it.getLayerPosition() }
+                },
+                removeAction = { transformableId ->
+                    transformables.removeAll { it.id == transformableId }
+                    transformables.sortByDescending { it.getLayerPosition() }
+                },
+                changeLayerPositionsAction = {
+                    transformables.sortByDescending { it.getLayerPosition() }
+                }
         )
             .also { transformables -> existingTransformables = transformables }
 
-        transformables.putAll(
-                existingTransformables.map { transformable -> transformable.id to transformable }
-        )
+        transformables.addAll(existingTransformables)
+        transformables.sortByDescending { it.getLayerPosition() }
     }
 
+    // rotation
     private val rotationGestureDetector = RotationGestureDetector { angle ->
-        transformables[currentTransformableId]!!.setRotation(angle)
+        transformables.filter { it.enableGesturesTransform }
+            .forEach { it.setRotation(angle) }
     }
 
+    // scale
     private val scaleGestureDetector = ScaleGestureDetector(context,
             object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
                 override fun onScale(detector: ScaleGestureDetector): Boolean {
-                    val transformable = transformables[currentTransformableId]!!
-                    val scaleFactor = (transformable.getScale() * detector.scaleFactor)
-                        .coerceIn(minScale, maxScale)
 
-                    transformable.setScale(scaleFactor)
+                    transformables.filter { it.enableGesturesTransform }
+                        .forEach { transformable ->
+
+                            val scaleFactor = (transformable.getScale() * detector.scaleFactor)
+                                .coerceIn(minScale, maxScale)
+
+                            transformable.setScale(scaleFactor)
+                        }
 
                     return true
                 }
             })
 
+    // pan & click
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
-            val transformable = transformables[currentTransformableId]!!
-            val (curX, curY) = transformable.getTranslation()
-            val scaleFactor = transformable.getScale()
 
-            val layerFrustum = transformable.getFrustumRect()
-            val layerAspect = transformable.getLayerAspect()
-            val leftRightCoeff = 0.5f + 1f / (layerFrustum.right - layerFrustum.left) * layerAspect * scaleFactor
-            val topBottomCoeff = 0.5f + 1f / (layerFrustum.top - layerFrustum.bottom) * scaleFactor
+            transformables.filter { it.enableGesturesTransform }
+                .forEach { transformable ->
 
-            // todo add option to set restriction factor
-            val xRestrictPx = viewport.width * leftRightCoeff
-            val yRestrictPx = viewport.height * topBottomCoeff
+                    val (curX, curY) = transformable.getTranslation()
+                    val scaleFactor = transformable.getScale()
 
-            val translationX = (curX + distanceX).coerceIn(-xRestrictPx, xRestrictPx)
-            val translationY = (curY + distanceY).coerceIn(-yRestrictPx, yRestrictPx)
+                    val layerFrustum = transformable.getFrustumRect()
+                    val layerAspect = transformable.getLayerAspect()
+                    val leftRightCoeff = 0.5f + 1f / (layerFrustum.right - layerFrustum.left) * layerAspect * scaleFactor
+                    val topBottomCoeff = 0.5f + 1f / (layerFrustum.top - layerFrustum.bottom) * scaleFactor
 
-            transformable.setTranslation(translationX, translationY)
+                    // todo add option to set restriction factor
+                    val xRestrictPx = viewport.width * leftRightCoeff
+                    val yRestrictPx = viewport.height * topBottomCoeff
+
+                    val translationX = (curX + distanceX).coerceIn(-xRestrictPx, xRestrictPx)
+                    val translationY = (curY + distanceY).coerceIn(-yRestrictPx, yRestrictPx)
+
+                    transformable.setTranslation(translationX, translationY)
+                }
 
             return true
         }
 
         override fun onSingleTapUp(e: MotionEvent): Boolean {
-            var tapConsumed = false
-
-            val tapX = e.x
-            val tapY = e.y
             val vpWidthRange = viewport.x.toFloat()..(viewport.x.toFloat() + viewport.width)
             val vpHeightRange = viewport.y.toFloat()..(viewport.y.toFloat() + viewport.height)
 
-            if (tapX in vpWidthRange && tapY in vpHeightRange) {
+            if (e.x in vpWidthRange && (viewHeight - e.y) in vpHeightRange) {
 
                 Log.v("Touches", "tap inside viewport!")
 
-                for (transformableEntry in transformables) {
-                    if ((tapX to tapY).hitTest(transformableEntry.value)) {
-                        Log.i("Touches", "Hit! the transformable ${transformableEntry.value}")
-                        currentTransformableId = transformableEntry.key
-                        tapConsumed = true
+                var hitLayer: Transformable? = null
+
+                for (transformable in transformables) {
+                    if (hitTest(PointF(e.x, (viewHeight - e.y)), transformable)) {
+                        Log.i("Touches", "Hit! the transformable $transformable")
+                        hitLayer = transformable
                         break
                     }
                 }
+
+                return if (hitLayer != null) {
+                    touchesListener?.onLayerTap(hitLayer) ?: false
+                } else {
+                    touchesListener?.onViewportInsideTap() ?: false
+                }
             }
 
-            return tapConsumed
+            return touchesListener?.onViewportOutsideTap() ?: false
         }
     })
 
@@ -114,9 +138,7 @@ internal class GlTouchHelper(context: Context, transformableObservable: Observab
         return rotation || scale || translate
     }
 
-    private fun Pair<Float, Float>.hitTest(transformable: Transformable): Boolean {
-        val tapPoint = PointF(first, second)
-
+    private fun hitTest(tapPoint: PointF, transformable: Transformable): Boolean {
         val (trX, trY) = transformable.getTranslation()
         val scaleFactor = transformable.getScale()
         val layerFrustum = transformable.getFrustumRect()
@@ -128,7 +150,7 @@ internal class GlTouchHelper(context: Context, transformableObservable: Observab
 
         val layerLeftTop = PointF(
                 viewport.x + viewport.width / 2f - layerWidth / 2f - trX,
-                viewport.y + viewport.height / 2f - layerHeight / 2f - trY
+                viewport.y + viewport.height / 2f - layerHeight / 2f + trY
         )
 
         val layerRect = RectF(

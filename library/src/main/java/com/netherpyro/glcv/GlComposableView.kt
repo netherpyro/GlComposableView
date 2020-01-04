@@ -13,6 +13,7 @@ import android.view.Surface
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_MARGIN
 import com.netherpyro.glcv.touches.GlTouchHelper
+import com.netherpyro.glcv.touches.LayerTouchListener
 import com.netherpyro.glcv.util.AspectRatioChooser
 import com.netherpyro.glcv.util.EConfigChooser
 import com.netherpyro.glcv.util.GlAspectRatio
@@ -37,9 +38,9 @@ class GlComposableView @JvmOverloads constructor(
 
     private val touchHelper: GlTouchHelper
     @ColorInt
-    private val defaultBaseColor: Int = Color.parseColor("#5555ff")
+    private val defaultBaseColor: Int = Color.WHITE
     @ColorInt
-    private val defaultViewportColor: Int = Color.parseColor("#ff5555")
+    private val defaultViewportColor: Int = Color.BLACK
 
     private val defaultViewportAspectRatio = 1f
     private var aspectRatioChooser: AspectRatioChooser? = null
@@ -72,6 +73,7 @@ class GlComposableView @JvmOverloads constructor(
         post { holder.setFixedSize(width, height) }
 
         val viewport = layoutHelper.onSurfaceChanged(width, height)
+        touchHelper.viewHeight = height
         updateViewport(viewport)
     }
 
@@ -136,6 +138,10 @@ class GlComposableView @JvmOverloads constructor(
 
     fun listenViewportSizeChanged(listener: (Size) -> Unit) {
         viewportSizeChangedListener = listener
+    }
+
+    fun listenTouches(layerTouchListener: LayerTouchListener) {
+        touchHelper.touchesListener = layerTouchListener
     }
 
     /**
