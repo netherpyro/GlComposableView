@@ -158,7 +158,6 @@ internal class GlRenderer(
 
         layers.removeAt(removedIdx)
             .also { removedLayer ->
-                --nextId
                 removedPosition = removedLayer.position
                 removedLayer.release()
             }
