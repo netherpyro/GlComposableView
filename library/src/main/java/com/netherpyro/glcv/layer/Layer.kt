@@ -63,6 +63,8 @@ internal abstract class Layer(
     private var aspectReadyAction: ((Float) -> Unit)? = null
     private var aspectSet = false
 
+    private var pendingCalculateGlTranslation = false
+
     private lateinit var viewport: GlViewport
 
     fun setup() {
@@ -92,25 +94,34 @@ internal abstract class Layer(
     override fun setScale(scaleFactor: Float) {
         this.scaleFactor = scaleFactor
 
-        recalculateMatrices()
-        invalidator.invalidate()
+        if (frustumRect.isInitialized()) {
+            recalculateMatrices()
+            invalidator.invalidate()
+        }
     }
 
     override fun setRotation(rotationDeg: Float) {
         this.rotationDeg = rotationDeg
 
-        recalculateMatrices()
-        invalidator.invalidate()
+        if (frustumRect.isInitialized()) {
+            recalculateMatrices()
+            invalidator.invalidate()
+        }
     }
 
     override fun setTranslation(x: Float, y: Float) {
-        this.translationX = x
-        this.translationY = y
-        this.glTranslationX = x.toGlTranslationX()
-        this.glTranslationY = y.toGlTranslationY()
+        translationX = x
+        translationY = y
 
-        recalculateMatrices()
-        invalidator.invalidate()
+        if (frustumRect.isInitialized()) {
+            glTranslationX = translationX.toGlTranslationX()
+            glTranslationY = translationY.toGlTranslationY()
+
+            recalculateMatrices()
+            invalidator.invalidate()
+        } else {
+            pendingCalculateGlTranslation = true
+        }
     }
 
     override fun setOpacity(opacity: Float) {
@@ -219,6 +230,12 @@ internal abstract class Layer(
     }
 
     private fun recalculateMatrices() {
+        if (pendingCalculateGlTranslation) {
+            pendingCalculateGlTranslation = false
+            glTranslationX = translationX.toGlTranslationX()
+            glTranslationY = translationY.toGlTranslationY()
+        }
+
         Matrix.frustumM(pMatrix, 0, frustumRect.left, frustumRect.right, frustumRect.bottom, frustumRect.top, 5f, 7f)
         Matrix.setIdentityM(mMatrix, 0)
         Matrix.scaleM(mMatrix, 0, scaleFactor, scaleFactor, 0f)
@@ -236,4 +253,6 @@ internal abstract class Layer(
     private fun Float.toGlTranslationY(): Float {
         return (this * (abs(frustumRect.top) + abs(frustumRect.bottom)) / viewport.height) / scaleFactor
     }
+
+    private fun RectF.isInitialized() = left != right && top != bottom
 }
