@@ -75,8 +75,8 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
 
     // pan & click
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
 
+        override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
             transformables.filter { it.enableGesturesTransform }
                 .forEach { transformable ->
 
@@ -102,6 +102,8 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
         }
 
         override fun onSingleTapUp(e: MotionEvent): Boolean {
+            if (touchesListener == null) return false
+
             val vpWidthRange = viewport.x.toFloat()..(viewport.x.toFloat() + viewport.width)
             val vpHeightRange = viewport.y.toFloat()..(viewport.y.toFloat() + viewport.height)
 

@@ -39,11 +39,8 @@ class MainActivity : AppCompatActivity() {
                 ?.setVideoSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
         }
 
-        override fun onRenderedFirstFrame() {
-        }
-
-        override fun onSurfaceSizeChanged(width: Int, height: Int) {
-        }
+        override fun onRenderedFirstFrame() {}
+        override fun onSurfaceSizeChanged(width: Int, height: Int) {}
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,11 +123,8 @@ class MainActivity : AppCompatActivity() {
                     glView.setViewportMargin(bottom = viewHeight)
                 }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                }
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                }
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
             })
         }
 

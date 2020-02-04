@@ -93,6 +93,7 @@ class GlComposableView @JvmOverloads constructor(
         }
     }
 
+    // todo do not auto apply initial aspect ratio
     override fun onLayerAspectRatio(aspectValue: Float) {
         val glAspectRatio = aspectRatioChooser?.selectNearestAspect(aspectValue) ?: GlAspectRatio("", aspectValue)
         initialAspectRatioListener?.invoke(glAspectRatio)
