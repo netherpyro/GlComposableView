@@ -16,7 +16,8 @@ internal class VideoLayer(
         tag: String?,
         position: Int,
         invalidator: Invalidator,
-        private val onSurfaceAvailable: (Surface) -> Unit
+        private val onSurfaceAvailable: (Surface) -> Unit,
+        private val onFrameAvailable: (() -> Unit)? = null
 ) : Layer(id, tag, position, invalidator), VideoTransformable, OnFrameAvailableListener {
 
     override val shader = GlExtTextureShader()
@@ -64,6 +65,7 @@ internal class VideoLayer(
         updateTexImageCounter++
 
         invalidator.invalidate()
+        onFrameAvailable?.invoke()
     }
 
     /**

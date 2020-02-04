@@ -47,6 +47,7 @@ class GlComposableView @JvmOverloads constructor(
 
     private var viewportSizeChangedListener: ((Size) -> Unit)? = null
     private var initialAspectRatioListener: ((GlAspectRatio) -> Unit)? = null
+    private var onFrameAvailableListener: (() -> Unit)? = null
 
     init {
         setEGLContextFactory(this)
@@ -119,9 +120,10 @@ class GlComposableView @JvmOverloads constructor(
             tag: String? = null,
             onSurfaceAvailable: (Surface) -> Unit,
             applyLayerAspect: Boolean = false,
-            position: Int = GlRenderer.NO_POSITION
+            position: Int = GlRenderer.NO_POSITION,
+            onFrameAvailable: (() -> Unit)? = null
     ): VideoTransformable {
-        return renderer.addVideoLayer(tag, onSurfaceAvailable, applyLayerAspect, position)
+        return renderer.addVideoLayer(tag, onSurfaceAvailable, applyLayerAspect, position, onFrameAvailable)
     }
 
     fun addImageLayer(

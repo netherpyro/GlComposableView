@@ -141,8 +141,8 @@ internal class GlRenderer(
     }
 
     fun addVideoLayer(tag: String?, onSurfaceAvailable: (Surface) -> Unit, applyLayerAspect: Boolean,
-                      position: Int): VideoTransformable {
-        return VideoLayer(nextId++, tag, position, this, onSurfaceAvailable)
+                      position: Int, onFrameAvailable: (() -> Unit)?): VideoTransformable {
+        return VideoLayer(nextId++, tag, position, this, onSurfaceAvailable, onFrameAvailable)
             .also { addLayer(it, applyLayerAspect) }
     }
 
