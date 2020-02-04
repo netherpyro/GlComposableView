@@ -46,6 +46,13 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
 
     @ColorInt
     var color: Int = Color.BLUE
+        set(value) {
+            field = value
+            redComponent = value.red()
+            greenComponent = value.green()
+            blueComponent = value.blue()
+        }
+
     var width = 0f
         set(value) {
             field = value
@@ -61,6 +68,11 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
     private var aPosLoc = -1
     private var uColorLoc = -1
     private var vertices = createVertices()
+
+    private var redComponent = color.red()
+    private var greenComponent = color.green()
+    private var blueComponent = color.blue()
+
 
     private var vertexData = ByteBuffer.allocateDirect(vertices.size * 4)
         .order(ByteOrder.nativeOrder())
@@ -88,7 +100,7 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
         glEnableVertexAttribArray(aPosLoc)
         glVertexAttribPointer(aPosLoc, 2, GL_FLOAT, false, 0, vertexData)
 
-        glUniform4f(uColorLoc, color.red(), color.green(), color.blue(), 1.0f)
+        glUniform4f(uColorLoc, redComponent, greenComponent, blueComponent, 1.0f)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size / 2)
 
         glDisableVertexAttribArray(aPosLoc)
@@ -97,11 +109,12 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
     fun setAspect(aspect: Float) {
         aspectCoefficient = when {
             aspect > 1f -> (1f / aspect) * borderMarginCoefficient
-            aspect < 1f -> -aspect * borderMarginCoefficient
+            aspect < 1f -> -0.47f * borderMarginCoefficient
             else -> 0f
         }
 
         vertices = createVertices()
+
         vertexData.clear()
         vertexData.put(vertices)
         vertexData.position(0)
