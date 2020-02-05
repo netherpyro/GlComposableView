@@ -47,7 +47,6 @@ class GlComposableView @JvmOverloads constructor(
 
     private var viewportSizeChangedListener: ((Size) -> Unit)? = null
     private var initialAspectRatioListener: ((GlAspectRatio) -> Unit)? = null
-    private var onFrameAvailableListener: (() -> Unit)? = null
 
     init {
         setEGLContextFactory(this)

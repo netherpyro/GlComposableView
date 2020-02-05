@@ -118,7 +118,8 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
     })
 
     fun onTouchEvent(event: MotionEvent): Boolean {
-        val rotation = rotationGestureDetector.onTouchEvent(event)
+        val prevRotationAngle = transformables.firstOrNull { it.enableGesturesTransform }?.getRotation()
+        val rotation = rotationGestureDetector.onTouchEvent(event, prevRotationAngle)
         val scale = scaleGestureDetector.onTouchEvent(event)
         val translate = gestureDetector.onTouchEvent(event)
 

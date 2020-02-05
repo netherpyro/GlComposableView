@@ -29,11 +29,11 @@ class RotationGestureDetector(private val listener: (Float) -> Unit) {
         ptrID2 = INVALID_POINTER_ID
     }
 
-    fun onTouchEvent(event: MotionEvent): Boolean {
+    fun onTouchEvent(event: MotionEvent, prevAngle: Float? = null): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> ptrID1 = event.getPointerId(event.actionIndex)
             MotionEvent.ACTION_POINTER_DOWN -> {
-                oldAngle = angle
+                oldAngle = prevAngle ?: angle
                 ptrID2 = event.getPointerId(event.actionIndex)
                 sX = event.getX(event.findPointerIndex(ptrID1))
                 sY = event.getY(event.findPointerIndex(ptrID1))
