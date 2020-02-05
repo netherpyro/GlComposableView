@@ -27,6 +27,7 @@ interface Transformable {
     fun getRotation(): Float
     fun getScale(): Float
     fun getTranslation(): Pair<Float, Float>
+    fun getTranslationFactor(): Pair<Float, Float>
     fun getFrustumRect(): RectF
     fun getLayerAspect(): Float
     fun getLayerPosition(): Int

@@ -79,23 +79,8 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float, distanceY: Float): Boolean {
             transformables.filter { it.enableGesturesTransform }
                 .forEach { transformable ->
-
                     val (curX, curY) = transformable.getTranslation()
-                    val scaleFactor = transformable.getScale()
-
-                    val layerFrustum = transformable.getFrustumRect()
-                    val layerAspect = transformable.getLayerAspect()
-                    val leftRightCoeff = 0.5f + 1f / (layerFrustum.right - layerFrustum.left) * layerAspect * scaleFactor
-                    val topBottomCoeff = 0.5f + 1f / (layerFrustum.top - layerFrustum.bottom) * scaleFactor
-
-                    // todo add option to set restriction factor
-                    val xRestrictPx = viewport.width * leftRightCoeff
-                    val yRestrictPx = viewport.height * topBottomCoeff
-
-                    val translationX = (curX + distanceX).coerceIn(-xRestrictPx, xRestrictPx)
-                    val translationY = (curY + distanceY).coerceIn(-yRestrictPx, yRestrictPx)
-
-                    transformable.setTranslation(translationX, translationY)
+                    transformable.setTranslation(curX + distanceX, curY + distanceY)
                 }
 
             return true
