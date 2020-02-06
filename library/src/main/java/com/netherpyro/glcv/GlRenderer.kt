@@ -196,16 +196,6 @@ internal class GlRenderer(
     }
 
     private fun addLayerToList(layer: Layer) {
-        if (layer.position < 0) {
-            layer.position = layers.size
-        } else {
-            layers.forEach {
-                if (it.position >= layer.position) {
-                    it.position += 1
-                }
-            }
-        }
-
         layers.add(layer)
         layers.sortBy { it.position }
     }
