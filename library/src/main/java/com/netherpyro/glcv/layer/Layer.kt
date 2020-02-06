@@ -112,8 +112,8 @@ internal abstract class Layer(
     }
 
     override fun setTranslation(x: Float, y: Float) {
-        translationX = x.coerceIn(-xRestrict, xRestrict)
-        translationY = y.coerceIn(-yRestrict, yRestrict)
+        translationX = x.coerceIn(-abs(xRestrict), abs(xRestrict))
+        translationY = y.coerceIn(-abs(yRestrict), abs(yRestrict))
 
         if (frustumRect.isInitialized()) {
             glTranslationX = translationX.toGlTranslationX()
