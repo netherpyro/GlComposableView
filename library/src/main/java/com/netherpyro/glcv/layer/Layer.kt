@@ -95,6 +95,7 @@ internal abstract class Layer(
 
     override fun setScale(scaleFactor: Float) {
         this.scaleFactor = scaleFactor
+        borderShader.setScale(scaleFactor)
 
         if (frustumRect.isInitialized()) {
             recalculateMatrices()

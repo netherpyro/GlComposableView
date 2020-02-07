@@ -56,13 +56,15 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
     var width = 0f
         set(value) {
             field = value
-            // todo recalculate 'vertices' values
+            // todo use this value to calculate border width coefficient
+            rebuildVertices()
         }
 
     private val borderMarginCoefficient = 0.05f
-    private val borderWidthCoefficient = 0.05f
+    private val borderWidthCoefficient = 0.08f
 
     private var aspectCoefficient: Float = 0f
+    private var scaleFactor: Float = 1f
     private var mvpLoc = -1
     private var ratioLoc = -1
     private var aPosLoc = -1
@@ -108,11 +110,21 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
 
     fun setAspect(aspect: Float) {
         aspectCoefficient = when {
-            aspect > 1f -> (1f / aspect) * borderMarginCoefficient
-            aspect < 1f -> -0.47f * borderMarginCoefficient
+            aspect > 1f -> 1f / aspect
+            aspect < 1f -> -aspect
             else -> 0f
         }
 
+        rebuildVertices()
+    }
+
+    fun setScale(scale: Float) {
+        scaleFactor = scale
+
+        rebuildVertices()
+    }
+
+    private fun rebuildVertices() {
         vertices = createVertices()
 
         vertexData.clear()
@@ -121,28 +133,36 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
     }
 
     private fun createVertices(): FloatArray {
+        val margin = (borderMarginCoefficient / scaleFactor).coerceAtMost(borderMarginCoefficient)
+        val width = (borderWidthCoefficient / scaleFactor).coerceAtMost(borderWidthCoefficient)
+        val marginAspectCoef = (aspectCoefficient * borderMarginCoefficient)
+            .let { (it / scaleFactor).coerceAtLeast(it) }
+
+        val widthAspectCoef = (aspectCoefficient * borderWidthCoefficient)
+            .let { (it / scaleFactor).coerceAtLeast(it) }
+
         return floatArrayOf(
-                /*v1*/   -1.1f, 1.0f + borderMarginCoefficient + aspectCoefficient,
-                /*v2*/   -1.1f, 1.1f + (2 * aspectCoefficient),
-                /*v3*/   -1.05f, 1.0f + borderMarginCoefficient + aspectCoefficient,
-                /*v4*/   -1.05f, 1.1f + (2 * aspectCoefficient),
-                /*v5*/   1.05f, 1.0f + borderMarginCoefficient + aspectCoefficient,
-                /*v6*/   1.05f, 1.1f + (2 * aspectCoefficient),
-                /*v7*/   1.1f, 1.1f + (2 * aspectCoefficient),
-                /*v8*/   1.1f, 1.0f + borderMarginCoefficient + aspectCoefficient,
-                /*v9*/   1.05f, 1.0f + borderMarginCoefficient + aspectCoefficient,
-                /*v10*/   1.1f, -1.05f - aspectCoefficient,
-                /*v11*/   1.05f, -1.05f - aspectCoefficient,
-                /*v12*/   1.1f, -1.1f - (2 * aspectCoefficient),
-                /*v13*/   1.05f, -1.1f - (2 * aspectCoefficient),
-                /*v14*/   1.05f, -1.05f - aspectCoefficient,
-                /*v15*/   -1.05f, -1.1f - (2 * aspectCoefficient),
-                /*v16*/   -1.05f, -1.05f - aspectCoefficient,
-                /*v17*/   -1.1f, -1.1f - (2 * aspectCoefficient),
-                /*v18*/   -1.1f, -1.05f - aspectCoefficient,
-                /*v19*/   -1.05f, -1.05f - aspectCoefficient,
-                /*v20*/   -1.1f, 1.0f + borderMarginCoefficient + aspectCoefficient,
-                /*v21*/   -1.05f, 1.0f + borderMarginCoefficient + aspectCoefficient
+                /*v1*/   -1f - width, 1f + margin + marginAspectCoef,
+                /*v2*/   -1f - width, 1f + width + widthAspectCoef,
+                /*v3*/   -1f - margin, 1f + margin + marginAspectCoef,
+                /*v4*/   -1f - margin, 1f + width + widthAspectCoef,
+                /*v5*/    1f + margin, 1f + margin + marginAspectCoef,
+                /*v6*/    1f + margin, 1f + width + widthAspectCoef,
+                /*v7*/    1f + width, 1f + width + widthAspectCoef,
+                /*v8*/    1f + width, 1f + margin + marginAspectCoef,
+                /*v9*/    1f + margin, 1f + margin + marginAspectCoef,
+                /*v10*/   1f + width, -1f - margin - marginAspectCoef,
+                /*v11*/   1f + margin, -1f - margin - marginAspectCoef,
+                /*v12*/   1f + width, -1f - width - widthAspectCoef,
+                /*v13*/   1f + margin, -1f - width - widthAspectCoef,
+                /*v14*/   1f + margin, -1f - margin - marginAspectCoef,
+                /*v15*/  -1f - margin, -1f - width - widthAspectCoef,
+                /*v16*/  -1f - margin, -1f - margin - marginAspectCoef,
+                /*v17*/  -1f - width, -1f - width - widthAspectCoef,
+                /*v18*/  -1f - width, -1f - margin - marginAspectCoef,
+                /*v19*/  -1f - margin, -1f - margin - marginAspectCoef,
+                /*v20*/  -1f - width, 1f + margin + marginAspectCoef,
+                /*v21*/  -1f - margin, 1f + margin + marginAspectCoef
         )
     }
 }
