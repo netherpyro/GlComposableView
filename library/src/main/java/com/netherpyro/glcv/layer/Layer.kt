@@ -127,6 +127,21 @@ internal abstract class Layer(
         }
     }
 
+    override fun setTranslationFactor(xFactor: Float, yFactor: Float) {
+        translationX = -xFactor.coerceIn(-1f..1f) * xRestrict
+        translationY = yFactor.coerceIn(-1f..1f) * yRestrict
+
+        if (frustumRect.isInitialized()) {
+            glTranslationX = translationX.toGlTranslationX()
+            glTranslationY = translationY.toGlTranslationY()
+
+            recalculateMatrices()
+            invalidator.invalidate()
+        } else {
+            pendingCalculateGlTranslation = true
+        }
+    }
+
     override fun setOpacity(opacity: Float) {
         shader.opacity = opacity
 

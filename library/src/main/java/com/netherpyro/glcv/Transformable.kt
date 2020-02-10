@@ -20,7 +20,8 @@ interface Transformable {
 
     fun setRotation(rotationDeg: Float)
     fun setScale(scaleFactor: Float)
-    fun setTranslation(@Px x: Float, @Px y: Float)
+    fun setTranslation(@Px x: Float, @Px y: Float) // todo revisit pixel translation
+    fun setTranslationFactor(xFactor: Float, yFactor: Float)
     fun setOpacity(opacity: Float)
     fun setBorder(width: Float, @ColorInt color: Int)
 
