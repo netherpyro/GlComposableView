@@ -59,8 +59,6 @@ internal abstract class Layer(
     private var rotationDeg = 0f
     private var translationX = 0f // pixels
     private var translationY = 0f // pixels
-    private var xRestrict = 0f // pixels
-    private var yRestrict = 0f // pixels
 
     private var aspectReadyAction: ((Float) -> Unit)? = null
     private var aspectSet = false
@@ -113,8 +111,16 @@ internal abstract class Layer(
     }
 
     override fun setTranslation(x: Float, y: Float) {
-        translationX = x.coerceIn(-abs(xRestrict), abs(xRestrict))
-        translationY = y.coerceIn(-abs(yRestrict), abs(yRestrict))
+        if (!::viewport.isInitialized) return
+
+        val availWidth = viewport.width.toFloat() * scaleFactor
+        val availHeight = viewport.height.toFloat() * scaleFactor
+
+        val halfLayerWidth = (1f / (frustumRect.right - frustumRect.left) * aspect * scaleFactor * 2f * availWidth) / 2f
+        val halfLayerHeight = (1f / (frustumRect.top - frustumRect.bottom) * scaleFactor * 2f * availHeight) / 2f
+
+        translationX = x.coerceIn(-availWidth - halfLayerWidth, availWidth + halfLayerWidth)
+        translationY = y.coerceIn(-availHeight - halfLayerHeight, availHeight + halfLayerHeight)
 
         if (frustumRect.isInitialized()) {
             glTranslationX = translationX.toGlTranslationX()
@@ -127,9 +133,17 @@ internal abstract class Layer(
         }
     }
 
+    private var transFactorX = 0f
+    private var transFactorY = 0f
+
     override fun setTranslationFactor(xFactor: Float, yFactor: Float) {
-        translationX = -xFactor.coerceIn(-1f..1f) * xRestrict
-        translationY = yFactor.coerceIn(-1f..1f) * yRestrict
+        if (!::viewport.isInitialized) return
+
+        transFactorX = -xFactor
+        transFactorY = yFactor
+
+        translationX = -xFactor * viewport.width
+        translationY = yFactor * viewport.height
 
         if (frustumRect.isInitialized()) {
             glTranslationX = translationX.toGlTranslationX()
@@ -166,7 +180,7 @@ internal abstract class Layer(
     override fun getRotation() = rotationDeg
     override fun getScale() = scaleFactor
     override fun getTranslation() = translationX to translationY
-    override fun getTranslationFactor() = -(translationX / xRestrict) to (translationY / yRestrict)
+    override fun getTranslationFactor() = -(translationX / viewport.width) to (translationY / viewport.height)
     override fun getFrustumRect() = frustumRect
     override fun getLayerAspect() = aspect
     override fun getLayerPosition() = position
@@ -245,12 +259,10 @@ internal abstract class Layer(
         frustumRect.right = right
         frustumRect.bottom = bottom
 
-        val leftRightCoeff = 0.5f + 1f / (frustumRect.right - frustumRect.left) * aspect * scaleFactor
-        val topBottomCoeff = 0.5f + 1f / (frustumRect.top - frustumRect.bottom) * scaleFactor
+        translationX = transFactorX * viewport.width
+        translationY = transFactorY * viewport.height
 
-        // todo add option to set restriction factor
-        xRestrict = viewport.width * leftRightCoeff
-        yRestrict = viewport.height * topBottomCoeff
+        pendingCalculateGlTranslation = true
 
         recalculateMatrices()
     }
