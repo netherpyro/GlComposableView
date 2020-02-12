@@ -113,14 +113,11 @@ internal abstract class Layer(
     override fun setTranslation(x: Float, y: Float) {
         if (!::viewport.isInitialized) return
 
-        val availWidth = viewport.width.toFloat() * scaleFactor
-        val availHeight = viewport.height.toFloat() * scaleFactor
+        val availWidth = viewport.width.toFloat()
+        val availHeight = viewport.height.toFloat()
 
-        val halfLayerWidth = (1f / (frustumRect.right - frustumRect.left) * aspect * scaleFactor * 2f * availWidth) / 2f
-        val halfLayerHeight = (1f / (frustumRect.top - frustumRect.bottom) * scaleFactor * 2f * availHeight) / 2f
-
-        translationX = x.coerceIn(-availWidth - halfLayerWidth, availWidth + halfLayerWidth)
-        translationY = y.coerceIn(-availHeight - halfLayerHeight, availHeight + halfLayerHeight)
+        translationX = x.coerceIn(-availWidth, availWidth)
+        translationY = y.coerceIn(-availHeight, availHeight)
 
         if (frustumRect.isInitialized()) {
             glTranslationX = translationX.toGlTranslationX()
