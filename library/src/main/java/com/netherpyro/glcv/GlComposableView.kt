@@ -26,6 +26,7 @@ import javax.microedition.khronos.egl.EGLDisplay
  * @author mmikhailov on 2019-10-26.
  *
  */
+// todo add option to (remove all / replace all with) layers
 class GlComposableView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null
