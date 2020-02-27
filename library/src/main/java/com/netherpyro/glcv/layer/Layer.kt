@@ -59,6 +59,8 @@ internal abstract class Layer(
     private var rotationDeg = 0f
     private var translationX = 0f // pixels
     private var translationY = 0f // pixels
+    private var transFactorX = 0f
+    private var transFactorY = 0f
 
     private var aspectReadyAction: ((Float) -> Unit)? = null
     private var aspectSet = false
@@ -118,6 +120,8 @@ internal abstract class Layer(
 
         translationX = x.coerceIn(-availWidth, availWidth)
         translationY = y.coerceIn(-availHeight, availHeight)
+        transFactorX = translationX / viewport.width
+        transFactorY = translationY / viewport.height
 
         if (frustumRect.isInitialized()) {
             glTranslationX = translationX.toGlTranslationX()
@@ -129,9 +133,6 @@ internal abstract class Layer(
             pendingCalculateGlTranslation = true
         }
     }
-
-    private var transFactorX = 0f
-    private var transFactorY = 0f
 
     override fun setTranslationFactor(xFactor: Float, yFactor: Float) {
         if (!::viewport.isInitialized) return
