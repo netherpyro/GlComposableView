@@ -189,11 +189,13 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     private fun updateViewport(vp: GlViewport) {
-        renderer.setViewport(vp)
-        touchHelper.viewport = vp
+        queueEvent {
+            renderer.setViewport(vp)
+            touchHelper.viewport = vp
 
-        viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }
+            viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }
 
-        requestDraw()
+            requestRender()
+        }
     }
 }
