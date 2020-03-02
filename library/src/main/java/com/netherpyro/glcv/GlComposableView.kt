@@ -63,7 +63,7 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     override fun requestDraw() {
-        queueEvent { requestRender() }
+        requestRender()
     }
 
     override fun postAction(action: Runnable) {
@@ -153,7 +153,7 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     fun setAspectRatio(aspect: Float, animated: Boolean = false) {
-        setAspectRatioInternal(aspect, animated)
+        queueEvent { setAspectRatioInternal(aspect, animated) }
     }
 
     fun setBaseColor(@ColorInt color: Int) {
@@ -178,8 +178,10 @@ class GlComposableView @JvmOverloads constructor(
             right: Int = NO_MARGIN,
             bottom: Int = NO_MARGIN
     ) {
-        val viewport = layoutHelper.setViewportMargin(left, top, right, bottom)
-        updateViewport(viewport)
+        queueEvent {
+            val viewport = layoutHelper.setViewportMargin(left, top, right, bottom)
+            updateViewport(viewport)
+        }
     }
 
     private fun setAspectRatioInternal(aspectValue: Float, animated: Boolean) {
@@ -189,13 +191,11 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     private fun updateViewport(vp: GlViewport) {
-        queueEvent {
-            renderer.setViewport(vp)
-            touchHelper.viewport = vp
+        renderer.setViewport(vp)
+        touchHelper.viewport = vp
 
-            viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }
+        viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }
 
-            requestRender()
-        }
+        requestRender()
     }
 }

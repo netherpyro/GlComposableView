@@ -60,7 +60,6 @@ internal class VideoLayer(
         }
     }
 
-    @Synchronized
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
         updateTexImageCounter++
 
@@ -68,10 +67,6 @@ internal class VideoLayer(
         onFrameAvailable?.invoke()
     }
 
-    /**
-     * Must be called in GL thread
-     * */
-    @Synchronized
     override fun onDrawFrame() {
         while (updateTexImageCounter != 0) {
             surfaceTexture.updateTexImage()

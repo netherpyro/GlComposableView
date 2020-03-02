@@ -32,7 +32,7 @@ internal class GlRenderer(
 ) : FrameBufferObjectRenderer(), Invalidator, TransformableObservable {
 
     companion object {
-        const val NO_POSITION = -1
+        const val NO_POSITION = -1 // means to top of layer stack
     }
 
     private val layers = mutableListOf<Layer>()
@@ -46,7 +46,6 @@ internal class GlRenderer(
     private var surfaceReady = false
     private var nextId = 0
 
-    @Synchronized
     override fun onSurfaceCreated() {
         glClearColor(backgroundColor.red(), backgroundColor.green(), backgroundColor.blue(), backgroundColor.alpha())
         glEnable(GLES20.GL_BLEND)
@@ -78,7 +77,6 @@ internal class GlRenderer(
         layers.forEach { it.draw() }
     }
 
-    @Synchronized
     override fun onRelease() {
         surfaceReady = false
 
@@ -89,7 +87,6 @@ internal class GlRenderer(
         renderHost.requestDraw()
     }
 
-    @Synchronized
     override fun claimPosition(layer: Layer, position: Int) {
         if (layers.size <= 1) return
 
