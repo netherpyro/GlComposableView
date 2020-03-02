@@ -75,7 +75,7 @@ internal abstract class Layer(
     }
 
     fun draw() {
-        Thread.sleep(10L) // TODO investigate why layers in stack (from 6 pieces) flicker if remove this sleep
+        Thread.sleep(2L) // TODO investigate why layers in stack (from 6 pieces) flicker if remove this sleep
         if (shouldDraw) {
             onDrawFrame()
 
