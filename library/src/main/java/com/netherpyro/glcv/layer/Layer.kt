@@ -2,6 +2,7 @@ package com.netherpyro.glcv.layer
 
 import android.graphics.RectF
 import android.opengl.Matrix
+import android.util.Log
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Invalidator
@@ -75,7 +76,8 @@ internal abstract class Layer(
     }
 
     fun draw() {
-        Thread.sleep(4L) // TODO investigate why layers in stack (from 6 pieces) flicker if remove this sleep
+       // Thread.sleep(4L) // TODO investigate why layers in stack (from 6 pieces) flicker if remove this sleep
+        Log.d("Layer","draw::draw ? $shouldDraw::$this")
         if (shouldDraw) {
             onDrawFrame()
 

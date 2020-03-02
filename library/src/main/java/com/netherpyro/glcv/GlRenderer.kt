@@ -61,7 +61,6 @@ internal class GlRenderer(
         renderHost.onSurfaceChanged(width, height)
     }
 
-    @Synchronized
     override fun onDrawFrame(fbo: FramebufferObject) {
         glClearColor(backgroundColor.red(), backgroundColor.green(), backgroundColor.blue(), backgroundColor.alpha())
         glClear(GLES20.GL_COLOR_BUFFER_BIT)
