@@ -15,9 +15,9 @@ import com.netherpyro.glcv.extensions.alpha
 import com.netherpyro.glcv.extensions.blue
 import com.netherpyro.glcv.extensions.green
 import com.netherpyro.glcv.extensions.red
-import com.netherpyro.glcv.layer.ImageLayer
+import com.netherpyro.glcv.layer.BitmapLayer
 import com.netherpyro.glcv.layer.Layer
-import com.netherpyro.glcv.layer.VideoLayer
+import com.netherpyro.glcv.layer.SurfaceLayer
 
 /**
  * @author mmikhailov on 2019-11-30.
@@ -131,17 +131,17 @@ internal class GlRenderer(
             layers.toTypedArray()
                 .contentToString()
 
-    fun addVideoLayer(
+    fun addSurfaceLayer(
             tag: String?,
             onSurfaceAvailable: (Surface) -> Unit,
             position: Int,
             onFrameAvailable: (() -> Unit)?
-    ): VideoTransformable =
-            VideoLayer(getNextId(), tag, position, this, onSurfaceAvailable, onFrameAvailable)
+    ): Transformable =
+            SurfaceLayer(getNextId(), tag, position, this, onSurfaceAvailable, onFrameAvailable)
                 .also { addLayer(it) }
 
-    fun addImageLayer(tag: String?, bitmap: Bitmap, position: Int): Transformable =
-            ImageLayer(getNextId(), tag, position, this, bitmap)
+    fun addBitmapLayer(tag: String?, bitmap: Bitmap, position: Int): Transformable =
+            BitmapLayer(getNextId(), tag, position, this, bitmap)
                 .also { addLayer(it) }
 
     fun removeLayer(transformable: Transformable) {

@@ -4,21 +4,20 @@ import android.graphics.SurfaceTexture
 import android.graphics.SurfaceTexture.OnFrameAvailableListener
 import android.view.Surface
 import com.netherpyro.glcv.Invalidator
-import com.netherpyro.glcv.VideoTransformable
 import com.netherpyro.glcv.shader.GlExtTextureShader
 import com.netherpyro.glcv.util.EglUtil
 
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal class VideoLayer(
+internal class SurfaceLayer(
         id: Int,
         tag: String?,
         position: Int,
         invalidator: Invalidator,
         private val onSurfaceAvailable: (Surface) -> Unit,
         private val onFrameAvailable: (() -> Unit)? = null
-) : Layer(id, tag, position, invalidator), VideoTransformable, OnFrameAvailableListener {
+) : Layer(id, tag, position, invalidator), OnFrameAvailableListener {
 
     override val shader = GlExtTextureShader()
 
@@ -74,7 +73,7 @@ internal class VideoLayer(
         EglUtil.deleteTextures(texName)
     }
 
-    override fun setVideoSize(width: Float, height: Float) {
+    override fun setSize(width: Float, height: Float) {
         aspect = width / height
         recalculateFrustum()
         invalidator.invalidate()

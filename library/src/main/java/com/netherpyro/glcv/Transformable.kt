@@ -24,6 +24,7 @@ interface Transformable {
     fun setTranslationFactor(xFactor: Float, yFactor: Float)
     fun setOpacity(opacity: Float)
     fun setBorder(width: Float, @ColorInt color: Int)
+    fun setSize(width: Float, height: Float)
 
     fun getRotation(): Float
     fun getScale(): Float

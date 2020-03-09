@@ -7,7 +7,7 @@ import com.netherpyro.glcv.shader.GlImageShader
 /**
  * @author mmikhailov on 2019-12-04.
  */
-internal class ImageLayer(
+internal class BitmapLayer(
         id: Int,
         tag: String?,
         position: Int,
@@ -32,5 +32,9 @@ internal class ImageLayer(
 
     override fun onRelease() {
         shader.release()
+    }
+
+    override fun setSize(width: Float, height: Float) {
+        // no-op
     }
 }

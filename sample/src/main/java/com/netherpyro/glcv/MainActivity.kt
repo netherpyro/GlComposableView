@@ -32,11 +32,13 @@ class MainActivity : AppCompatActivity() {
 
     private val transformableList = mutableListOf<Transformable>()
 
+    private val videoTag = "VIDEO_TAG"
+
     private val videoListener = object : VideoListener {
         override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int,
                                         pixelWidthHeightRatio: Float) {
-            transformableList.findVideoTransformable()
-                ?.setVideoSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
+            transformableList.findTransformable(videoTag)
+                ?.setSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
         }
 
         override fun onRenderedFirstFrame() {}
@@ -68,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         player.addListener(object : Player.EventListener {
 
             override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray?) {
-                transformableList.findVideoTransformable()
+                transformableList.findTransformable(videoTag)
                     ?.setSkipDraw(trackGroups.isSilence())
 
                 glView.requestRender()
@@ -77,25 +79,25 @@ class MainActivity : AppCompatActivity() {
 
         glView.enableGestures = true
 
-        // add video layer
-        glView.addVideoLayer(
+        // add surface layer
+        glView.addSurfaceLayer(
+                tag = videoTag,
                 onSurfaceAvailable = { surface -> player.setVideoSurface(surface) }
         ) { transformable ->
             transformableList.add(transformable)
-            // todo investigate video aspect
             Log.i("MainActivity", "layer aspect=${transformable.getLayerAspect()}")
             applyAspectRatio(transformable.getLayerAspect())
         }
 
-        // add image 1 layer
+        // add bitmap 1 layer
         LibraryHelper.image1()
             ?.also { bitmap ->
-                glView.addImageLayer(bitmap = bitmap) { transformable -> transformableList.add(transformable) }
+                glView.addBitmapLayer(bitmap = bitmap) { transformable -> transformableList.add(transformable) }
             }
-        // add image 2 layer
+        // add bitmap 2 layer
         LibraryHelper.image2()
             ?.also { bitmap ->
-                glView.addImageLayer(bitmap = bitmap) { transformable -> transformableList.add(transformable) }
+                glView.addBitmapLayer(bitmap = bitmap) { transformable -> transformableList.add(transformable) }
             }
 
         a1_1.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
@@ -224,8 +226,8 @@ class MainActivity : AppCompatActivity() {
         glView.setAspectRatio(nearestAspect.value)
     }
 
-    private fun List<Transformable>.findVideoTransformable(): VideoTransformable? =
-            (this.firstOrNull { it is VideoTransformable } as? VideoTransformable)
+    private fun List<Transformable>.findTransformable(tag: String): Transformable? =
+            this.firstOrNull { it.tag == tag }
 
     private fun TrackGroupArray.isSilence() =
             !this.isEmpty && this[0].getFormat(0).id == MySilenceMediaSource.SILENCE_ID
