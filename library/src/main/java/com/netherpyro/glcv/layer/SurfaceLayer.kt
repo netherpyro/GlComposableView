@@ -9,6 +9,10 @@ import com.netherpyro.glcv.util.EglUtil
 
 /**
  * @author mmikhailov on 2019-11-30.
+ *
+ * Surface layer is used for player frames rendering;
+ * Due to we won't learn aspect of video during layer setup there is
+ * {@link setSize()} method overridden.
  */
 internal class SurfaceLayer(
         id: Int,

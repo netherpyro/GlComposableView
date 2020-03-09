@@ -160,6 +160,10 @@ internal abstract class Layer(
         invalidator.claimPosition(this, position)
     }
 
+    override fun setSize(width: Float, height: Float) {
+        // no-op by default
+    }
+
     override fun getRotation() = rotationDeg
     override fun getScale() = scaleFactor
     override fun getTranslation() = translationX to translationY

@@ -33,8 +33,4 @@ internal class BitmapLayer(
     override fun onRelease() {
         shader.release()
     }
-
-    override fun setSize(width: Float, height: Float) {
-        // no-op
-    }
 }

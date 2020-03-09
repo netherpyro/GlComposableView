@@ -38,7 +38,10 @@ class MainActivity : AppCompatActivity() {
         override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int,
                                         pixelWidthHeightRatio: Float) {
             transformableList.findTransformable(videoTag)
-                ?.setSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
+                ?.also { tr ->
+                    tr.setSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
+                    applyAspectRatio(tr.getLayerAspect())
+                }
         }
 
         override fun onRenderedFirstFrame() {}
@@ -83,11 +86,7 @@ class MainActivity : AppCompatActivity() {
         glView.addSurfaceLayer(
                 tag = videoTag,
                 onSurfaceAvailable = { surface -> player.setVideoSurface(surface) }
-        ) { transformable ->
-            transformableList.add(transformable)
-            Log.i("MainActivity", "layer aspect=${transformable.getLayerAspect()}")
-            applyAspectRatio(transformable.getLayerAspect())
-        }
+        ) { transformable -> transformableList.add(transformable) }
 
         // add bitmap 1 layer
         LibraryHelper.image1()
