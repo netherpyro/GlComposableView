@@ -18,8 +18,8 @@ interface Transformable {
 
     fun setSkipDraw(skip: Boolean)
 
-    fun setRotation(rotationDeg: Float)
     fun setScale(scaleFactor: Float)
+    fun setRotation(rotationDeg: Float)
     fun setTranslation(@Px x: Float, @Px y: Float) // todo revisit pixel translation
     fun setTranslationFactor(xFactor: Float, yFactor: Float)
     fun setOpacity(opacity: Float)

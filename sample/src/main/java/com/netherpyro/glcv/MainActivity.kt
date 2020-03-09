@@ -20,8 +20,8 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoListener
 import com.netherpyro.glcv.touches.LayerTouchListener
-import com.netherpyro.glcv.util.GlAspectRatio
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlin.math.abs
 
 /**
  * @author mmikhailov on 2019-11-30.
@@ -76,23 +76,27 @@ class MainActivity : AppCompatActivity() {
         })
 
         glView.enableGestures = true
-        glView.setAspectsPreset(AspectRatio.values().map { GlAspectRatio(it.name, it.value) }) {
-            Log.d("MainActivity", "initial aspect = $it")
-        }
 
         // add video layer
         glView.addVideoLayer(
-                onSurfaceAvailable = { surface -> player.setVideoSurface(surface) },
-                applyLayerAspect = true
-        )
-            .also { transformableList.add(it) }
+                onSurfaceAvailable = { surface -> player.setVideoSurface(surface) }
+        ) { transformable ->
+            transformableList.add(transformable)
+            // todo investigate video aspect
+            Log.i("MainActivity", "layer aspect=${transformable.getLayerAspect()}")
+            applyAspectRatio(transformable.getLayerAspect())
+        }
 
         // add image 1 layer
         LibraryHelper.image1()
-            ?.also { transformableList.add(glView.addImageLayer(bitmap = it)) }
+            ?.also { bitmap ->
+                glView.addImageLayer(bitmap = bitmap) { transformable -> transformableList.add(transformable) }
+            }
         // add image 2 layer
         LibraryHelper.image2()
-            ?.also { transformableList.add(glView.addImageLayer(bitmap = it)) }
+            ?.also { bitmap ->
+                glView.addImageLayer(bitmap = bitmap) { transformable -> transformableList.add(transformable) }
+            }
 
         a1_1.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
         a3_2.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
@@ -209,6 +213,15 @@ class MainActivity : AppCompatActivity() {
                 block.invoke(this@alsoOnLaid)
             }
         })
+    }
+
+    private fun applyAspectRatio(layerAspectValue: Float) {
+        val nearestAspect = AspectRatio.values()
+            .minBy { ar -> abs(layerAspectValue - ar.value) }!!
+
+        Log.d("MainActivity", "nearest aspect=$nearestAspect")
+
+        glView.setAspectRatio(nearestAspect.value)
     }
 
     private fun List<Transformable>.findVideoTransformable(): VideoTransformable? =

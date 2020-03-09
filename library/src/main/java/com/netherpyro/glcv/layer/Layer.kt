@@ -21,6 +21,10 @@ internal abstract class Layer(
         protected val invalidator: Invalidator
 ) : Transformable {
 
+    companion object {
+        val TAG = this::class.java.canonicalName
+    }
+
     override var enableGesturesTransform: Boolean = false
 
     protected abstract val shader: GlShader
@@ -44,11 +48,6 @@ internal abstract class Layer(
         set(value) {
             field = value
             borderShader.setAspect(value)
-
-            if (!aspectSet) {
-                aspectSet = true
-                aspectReadyAction?.invoke(value)
-            }
         }
 
     private var shouldDraw = true
@@ -63,21 +62,19 @@ internal abstract class Layer(
     private var transFactorX = 0f
     private var transFactorY = 0f
 
-    private var aspectReadyAction: ((Float) -> Unit)? = null
-    private var aspectSet = false
-
-    private var pendingCalculateGlTranslation = false
-
     private lateinit var viewport: GlViewport
+
+    private var initialized = false
 
     fun setup() {
         onSetup()
         borderShader.setup()
+        initialized = true
     }
 
     fun draw() {
-       // Thread.sleep(4L) // TODO investigate why layers in stack (from 6 pieces) flicker if remove this sleep
-        Log.d("Layer","draw::draw ? $shouldDraw::$this")
+        // Thread.sleep(4L) // TODO investigate why layers in stack (from 6 pieces) flicker if remove this sleep
+        // Log.d("Layer","draw::draw ? $shouldDraw::$this")
         if (shouldDraw) {
             onDrawFrame()
 
@@ -88,6 +85,7 @@ internal abstract class Layer(
     }
 
     fun release() {
+        initialized = false
         borderShader.release()
         onRelease()
     }
@@ -96,28 +94,22 @@ internal abstract class Layer(
     protected abstract fun onDrawFrame()
     protected abstract fun onRelease()
 
-    override fun setScale(scaleFactor: Float) {
+    override fun setScale(scaleFactor: Float) = doIfInitialized {
         this.scaleFactor = scaleFactor
         borderShader.setScale(scaleFactor)
 
-        if (frustumRect.isInitialized()) {
-            recalculateMatrices()
-            invalidator.invalidate()
-        }
+        recalculateMatrices()
+        invalidator.invalidate()
     }
 
-    override fun setRotation(rotationDeg: Float) {
+    override fun setRotation(rotationDeg: Float) = doIfInitialized {
         this.rotationDeg = rotationDeg
 
-        if (frustumRect.isInitialized()) {
-            recalculateMatrices()
-            invalidator.invalidate()
-        }
+        recalculateMatrices()
+        invalidator.invalidate()
     }
 
-    override fun setTranslation(x: Float, y: Float) {
-        if (!::viewport.isInitialized) return
-
+    override fun setTranslation(x: Float, y: Float) = doIfInitialized {
         val availWidth = viewport.width.toFloat()
         val availHeight = viewport.height.toFloat()
 
@@ -126,55 +118,45 @@ internal abstract class Layer(
         transFactorX = translationX / viewport.width
         transFactorY = translationY / viewport.height
 
-        if (frustumRect.isInitialized()) {
-            glTranslationX = translationX.toGlTranslationX()
-            glTranslationY = translationY.toGlTranslationY()
+        glTranslationX = translationX.toGlTranslationX()
+        glTranslationY = translationY.toGlTranslationY()
 
-            recalculateMatrices()
-            invalidator.invalidate()
-        } else {
-            pendingCalculateGlTranslation = true
-        }
+        recalculateMatrices()
+        invalidator.invalidate()
     }
 
-    override fun setTranslationFactor(xFactor: Float, yFactor: Float) {
-        if (!::viewport.isInitialized) return
-
+    override fun setTranslationFactor(xFactor: Float, yFactor: Float) = doIfInitialized {
         transFactorX = -xFactor
         transFactorY = yFactor
 
         translationX = -xFactor * viewport.width
         translationY = yFactor * viewport.height
 
-        if (frustumRect.isInitialized()) {
-            glTranslationX = translationX.toGlTranslationX()
-            glTranslationY = translationY.toGlTranslationY()
+        glTranslationX = translationX.toGlTranslationX()
+        glTranslationY = translationY.toGlTranslationY()
 
-            recalculateMatrices()
-            invalidator.invalidate()
-        } else {
-            pendingCalculateGlTranslation = true
-        }
+        recalculateMatrices()
+        invalidator.invalidate()
     }
 
-    override fun setOpacity(opacity: Float) {
+    override fun setOpacity(opacity: Float) = doIfInitialized {
         shader.opacity = opacity
 
         invalidator.invalidate()
     }
 
-    override fun setBorder(width: Float, @ColorInt color: Int) {
+    override fun setBorder(width: Float, @ColorInt color: Int) = doIfInitialized {
         borderShader.width = width
         borderShader.color = color
 
         invalidator.invalidate()
     }
 
-    override fun setSkipDraw(skip: Boolean) {
+    override fun setSkipDraw(skip: Boolean) = doIfInitialized {
         shouldDraw = !skip
     }
 
-    override fun setLayerPosition(position: Int) {
+    override fun setLayerPosition(position: Int) = doIfInitialized {
         invalidator.claimPosition(this, position)
     }
 
@@ -202,11 +184,6 @@ internal abstract class Layer(
         this.viewport = viewport
 
         recalculateFrustum()
-    }
-
-    fun listenAspectRatioReady(onReadyAction: (Float) -> Unit) {
-        if (aspectSet) onReadyAction(aspect)
-        else aspectReadyAction = onReadyAction
     }
 
     protected fun recalculateFrustum() {
@@ -263,18 +240,10 @@ internal abstract class Layer(
         translationX = transFactorX * viewport.width
         translationY = transFactorY * viewport.height
 
-        pendingCalculateGlTranslation = true
-
         recalculateMatrices()
     }
 
     private fun recalculateMatrices() {
-        if (pendingCalculateGlTranslation) {
-            pendingCalculateGlTranslation = false
-            glTranslationX = translationX.toGlTranslationX()
-            glTranslationY = translationY.toGlTranslationY()
-        }
-
         Matrix.frustumM(pMatrix, 0, frustumRect.left, frustumRect.right, frustumRect.bottom, frustumRect.top, 5f, 7f)
         Matrix.setIdentityM(mMatrix, 0)
         Matrix.scaleM(mMatrix, 0, scaleFactor, scaleFactor, 0f)
@@ -293,5 +262,12 @@ internal abstract class Layer(
         return (this * (abs(frustumRect.top) + abs(frustumRect.bottom)) / viewport.height) / scaleFactor
     }
 
-    private fun RectF.isInitialized() = left != right && top != bottom
+    private inline fun doIfInitialized(block: () -> Unit) {
+        if (!initialized) {
+            Log.w(TAG, "Transformable was not initialized!")
+            return
+        }
+
+        block()
+    }
 }

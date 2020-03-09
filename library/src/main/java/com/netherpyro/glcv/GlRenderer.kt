@@ -9,7 +9,6 @@ import android.opengl.GLES20.glDisable
 import android.opengl.GLES20.glEnable
 import android.opengl.GLES20.glScissor
 import android.opengl.GLES20.glViewport
-import android.util.Log
 import android.view.Surface
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.extensions.alpha
@@ -43,15 +42,12 @@ internal class GlRenderer(
     private var removeLayerAction: ((Int) -> Unit)? = null
     private var changeLayerPositionsAction: (() -> Unit)? = null
 
-    private var surfaceReady = false
     private var nextId = 0
 
     override fun onSurfaceCreated() {
         glClearColor(backgroundColor.red(), backgroundColor.green(), backgroundColor.blue(), backgroundColor.alpha())
         glEnable(GLES20.GL_BLEND)
         glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
-
-        surfaceReady = true
 
         layers.forEach { it.setup() }
     }
@@ -78,39 +74,11 @@ internal class GlRenderer(
     }
 
     override fun onRelease() {
-        surfaceReady = false
-
         layers.forEach { it.release() }
     }
 
     override fun invalidate() {
-        renderHost.requestDraw()
-    }
-
-    override fun claimPosition(layer: Layer, position: Int) {
-        if (layers.size <= 1) return
-
-        val lastAvailablePosition = layers.size - 1
-        val finalPosition = position.coerceIn(0, lastAvailablePosition)
-
-        if (layer.position == finalPosition) return
-
-        layers.forEach {
-            if (it.id != layer.id) {
-                if (it.position > finalPosition) {
-                    it.position = (it.position + 1).coerceAtMost(lastAvailablePosition)
-                } else if (it.position <= finalPosition) {
-                    it.position = (it.position - 1).coerceAtLeast(0)
-                }
-            }
-        }
-
-        layer.position = finalPosition
-        layers.sortBy { it.position }
-
-        changeLayerPositionsAction?.invoke()
-
-        invalidate()
+        renderHost.requestRender()
     }
 
     override fun subscribeLayersChange(
@@ -126,28 +94,56 @@ internal class GlRenderer(
         return layers.toList()
     }
 
-    @Synchronized
+    override fun claimPosition(layer: Layer, position: Int) {
+        renderHost.enqueueEvent(Runnable {
+            if (layers.size <= 1) return@Runnable
+
+            val lastAvailablePosition = layers.size - 1
+            val finalPosition = position.coerceIn(0, lastAvailablePosition)
+
+            if (layer.position == finalPosition) return@Runnable
+
+            layers.forEach {
+                if (it.id != layer.id) {
+                    if (it.position > finalPosition) {
+                        it.position = (it.position + 1).coerceAtMost(lastAvailablePosition)
+                    } else if (it.position <= finalPosition) {
+                        it.position = (it.position - 1).coerceAtLeast(0)
+                    }
+                }
+            }
+
+            layer.position = finalPosition
+            layers.sortBy { it.position }
+
+            changeLayerPositionsAction?.invoke()
+
+            invalidate()
+        })
+    }
+
     fun setViewport(viewport: GlViewport) {
         this.viewport = viewport
         this.layers.forEach { it.onViewportUpdated(viewport) }
     }
 
-    fun listLayers() {
-        Log.d("GlRenderer", "listLayers::${layers.toTypedArray().contentToString()}\n\n")
-    }
+    fun listLayers(): String =
+            layers.toTypedArray()
+                .contentToString()
 
-    fun addVideoLayer(tag: String?, onSurfaceAvailable: (Surface) -> Unit, applyLayerAspect: Boolean,
-                      position: Int, onFrameAvailable: (() -> Unit)?): VideoTransformable {
-        return VideoLayer(nextId++, tag, position, this, onSurfaceAvailable, onFrameAvailable)
-            .also { addLayer(it, applyLayerAspect) }
-    }
+    fun addVideoLayer(
+            tag: String?,
+            onSurfaceAvailable: (Surface) -> Unit,
+            position: Int,
+            onFrameAvailable: (() -> Unit)?
+    ): VideoTransformable =
+            VideoLayer(getNextId(), tag, position, this, onSurfaceAvailable, onFrameAvailable)
+                .also { addLayer(it) }
 
-    fun addImageLayer(tag: String?, bitmap: Bitmap, applyLayerAspect: Boolean, position: Int): Transformable {
-        return ImageLayer(nextId++, tag, position, this, bitmap)
-            .also { addLayer(it, applyLayerAspect) }
-    }
+    fun addImageLayer(tag: String?, bitmap: Bitmap, position: Int): Transformable =
+            ImageLayer(getNextId(), tag, position, this, bitmap)
+                .also { addLayer(it) }
 
-    @Synchronized
     fun removeLayer(transformable: Transformable) {
         var removedPosition: Int
         val removedIdx = layers.indexOfFirst { it.id == transformable.id }
@@ -171,28 +167,17 @@ internal class GlRenderer(
         invalidate()
     }
 
-    @Synchronized
-    private fun addLayer(layer: Layer, applyLayerAspect: Boolean) {
-        if (applyLayerAspect) layer.listenAspectRatioReady { renderHost.onLayerAspectRatio(it) }
+    private fun addLayer(layer: Layer) {
+        layer.setup()
+        layer.onViewportUpdated(viewport)
 
-        if (surfaceReady) {
-            renderHost.postAction(Runnable {
-                layer.setup()
-                layer.onViewportUpdated(viewport)
-
-                addLayerToList(layer)
-                addLayerAction?.invoke(layer)
-
-                invalidate()
-            })
-        } else {
-            addLayerToList(layer)
-            addLayerAction?.invoke(layer)
-        }
-    }
-
-    private fun addLayerToList(layer: Layer) {
         layers.add(layer)
         layers.sortBy { it.position }
+
+        addLayerAction?.invoke(layer)
+
+        invalidate()
     }
+
+    private fun getNextId() = nextId++
 }

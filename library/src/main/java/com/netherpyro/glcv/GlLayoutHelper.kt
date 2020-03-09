@@ -1,21 +1,15 @@
 package com.netherpyro.glcv
 
-import android.animation.ValueAnimator
-import android.view.animation.AccelerateInterpolator
-import androidx.core.animation.doOnEnd
-import kotlin.math.abs
 import kotlin.math.min
 
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal class GlLayoutHelper(private var viewportAspect: Float) {
+internal class GlLayoutHelper(var viewportAspect: Float) {
 
     companion object {
         const val NO_MARGIN = -1
     }
-
-    var animDuration = 150L
 
     private var viewWidth = 0
     private var viewHeight = 0
@@ -32,23 +26,10 @@ internal class GlLayoutHelper(private var viewportAspect: Float) {
         return recalculateViewport()
     }
 
-    fun changeAspectRatio(aspect: Float, animated: Boolean = false, onViewportReady: (GlViewport) -> Unit) {
-        if (!animated || abs(viewportAspect - aspect) > 1f ) {
-            viewportAspect = aspect
-            onViewportReady(recalculateViewport())
-        } else {
-            ValueAnimator.ofFloat(viewportAspect, aspect)
-                .apply {
-                    duration = animDuration
-                    interpolator = AccelerateInterpolator()
-                    addUpdateListener {
-                        viewportAspect = it.animatedValue as Float
-                        onViewportReady(recalculateViewport())
-                    }
-                    doOnEnd { onViewportReady(recalculateViewport()) }
-                    start()
-                }
-        }
+    fun changeAspectRatio(aspect: Float): GlViewport {
+        viewportAspect = aspect
+
+        return recalculateViewport()
     }
 
     fun setViewportMargin(left: Int, top: Int, right: Int, bottom: Int): GlViewport {

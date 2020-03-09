@@ -4,8 +4,7 @@ package com.netherpyro.glcv
  * @author mmikhailov on 2019-11-30.
  */
 internal interface RenderHost {
-    fun requestDraw()
+    fun requestRender()
     fun onSurfaceChanged(width: Int, height: Int)
-    fun onLayerAspectRatio(aspectValue: Float)
-    fun postAction(action: Runnable)
+    fun enqueueEvent(runnable: Runnable)
 }

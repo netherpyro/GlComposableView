@@ -1,5 +1,6 @@
 package com.netherpyro.glcv
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
@@ -10,17 +11,19 @@ import android.util.AttributeSet
 import android.util.Size
 import android.view.MotionEvent
 import android.view.Surface
+import android.view.animation.AccelerateInterpolator
 import androidx.annotation.ColorInt
+import androidx.core.animation.doOnEnd
 import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_MARGIN
 import com.netherpyro.glcv.touches.GlTouchHelper
 import com.netherpyro.glcv.touches.LayerTouchListener
-import com.netherpyro.glcv.util.AspectRatioChooser
 import com.netherpyro.glcv.util.EConfigChooser
-import com.netherpyro.glcv.util.GlAspectRatio
+import java.util.LinkedList
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLContext
 import javax.microedition.khronos.egl.EGLDisplay
+import kotlin.math.abs
 
 /**
  * @author mmikhailov on 2019-10-26.
@@ -36,18 +39,23 @@ class GlComposableView @JvmOverloads constructor(
 
     private val renderer: GlRenderer
     private val layoutHelper: GlLayoutHelper
-
     private val touchHelper: GlTouchHelper
+
+    private val eventQueue = LinkedList<Runnable>()
+
     @ColorInt
     private val defaultBaseColor: Int = Color.WHITE
+
     @ColorInt
     private val defaultViewportColor: Int = Color.BLACK
 
     private val defaultViewportAspectRatio = 1f
-    private var aspectRatioChooser: AspectRatioChooser? = null
+
+    private var changeAspectRatioAnimDuration = 150L
+
+    private var viewReady = false
 
     private var viewportSizeChangedListener: ((Size) -> Unit)? = null
-    private var initialAspectRatioListener: ((GlAspectRatio) -> Unit)? = null
 
     init {
         setEGLContextFactory(this)
@@ -62,31 +70,29 @@ class GlComposableView @JvmOverloads constructor(
         renderMode = RENDERMODE_WHEN_DIRTY
     }
 
-    override fun requestDraw() {
-        requestRender()
-    }
-
-    override fun postAction(action: Runnable) {
-        queueEvent(action)
-    }
-
     override fun onSurfaceChanged(width: Int, height: Int) {
         post { holder.setFixedSize(width, height) }
 
         val viewport = layoutHelper.onSurfaceChanged(width, height)
         touchHelper.viewHeight = height
         updateViewport(viewport)
+
+        while (eventQueue.isNotEmpty()) {
+            eventQueue.removeFirst()
+                .run()
+        }
+
+        viewReady = true
     }
 
-    override fun createContext(egl: EGL10, display: EGLDisplay,
-                               config: EGLConfig): EGLContext {
+    override fun createContext(egl: EGL10, display: EGLDisplay, config: EGLConfig): EGLContext {
         val attribList: IntArray = intArrayOf(0x3098, 2, EGL10.EGL_NONE)
 
         return egl.eglCreateContext(display, config, EGL10.EGL_NO_CONTEXT, attribList)
     }
 
-    override fun destroyContext(egl: EGL10, display: EGLDisplay,
-                                context: EGLContext) {
+    override fun destroyContext(egl: EGL10, display: EGLDisplay, context: EGLContext) {
+        viewReady = false
         renderer.release()
 
         if (!egl.eglDestroyContext(display, context)) {
@@ -94,9 +100,12 @@ class GlComposableView @JvmOverloads constructor(
         }
     }
 
-    override fun onLayerAspectRatio(aspectValue: Float) {
-        val glAspectRatio = aspectRatioChooser?.selectNearestAspect(aspectValue) ?: GlAspectRatio("", aspectValue)
-        initialAspectRatioListener?.invoke(glAspectRatio)
+    override fun enqueueEvent(runnable: Runnable) {
+        if (viewReady) {
+            queueEvent { runnable.run() }
+        } else {
+            eventQueue.addLast(runnable)
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -106,30 +115,35 @@ class GlComposableView @JvmOverloads constructor(
         } else super.onTouchEvent(event)
     }
 
-    fun listLayers() {
-        renderer.listLayers()
-    }
+    fun listLayers() = renderer.listLayers()
 
     fun addVideoLayer(
             tag: String? = null,
             onSurfaceAvailable: (Surface) -> Unit,
-            applyLayerAspect: Boolean = false,
             position: Int = GlRenderer.NO_POSITION,
-            onFrameAvailable: (() -> Unit)? = null
-    ): VideoTransformable {
-        return renderer.addVideoLayer(tag, onSurfaceAvailable, applyLayerAspect, position, onFrameAvailable)
+            onFrameAvailable: (() -> Unit)? = null,
+            onTransformable: (Transformable) -> Unit
+    ) = enqueueEvent {
+        val t: Transformable = renderer.addVideoLayer(
+                tag,
+                onSurfaceAvailable,
+                position,
+                onFrameAvailable
+        )
+        onTransformable(t)
     }
 
     fun addImageLayer(
             tag: String? = null,
             bitmap: Bitmap,
-            applyLayerAspect: Boolean = false,
-            position: Int = GlRenderer.NO_POSITION
-    ): Transformable {
-        return renderer.addImageLayer(tag, bitmap, applyLayerAspect, position)
+            position: Int = GlRenderer.NO_POSITION,
+            onTransformable: (Transformable) -> Unit
+    ) = enqueueEvent {
+        val t: Transformable = renderer.addImageLayer(tag, bitmap, position)
+        onTransformable(t)
     }
 
-    fun remove(transformable: Transformable) {
+    fun removeLayer(transformable: Transformable) = enqueueEvent {
         renderer.removeLayer(transformable)
     }
 
@@ -141,35 +155,18 @@ class GlComposableView @JvmOverloads constructor(
         touchHelper.touchesListener = layerTouchListener
     }
 
-    /**
-     * Sets preferred aspects, one of them being apply automatically once one of layers has given its aspect
-     *
-     * Make sure this function called before layers being added for proper initial aspect installation
-     * */
-    fun setAspectsPreset(aspectRatioPresetList: List<GlAspectRatio>,
-                         initialAspectRatioListener: ((GlAspectRatio) -> Unit)? = null) {
-        this.aspectRatioChooser = AspectRatioChooser(aspectRatioPresetList)
-        this.initialAspectRatioListener = initialAspectRatioListener
+    fun setAspectRatio(aspect: Float, animated: Boolean = false) = enqueueEvent {
+        setAspectRatioInternal(aspect, animated)
     }
 
-    fun setAspectRatio(aspect: Float, animated: Boolean = false) {
-        queueEvent { setAspectRatioInternal(aspect, animated) }
-    }
-
-    fun setBaseColor(@ColorInt color: Int) {
+    fun setBaseColor(@ColorInt color: Int) = enqueueEvent {
         renderer.backgroundColor = color
-
-        requestDraw()
+        requestRender()
     }
 
-    fun setViewportColor(@ColorInt color: Int) {
+    fun setViewportColor(@ColorInt color: Int) = enqueueEvent {
         renderer.viewportColor = color
-
-        requestDraw()
-    }
-
-    fun setChangeAspectRatioAnimationDuration(duration: Long) {
-        layoutHelper.animDuration = duration
+        requestRender()
     }
 
     fun setViewportMargin(
@@ -177,16 +174,27 @@ class GlComposableView @JvmOverloads constructor(
             top: Int = NO_MARGIN,
             right: Int = NO_MARGIN,
             bottom: Int = NO_MARGIN
-    ) {
-        queueEvent {
-            val viewport = layoutHelper.setViewportMargin(left, top, right, bottom)
-            updateViewport(viewport)
-        }
+    ) = enqueueEvent {
+        val viewport = layoutHelper.setViewportMargin(left, top, right, bottom)
+        updateViewport(viewport)
     }
 
-    private fun setAspectRatioInternal(aspectValue: Float, animated: Boolean) {
-        layoutHelper.changeAspectRatio(aspectValue, animated) { viewport ->
-            updateViewport(viewport)
+    private fun setAspectRatioInternal(targetValue: Float, animated: Boolean) {
+        val currentValue = layoutHelper.viewportAspect
+
+        if (!animated || abs(currentValue - targetValue) > 1f) {
+            updateViewport(layoutHelper.changeAspectRatio(targetValue))
+        } else {
+            ValueAnimator.ofFloat(currentValue, targetValue)
+                .apply {
+                    duration = changeAspectRatioAnimDuration
+                    interpolator = AccelerateInterpolator()
+                    addUpdateListener {
+                        updateViewport(layoutHelper.changeAspectRatio(it.animatedValue as Float))
+                    }
+                    doOnEnd { updateViewport(layoutHelper.changeAspectRatio(targetValue)) }
+                    post { start() }
+                }
         }
     }
 
@@ -194,8 +202,16 @@ class GlComposableView @JvmOverloads constructor(
         renderer.setViewport(vp)
         touchHelper.viewport = vp
 
-        viewportSizeChangedListener?.also { post { it.invoke(vp.toSize()) } }
+        viewportSizeChangedListener?.also { listener -> post { listener.invoke(vp.toSize()) } }
 
         requestRender()
+    }
+
+    private inline fun enqueueEvent(crossinline r: () -> Unit) {
+        if (viewReady) {
+            queueEvent { r.invoke() }
+        } else {
+            eventQueue.addLast(Runnable { r.invoke() })
+        }
     }
 }

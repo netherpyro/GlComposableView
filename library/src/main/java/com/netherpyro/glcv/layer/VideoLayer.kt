@@ -30,14 +30,13 @@ internal class VideoLayer(
     private val transformMatrix = FloatArray(16)
     private val textureTarget = GlExtTextureShader.GL_TEXTURE_EXTERNAL_OES
 
-    private var initialized = false
-    private var pendingCalculate = false
-
     /**
      * Must be called in GL thread
      * */
     override fun onSetup() {
         release()
+
+        updateTexImageCounter = 0
 
         texName = EglUtil.genBlankTexture(textureTarget)
 
@@ -47,17 +46,6 @@ internal class VideoLayer(
         shader.setup()
 
         onSurfaceAvailable(Surface(surfaceTexture))
-
-        synchronized(this) {
-            updateTexImageCounter = 0
-            initialized = true
-
-            if (pendingCalculate) {
-                pendingCalculate = false
-                recalculateFrustum()
-                invalidator.invalidate()
-            }
-        }
     }
 
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
@@ -81,7 +69,6 @@ internal class VideoLayer(
      * Must be called in GL thread
      * */
     override fun onRelease() {
-        initialized = false
         shader.release()
 
         EglUtil.deleteTextures(texName)
@@ -89,12 +76,7 @@ internal class VideoLayer(
 
     override fun setVideoSize(width: Float, height: Float) {
         aspect = width / height
-
-        if (initialized) {
-            recalculateFrustum()
-            invalidator.invalidate()
-        } else {
-            pendingCalculate = true
-        }
+        recalculateFrustum()
+        invalidator.invalidate()
     }
 }
