@@ -16,7 +16,6 @@ import kotlin.math.sin
 /**
  * @author mmikhailov on 2019-12-18.
  */
-// todo check position order
 internal class GlTouchHelper(context: Context, observable: TransformableObservable) {
 
     var viewport = GlViewport()

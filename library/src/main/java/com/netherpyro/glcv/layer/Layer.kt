@@ -157,7 +157,7 @@ internal abstract class Layer(
     }
 
     override fun setLayerPosition(position: Int) = doIfInitialized {
-        invalidator.claimPosition(this, position)
+        invalidator.claimLayerPosition(this, position)
     }
 
     override fun setSize(width: Float, height: Float) {

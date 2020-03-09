@@ -31,7 +31,8 @@ internal class GlRenderer(
 ) : FrameBufferObjectRenderer(), Invalidator, TransformableObservable {
 
     companion object {
-        const val NO_POSITION = -1 // means to top of layer stack
+        const val TOP_POSITION = Int.MAX_VALUE
+        const val BOTTOM_POSITION = Int.MIN_VALUE
     }
 
     private val layers = mutableListOf<Layer>()
@@ -94,31 +95,9 @@ internal class GlRenderer(
         return layers.toList()
     }
 
-    override fun claimPosition(layer: Layer, position: Int) {
+    override fun claimLayerPosition(layer: Layer, position: Int) {
         renderHost.enqueueEvent(Runnable {
-            if (layers.size <= 1) return@Runnable
-
-            val lastAvailablePosition = layers.size - 1
-            val finalPosition = position.coerceIn(0, lastAvailablePosition)
-
-            if (layer.position == finalPosition) return@Runnable
-
-            layers.forEach {
-                if (it.id != layer.id) {
-                    if (it.position > finalPosition) {
-                        it.position = (it.position + 1).coerceAtMost(lastAvailablePosition)
-                    } else if (it.position <= finalPosition) {
-                        it.position = (it.position - 1).coerceAtLeast(0)
-                    }
-                }
-            }
-
-            layer.position = finalPosition
-            layers.sortBy { it.position }
-
-            changeLayerPositionsAction?.invoke()
-
-            invalidate()
+            moveLayer(layer, position)
         })
     }
 
@@ -137,11 +116,11 @@ internal class GlRenderer(
             position: Int,
             onFrameAvailable: (() -> Unit)?
     ): Transformable =
-            SurfaceLayer(getNextId(), tag, position, this, onSurfaceAvailable, onFrameAvailable)
+            SurfaceLayer(getNextId(), tag, refineAddPosition(position), this, onSurfaceAvailable, onFrameAvailable)
                 .also { addLayer(it) }
 
     fun addBitmapLayer(tag: String?, bitmap: Bitmap, position: Int): Transformable =
-            BitmapLayer(getNextId(), tag, position, this, bitmap)
+            BitmapLayer(getNextId(), tag, refineAddPosition(position), this, bitmap)
                 .also { addLayer(it) }
 
     fun removeLayer(transformable: Transformable) {
@@ -171,6 +150,12 @@ internal class GlRenderer(
         layer.setup()
         layer.onViewportUpdated(viewport)
 
+        layers.forEach {
+            if (it.position >= layer.position) {
+                it.position += 1
+            }
+        }
+
         layers.add(layer)
         layers.sortBy { it.position }
 
@@ -179,5 +164,41 @@ internal class GlRenderer(
         invalidate()
     }
 
+    private fun moveLayer(layer: Layer, position: Int) {
+        if (layers.size <= 1) return
+
+        val lastAvailablePosition = layers.size - 1
+        val finalPosition = position.coerceIn(0, lastAvailablePosition)
+
+        if (layer.position == finalPosition) return
+
+        layers.forEach {
+            if (it.id != layer.id) {
+                if (it.position > finalPosition) {
+                    it.position = (it.position + 1).coerceAtMost(lastAvailablePosition)
+                } else if (it.position <= finalPosition) {
+                    it.position = (it.position - 1).coerceAtLeast(0)
+                }
+            }
+        }
+
+        layer.position = finalPosition
+        layers.sortBy { it.position }
+
+        changeLayerPositionsAction?.invoke()
+
+        invalidate()
+    }
+
     private fun getNextId() = nextId++
+
+    private fun refineAddPosition(desiredPos: Int): Int {
+        val currentMaxPosition: Int = layers.maxBy { it.position }?.position ?: -1
+
+        return when {
+            desiredPos < 0 -> 0 // bottom position
+            desiredPos > currentMaxPosition -> currentMaxPosition + 1 // top position
+            else -> desiredPos // desired position
+        }
+    }
 }

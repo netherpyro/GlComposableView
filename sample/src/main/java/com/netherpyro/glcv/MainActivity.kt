@@ -38,10 +38,7 @@ class MainActivity : AppCompatActivity() {
         override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int,
                                         pixelWidthHeightRatio: Float) {
             transformableList.findTransformable(videoTag)
-                ?.also { tr ->
-                    tr.setSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
-                    applyAspectRatio(tr.getLayerAspect())
-                }
+                ?.setSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
         }
 
         override fun onRenderedFirstFrame() {}
@@ -96,7 +93,10 @@ class MainActivity : AppCompatActivity() {
         // add bitmap 2 layer
         LibraryHelper.image2()
             ?.also { bitmap ->
-                glView.addBitmapLayer(bitmap = bitmap) { transformable -> transformableList.add(transformable) }
+                glView.addBitmapLayer(bitmap = bitmap) { transformable ->
+                    transformableList.add(transformable)
+                    applyAspectRatio(transformable.getLayerAspect()) // use initial aspect of second image added
+                }
             }
 
         a1_1.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }

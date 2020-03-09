@@ -120,7 +120,7 @@ class GlComposableView @JvmOverloads constructor(
     fun addSurfaceLayer(
             tag: String? = null,
             onSurfaceAvailable: (Surface) -> Unit,
-            position: Int = GlRenderer.NO_POSITION,
+            position: Int = GlRenderer.TOP_POSITION,
             onFrameAvailable: (() -> Unit)? = null,
             onTransformable: (Transformable) -> Unit
     ) = enqueueEvent {
@@ -136,7 +136,7 @@ class GlComposableView @JvmOverloads constructor(
     fun addBitmapLayer(
             tag: String? = null,
             bitmap: Bitmap,
-            position: Int = GlRenderer.NO_POSITION,
+            position: Int = GlRenderer.TOP_POSITION,
             onTransformable: (Transformable) -> Unit
     ) = enqueueEvent {
         val t: Transformable = renderer.addBitmapLayer(tag, bitmap, position)
