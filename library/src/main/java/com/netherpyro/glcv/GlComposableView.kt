@@ -10,7 +10,6 @@ import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.util.Size
 import android.view.MotionEvent
-import android.view.Surface
 import android.view.animation.AccelerateInterpolator
 import androidx.annotation.ColorInt
 import androidx.core.animation.doOnEnd
@@ -119,7 +118,7 @@ class GlComposableView @JvmOverloads constructor(
 
     fun addSurfaceLayer(
             tag: String? = null,
-            surfaceConsumer: (Surface) -> Unit,
+            surfaceConsumer: SurfaceConsumer,
             position: Int = GlRenderer.TOP_POSITION,
             onFrameAvailable: ((Long) -> Unit)? = null,
             onTransformable: (Transformable) -> Unit

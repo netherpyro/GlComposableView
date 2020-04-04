@@ -1,5 +1,6 @@
 package com.netherpyro.glcv.baker
 
+import android.content.Context
 import com.netherpyro.glcv.baker.encode.EncoderConfig
 import com.netherpyro.glcv.baker.encode.VideoEncoderCore.Companion.DEFAULT_BIT_RATE
 import com.netherpyro.glcv.baker.encode.VideoEncoderCore.Companion.DEFAULT_FPS
@@ -12,6 +13,7 @@ import com.netherpyro.glcv.compose.Composer
  * @author mmikhailov on 01.04.2020.
  */
 fun Composer.renderToVideoFile(
+        context: Context,
         outputPath: String,
         width: Int = FULL_HD_WIDTH,
         height: Int = FULL_HD_HEIGHT,
@@ -20,6 +22,7 @@ fun Composer.renderToVideoFile(
         bitRate: Int = DEFAULT_BIT_RATE,
         progressListener: ((progress: Float, completed: Boolean) -> Unit)? = null
 ): Cancellable = Baker.bake(
+        context,
         this.takeSnapshot(),
         EncoderConfig(outputPath, width, height, fps, iFrameIntervalSecs, bitRate, getSharedEglContext()),
         progressListener

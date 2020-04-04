@@ -4,6 +4,7 @@ import android.graphics.SurfaceTexture
 import android.graphics.SurfaceTexture.OnFrameAvailableListener
 import android.view.Surface
 import com.netherpyro.glcv.Invalidator
+import com.netherpyro.glcv.SurfaceConsumer
 import com.netherpyro.glcv.shader.GlExtTextureShader
 import com.netherpyro.glcv.util.EglUtil
 
@@ -19,7 +20,7 @@ internal class SurfaceLayer(
         tag: String?,
         position: Int,
         invalidator: Invalidator,
-        private val surfaceConsumer: (Surface) -> Unit,
+        private val surfaceConsumer: SurfaceConsumer,
         private val onFrameAvailable: ((Long) -> Unit)? = null
 ) : Layer(id, tag, position, invalidator), OnFrameAvailableListener {
 
@@ -48,7 +49,7 @@ internal class SurfaceLayer(
 
         shader.setup()
 
-        surfaceConsumer(Surface(surfaceTexture))
+        surfaceConsumer.consume(Surface(surfaceTexture))
     }
 
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture) {

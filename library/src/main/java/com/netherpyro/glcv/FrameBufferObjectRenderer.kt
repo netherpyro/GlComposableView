@@ -17,12 +17,16 @@ abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
     private lateinit var mFramebufferObject: FramebufferObject
     private lateinit var normalShader: GlShader
 
+    protected var initialized = false
+
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         mFramebufferObject = FramebufferObject()
         normalShader = GlShader()
         normalShader.setup()
 
         onSurfaceCreated()
+
+        initialized = true
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -46,6 +50,8 @@ abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
     }
 
     fun release() {
+        initialized = false
+
         normalShader.release()
         mFramebufferObject.release()
 

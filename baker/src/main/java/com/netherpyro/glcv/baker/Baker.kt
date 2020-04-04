@@ -1,5 +1,6 @@
 package com.netherpyro.glcv.baker
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Handler
 import android.os.HandlerThread
@@ -8,10 +9,13 @@ import android.util.Log
 import com.netherpyro.glcv.GlRenderer
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.LayoutHelper
+import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.baker.decode.DecoderPool
 import com.netherpyro.glcv.baker.encode.EncoderConfig
 import com.netherpyro.glcv.baker.encode.GlRecoder
 import com.netherpyro.glcv.baker.encode.PostRenderCallback
 import com.netherpyro.glcv.compose.Composer
+import com.netherpyro.glcv.compose.LayerType
 import com.netherpyro.glcv.compose.TimeMask
 
 /**
@@ -21,25 +25,22 @@ import com.netherpyro.glcv.compose.TimeMask
  */
 internal class Baker private constructor(
         config: EncoderConfig,
+        private val context: Context,
         private val snapshot: Composer.Snapshot,
         private val progressListener: ((progress: Float, completed: Boolean) -> Unit)?
 ) : Cancellable {
 
     companion object {
-        fun bake(
-                snapshot: Composer.Snapshot,
-                config: EncoderConfig,
-                progressListener: ((progress: Float, completed: Boolean) -> Unit)?
-        ): Cancellable = Baker(config, snapshot, progressListener)
+        fun bake(context: Context,
+                 snapshot: Composer.Snapshot,
+                 config: EncoderConfig,
+                 progressListener: ((progress: Float, completed: Boolean) -> Unit)?
+        ): Cancellable = Baker(config, context, snapshot, progressListener)
     }
 
-    private val frameSyncThread = FrameSyncThread(config)
-    private val renderer = GlRenderer(RenderHostStub, Color.BLACK, snapshot.viewportColor)
-    private val viewport: GlViewport = LayoutHelper(snapshot.aspectRatio)
-        .onSurfaceChanged(config.width, config.height)
+    private val frameSyncThread = BakerThread(config)
 
     init {
-        snapshot.setupWithLayers(renderer)
         frameSyncThread.requestStartRecording()
     }
 
@@ -48,21 +49,30 @@ internal class Baker private constructor(
     }
 
     @Suppress("PrivatePropertyName")
-    private inner class FrameSyncThread(
-            private val encoderConfig: EncoderConfig
-    ) : HandlerThread("FrameSyncThread"), Handler.Callback, PostRenderCallback {
+    private inner class BakerThread(
+            private val config: EncoderConfig
+    ) : HandlerThread("BakerThread"), Handler.Callback, PostRenderCallback {
 
-        private val TAG = "FrameSyncThread"
+        private val TAG = "BakerThread"
         private val START = 0
         private val STOP = 1
         private val FRAME = 2
 
-        private val totalDurationNanos = snapshot.totalDurationMs() * 1_000_000L
-        private val frameDurationNanos = 1_000_000_000L / encoderConfig.fps
+        private lateinit var handler: Handler
+        private lateinit var glRecoder: GlRecoder
+        private lateinit var transformables: Array<Transformable>
+
+        private val glRenderer = GlRenderer(RenderHostStub, Color.BLACK, snapshot.viewportColor)
+        private val viewport: GlViewport = LayoutHelper(snapshot.aspectRatio)
+            .onSurfaceChanged(config.width, config.height)
+
+        private val timeMask = TimeMask.from(snapshot.layers)
+        private val totalDurationNanos = timeMask.durationMs * 1_000_000L
+        private val frameDurationNanos = 1_000_000_000L / config.fps
+
         private var presentationTimeNanos = -frameDurationNanos //todo minus needed?
 
-        private lateinit var glRecoder: GlRecoder
-        private lateinit var handler: Handler
+        private val decoders = DecoderPool()
 
         @Synchronized
         override fun start() {
@@ -96,12 +106,51 @@ internal class Baker private constructor(
             handler.sendEmptyMessage(STOP)
         }
 
+        private fun startRecoding(): Boolean {
+            glRecoder = GlRecoder(glRenderer, viewport, config, this)
+            glRecoder.raiseEncoder()
+            setupGlRenderer()
+
+            generateFrame()
+
+            return true
+        }
+
+        private fun stopRecoding(): Boolean {
+            glRecoder.stopRecording()
+
+            interrupt()
+            quit()
+
+            return true
+        }
+
+        private fun setupGlRenderer() {
+            transformables = Array(snapshot.layers.size) { index ->
+                snapshot.layers[index].run {
+                    return@run when (type) {
+                        LayerType.VIDEO -> glRenderer.addSurfaceLayer(
+                                tag,
+                                surfaceConsumer = decoders.createDecoderForTag(tag, context, uri),
+                                position = zPosition
+                        )
+                        LayerType.IMAGE -> glRenderer.addBitmapLayer(
+                                tag,
+                                bitmap = BitmapProvider.get(context, uri),
+                                position = zPosition
+                        )
+                    }
+                }
+            }
+        }
+
         private fun generateFrame(): Boolean {
             presentationTimeNanos += frameDurationNanos
 
-            snapshot.invalidateLayersVisibility(presentationTimeNanos / 1_000_000)
+            invalidateLayersVisibility(presentationTimeNanos / 1_000_000)
 
-            // todo play movie frame synchronously if exists
+            // todo resolve video's timestamps
+            //decoders.advance()
 
             val progress = presentationTimeNanos / totalDurationNanos.toFloat()
             val hasFrames = presentationTimeNanos <= totalDurationNanos
@@ -116,22 +165,9 @@ internal class Baker private constructor(
             return true
         }
 
-        private fun startRecoding(): Boolean {
-            glRecoder = GlRecoder(renderer, viewport, encoderConfig, this)
-            glRecoder.raiseEncoder()
-
-            generateFrame()
-
-            return true
-        }
-
-        private fun stopRecoding(): Boolean {
-            glRecoder.stopRecording()
-
-            interrupt()
-            quit()
-
-            return true
+        private fun invalidateLayersVisibility(timestampMs: Long) {
+            timeMask.takeVisibilityStatus(timestampMs)
+                .values.forEachIndexed { index, visible -> transformables[index].setSkipDraw(!visible) }
         }
     }
 }

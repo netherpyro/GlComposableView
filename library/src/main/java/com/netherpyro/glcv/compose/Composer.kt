@@ -1,10 +1,9 @@
 package com.netherpyro.glcv.compose
 
+import android.net.Uri
 import android.opengl.EGLContext
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlComposableView
-import com.netherpyro.glcv.GlRenderer
-import java.io.File
 
 /**
  * @author mmikhailov on 28.03.2020.
@@ -44,11 +43,13 @@ class Composer {
 
     fun takeLayerTemplate() = LayerTemplate.from(mediaLayers)
 
-    fun takeSnapshot() = Snapshot(takeLayerTemplate(), viewportColor, aspectRatio)
+    fun takeSnapshot() = Snapshot(takeLayerTemplate().toLayers(), viewportColor, aspectRatio)
 
     fun applyLayerTemplate(template: LayerTemplate) {
         // todo validate template param
-        // todo set up media layers according template
+
+        mediaLayers.clear()
+        mediaLayers.addAll(template.toLayers())
     }
 
     /**
@@ -68,7 +69,8 @@ class Composer {
         // todo add media layers to glView
     }
 
-    fun addLayer(tag: String, src: File, zOrderPosition: ZOrderPosition = ZOrderPosition.TOP) {
+    fun addLayer(tag: String, src: Uri, zOrderPosition: ZOrderPosition = ZOrderPosition.TOP) {
+        // todo convert input data to media layer
         // todo modify media layer list
         // todo apply to glView if exists
     }
@@ -88,26 +90,10 @@ class Composer {
         // todo apply to glView if exists
     }
 
-    class Snapshot(
-            template: LayerTemplate,
+    data class Snapshot(
+            val layers: List<MediaLayer>,
             @ColorInt
             val viewportColor: Int,
             val aspectRatio: Float
-    ) {
-        private val layers: List<MediaLayer> = template.toLayers()
-        private val timeMask = TimeMask.from(layers)
-
-        fun invalidateLayersVisibility(timestampMs: Long) {
-            timeMask.takeVisibilityStatus(timestampMs)
-                .forEach { entry ->
-                    layers.find { l -> l.tag == entry.key }?.isVisible = entry.value
-                }
-        }
-
-        fun totalDurationMs() = timeMask.durationMs
-
-        fun setupWithLayers(glRenderer: GlRenderer) {
-            // todo add media layers to renderer
-        }
-    }
+    )
 }

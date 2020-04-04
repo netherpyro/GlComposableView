@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity() {
         // add surface layer
         glView.addSurfaceLayer(
                 tag = videoTag,
-                surfaceConsumer = { surface -> player.setVideoSurface(surface) }
+                surfaceConsumer = SurfaceConsumer { player.setVideoSurface(it) }
         ) { transformable -> transformableList.add(transformable) }
 
         // add bitmap 1 layer

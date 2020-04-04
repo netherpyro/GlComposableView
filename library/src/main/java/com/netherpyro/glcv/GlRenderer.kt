@@ -9,7 +9,6 @@ import android.opengl.GLES20.glDisable
 import android.opengl.GLES20.glEnable
 import android.opengl.GLES20.glScissor
 import android.opengl.GLES20.glViewport
-import android.view.Surface
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.extensions.alpha
 import com.netherpyro.glcv.extensions.blue
@@ -112,9 +111,9 @@ class GlRenderer(
 
     fun addSurfaceLayer(
             tag: String?,
-            surfaceConsumer: (Surface) -> Unit,
+            surfaceConsumer: SurfaceConsumer,
             position: Int,
-            onFrameAvailable: ((Long) -> Unit)?
+            onFrameAvailable: ((Long) -> Unit)? = null
     ): Transformable =
             SurfaceLayer(getNextId(), tag, refineAddPosition(position), this, surfaceConsumer, onFrameAvailable)
                 .also { addLayer(it) }
@@ -147,7 +146,10 @@ class GlRenderer(
     }
 
     private fun addLayer(layer: Layer) {
-        layer.setup()
+        if (initialized) {
+            layer.setup()
+        }
+
         layer.onViewportUpdated(viewport)
 
         layers.forEach {
