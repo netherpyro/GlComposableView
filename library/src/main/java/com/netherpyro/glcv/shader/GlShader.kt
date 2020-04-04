@@ -8,7 +8,7 @@ import java.util.HashMap
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal open class GlShader @JvmOverloads constructor(
+open class GlShader @JvmOverloads constructor(
         private val vertexShaderSource: String = DEFAULT_VERTEX_SHADER,
         private val fragmentShaderSource: String = DEFAULT_FRAGMENT_SHADER
 ) {

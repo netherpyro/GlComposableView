@@ -89,12 +89,15 @@ object EglUtil {
         return program
     }
 
+    /**
+     * Checks for EGL errors.  Throws an exception if one is found.
+     */
     fun checkEglError(operation: String) {
         if (!BuildConfig.DEBUG) return
-        var error: Int
+        val error = glGetError()
 
-        while (glGetError().also { error = it } != GL_NO_ERROR) {
-            throw RuntimeException("$operation: glError $error")
+        if (error != GL_NO_ERROR) {
+            throw RuntimeException("$operation: glError 0x${Integer.toHexString(error)}")
         }
     }
 

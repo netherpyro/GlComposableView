@@ -14,7 +14,7 @@ import kotlin.math.abs
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal abstract class Layer(
+abstract class Layer(
         override val id: Int,
         override val tag: String? = null,
         var position: Int,

@@ -5,14 +5,14 @@ import kotlin.math.min
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal class GlLayoutHelper(var viewportAspect: Float) {
+class LayoutHelper(var viewportAspect: Float) {
 
     companion object {
         const val NO_MARGIN = -1
     }
 
-    private var viewWidth = 0
-    private var viewHeight = 0
+    private var totalWidth = 0
+    private var totalHeight = 0
     private var viewportMarginLeft = 0
     private var viewportMarginTop = 0
     private var viewportMarginRight = 0
@@ -20,8 +20,8 @@ internal class GlLayoutHelper(var viewportAspect: Float) {
     private var viewport = GlViewport()
 
     fun onSurfaceChanged(width: Int, height: Int): GlViewport {
-        viewWidth = width
-        viewHeight = height
+        totalWidth = width
+        totalHeight = height
 
         return recalculateViewport()
     }
@@ -47,8 +47,8 @@ internal class GlLayoutHelper(var viewportAspect: Float) {
         val h: Int
         val w: Int
 
-        val maxW = viewWidth - viewportMarginLeft - viewportMarginRight
-        val maxH = viewHeight - viewportMarginTop - viewportMarginBottom
+        val maxW = totalWidth - viewportMarginLeft - viewportMarginRight
+        val maxH = totalHeight - viewportMarginTop - viewportMarginBottom
 
         if (viewportAspect >= 1f) {
             h = min((maxW / viewportAspect).toInt(), maxH)

@@ -22,7 +22,7 @@ import com.netherpyro.glcv.layer.SurfaceLayer
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal class GlRenderer(
+class GlRenderer(
         private val renderHost: RenderHost,
         @ColorInt
         var backgroundColor: Int,
@@ -112,11 +112,11 @@ internal class GlRenderer(
 
     fun addSurfaceLayer(
             tag: String?,
-            onSurfaceAvailable: (Surface) -> Unit,
+            surfaceConsumer: (Surface) -> Unit,
             position: Int,
-            onFrameAvailable: (() -> Unit)?
+            onFrameAvailable: ((Long) -> Unit)?
     ): Transformable =
-            SurfaceLayer(getNextId(), tag, refineAddPosition(position), this, onSurfaceAvailable, onFrameAvailable)
+            SurfaceLayer(getNextId(), tag, refineAddPosition(position), this, surfaceConsumer, onFrameAvailable)
                 .also { addLayer(it) }
 
     fun addBitmapLayer(tag: String?, bitmap: Bitmap, position: Int): Transformable =

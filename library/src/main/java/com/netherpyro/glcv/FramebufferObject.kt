@@ -36,7 +36,7 @@ import com.netherpyro.glcv.util.EglUtil
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal class FramebufferObject {
+class FramebufferObject {
 
     var width = 0
         private set

@@ -12,12 +12,12 @@ import javax.microedition.khronos.opengles.GL10
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
+abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
 
     private lateinit var mFramebufferObject: FramebufferObject
     private lateinit var normalShader: GlShader
 
-    override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
+    override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         mFramebufferObject = FramebufferObject()
         normalShader = GlShader()
         normalShader.setup()
@@ -25,13 +25,13 @@ internal abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
         onSurfaceCreated()
     }
 
-    override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
+    override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         mFramebufferObject.setup(width, height)
 
         onSurfaceChanged(width, height)
     }
 
-    override fun onDrawFrame(gl: GL10) {
+    override fun onDrawFrame(gl: GL10?) {
         mFramebufferObject.enable()
 
         glViewport(0, 0, mFramebufferObject.width, mFramebufferObject.height)
@@ -56,8 +56,8 @@ internal abstract class FrameBufferObjectRenderer : GLSurfaceView.Renderer {
     protected fun finalize() {
     }
 
-    abstract fun onSurfaceCreated()
-    abstract fun onSurfaceChanged(width: Int, height: Int)
-    abstract fun onDrawFrame(fbo: FramebufferObject)
-    abstract fun onRelease()
+    protected abstract fun onSurfaceCreated()
+    protected abstract fun onSurfaceChanged(width: Int, height: Int)
+    protected abstract fun onDrawFrame(fbo: FramebufferObject)
+    protected abstract fun onRelease()
 }

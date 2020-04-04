@@ -5,7 +5,7 @@ import com.netherpyro.glcv.layer.Layer
 /**
  * @author mmikhailov on 2019-11-30.
  */
-internal interface Invalidator {
+interface Invalidator {
     /**
      * Claim request of move specified layer to desired position
      * */

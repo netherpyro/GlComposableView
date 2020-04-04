@@ -19,8 +19,8 @@ internal class SurfaceLayer(
         tag: String?,
         position: Int,
         invalidator: Invalidator,
-        private val onSurfaceAvailable: (Surface) -> Unit,
-        private val onFrameAvailable: (() -> Unit)? = null
+        private val surfaceConsumer: (Surface) -> Unit,
+        private val onFrameAvailable: ((Long) -> Unit)? = null
 ) : Layer(id, tag, position, invalidator), OnFrameAvailableListener {
 
     override val shader = GlExtTextureShader()
@@ -48,14 +48,14 @@ internal class SurfaceLayer(
 
         shader.setup()
 
-        onSurfaceAvailable(Surface(surfaceTexture))
+        surfaceConsumer(Surface(surfaceTexture))
     }
 
-    override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
+    override fun onFrameAvailable(surfaceTexture: SurfaceTexture) {
         updateTexImageCounter++
 
         invalidator.invalidate()
-        onFrameAvailable?.invoke()
+        onFrameAvailable?.invoke(surfaceTexture.timestamp)
     }
 
     override fun onDrawFrame() {

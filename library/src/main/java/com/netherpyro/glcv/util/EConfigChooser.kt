@@ -50,8 +50,7 @@ class EConfigChooser : EGLConfigChooser {
         return newConfigSpec
     }
 
-    override fun chooseConfig(egl: EGL10,
-                              display: EGLDisplay): EGLConfig {
+    override fun chooseConfig(egl: EGL10, display: EGLDisplay): EGLConfig {
         val numConfig = IntArray(1)
         require(egl.eglChooseConfig(display, configSpec, null, 0, numConfig)) { "eglChooseConfig failed" }
 

@@ -14,7 +14,7 @@ import android.view.Surface
 import android.view.animation.AccelerateInterpolator
 import androidx.annotation.ColorInt
 import androidx.core.animation.doOnEnd
-import com.netherpyro.glcv.GlLayoutHelper.Companion.NO_MARGIN
+import com.netherpyro.glcv.LayoutHelper.Companion.NO_MARGIN
 import com.netherpyro.glcv.touches.GlTouchHelper
 import com.netherpyro.glcv.touches.LayerTouchListener
 import com.netherpyro.glcv.util.EConfigChooser
@@ -38,7 +38,7 @@ class GlComposableView @JvmOverloads constructor(
     var enableGestures = false
 
     private val renderer: GlRenderer
-    private val layoutHelper: GlLayoutHelper
+    private val layoutHelper: LayoutHelper
     private val touchHelper: GlTouchHelper
 
     private val eventQueue = LinkedList<Runnable>()
@@ -60,10 +60,10 @@ class GlComposableView @JvmOverloads constructor(
     init {
         setEGLContextFactory(this)
         setEGLConfigChooser(EConfigChooser())
-        holder.setFormat(PixelFormat.RGBA_8888)
+        holder.setFormat(PixelFormat.RGBA_8888) // todo remove line (?)
 
         renderer = GlRenderer(this, defaultBaseColor, defaultViewportColor)
-        layoutHelper = GlLayoutHelper(defaultViewportAspectRatio)
+        layoutHelper = LayoutHelper(defaultViewportAspectRatio)
         touchHelper = GlTouchHelper(context, renderer)
 
         setRenderer(renderer)
@@ -71,7 +71,7 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     override fun onSurfaceChanged(width: Int, height: Int) {
-        post { holder.setFixedSize(width, height) }
+        post { holder.setFixedSize(width, height) } // todo remove line (?)
 
         val viewport = layoutHelper.onSurfaceChanged(width, height)
         touchHelper.viewHeight = height
@@ -119,14 +119,14 @@ class GlComposableView @JvmOverloads constructor(
 
     fun addSurfaceLayer(
             tag: String? = null,
-            onSurfaceAvailable: (Surface) -> Unit,
+            surfaceConsumer: (Surface) -> Unit,
             position: Int = GlRenderer.TOP_POSITION,
-            onFrameAvailable: (() -> Unit)? = null,
+            onFrameAvailable: ((Long) -> Unit)? = null,
             onTransformable: (Transformable) -> Unit
     ) = enqueueEvent {
         val t: Transformable = renderer.addSurfaceLayer(
                 tag,
-                onSurfaceAvailable,
+                surfaceConsumer,
                 position,
                 onFrameAvailable
         )
