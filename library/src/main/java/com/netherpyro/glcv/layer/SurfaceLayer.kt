@@ -78,8 +78,8 @@ internal class SurfaceLayer(
         EglUtil.deleteTextures(texName)
     }
 
-    override fun setSize(width: Float, height: Float) {
-        aspect = width / height
+    override fun setSize(width: Int, height: Int) {
+        aspect = width / height.toFloat()
         recalculateFrustum()
         invalidator.invalidate()
     }

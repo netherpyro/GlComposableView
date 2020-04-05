@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
 import android.util.Log
+import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlRenderer
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.LayoutHelper
@@ -14,28 +15,30 @@ import com.netherpyro.glcv.baker.decode.DecoderPool
 import com.netherpyro.glcv.baker.encode.EncoderConfig
 import com.netherpyro.glcv.baker.encode.GlRecoder
 import com.netherpyro.glcv.baker.encode.PostRenderCallback
-import com.netherpyro.glcv.compose.Composer
-import com.netherpyro.glcv.compose.LayerType
-import com.netherpyro.glcv.compose.TimeMask
+import com.netherpyro.glcv.compose.media.Constant
+import com.netherpyro.glcv.compose.media.Type
+import com.netherpyro.glcv.compose.media.Util
+import com.netherpyro.glcv.compose.template.Template
+import com.netherpyro.glcv.compose.template.TimeMask
 
 /**
  * @author mmikhailov on 28.03.2020.
  *
- * Bakes (records) composed [Composer.Snapshot] synced with [TimeMask] into video file.
+ * Bakes (records) composed [Template] synced with [TimeMask] into video file.
  */
 internal class Baker private constructor(
         config: EncoderConfig,
         private val context: Context,
-        private val snapshot: Composer.Snapshot,
+        private val data: BakerData,
         private val progressListener: ((progress: Float, completed: Boolean) -> Unit)?
 ) : Cancellable {
 
     companion object {
         fun bake(context: Context,
-                 snapshot: Composer.Snapshot,
+                 data: BakerData,
                  config: EncoderConfig,
                  progressListener: ((progress: Float, completed: Boolean) -> Unit)?
-        ): Cancellable = Baker(config, context, snapshot, progressListener)
+        ): Cancellable = Baker(config, context, data, progressListener)
     }
 
     private val frameSyncThread = BakerThread(config)
@@ -62,11 +65,11 @@ internal class Baker private constructor(
         private lateinit var glRecoder: GlRecoder
         private lateinit var transformables: Array<Transformable>
 
-        private val glRenderer = GlRenderer(RenderHostStub, Color.BLACK, snapshot.viewportColor)
-        private val viewport: GlViewport = LayoutHelper(snapshot.aspectRatio)
+        private val glRenderer = GlRenderer(RenderHostStub, Color.BLACK, data.viewportColor)
+        private val viewport: GlViewport = LayoutHelper(data.template.aspectRatio)
             .onSurfaceChanged(config.width, config.height)
 
-        private val timeMask = TimeMask.from(snapshot.layers)
+        private val timeMask = data.template.timeMask
         private val totalDurationNanos = timeMask.durationMs * 1_000_000L
         private val frameDurationNanos = 1_000_000_000L / config.fps
 
@@ -109,7 +112,7 @@ internal class Baker private constructor(
         private fun startRecoding(): Boolean {
             glRecoder = GlRecoder(glRenderer, viewport, config, this)
             glRecoder.raiseEncoder()
-            setupGlRenderer()
+            setupGlLayers()
 
             generateFrame()
 
@@ -125,20 +128,32 @@ internal class Baker private constructor(
             return true
         }
 
-        private fun setupGlRenderer() {
-            transformables = Array(snapshot.layers.size) { index ->
-                snapshot.layers[index].run {
-                    return@run when (type) {
-                        LayerType.VIDEO -> glRenderer.addSurfaceLayer(
-                                tag,
-                                surfaceConsumer = decoders.createDecoderForTag(tag, context, uri),
-                                position = zPosition
+        private fun setupGlLayers() {
+            transformables = Array(data.template.units.size) { index ->
+                data.template.units[index].let { unit ->
+                    val metadata = Util.getMetadata(context, unit.uri, Constant.DEFAULT_IMAGE_DURATION_MS)
+                    val transformable = when (metadata.type) {
+                        Type.VIDEO -> glRenderer.addSurfaceLayer(
+                                unit.tag,
+                                surfaceConsumer = decoders.createDecoderForTag(unit.tag, context, unit.uri),
+                                position = unit.zPosition
                         )
-                        LayerType.IMAGE -> glRenderer.addBitmapLayer(
-                                tag,
-                                bitmap = BitmapProvider.get(context, uri),
-                                position = zPosition
+                        Type.IMAGE -> glRenderer.addBitmapLayer(
+                                unit.tag,
+                                bitmap = Util.getBitmap(context, unit.uri),
+                                position = unit.zPosition
                         )
+                    }
+
+                    return@let transformable.apply {
+                        setScale(unit.scaleFactor)
+                        setRotation(unit.rotationDeg)
+                        setTranslationFactor(unit.translateFactorX, unit.translateFactorY)
+                        setOpacity(unit.opacity)
+
+                        if (metadata.type == Type.VIDEO) {
+                            setSize(metadata.width, metadata.height)
+                        }
                     }
                 }
             }
@@ -171,3 +186,9 @@ internal class Baker private constructor(
         }
     }
 }
+
+data class BakerData(
+        @ColorInt
+        val viewportColor: Int,
+        val template: Template
+)

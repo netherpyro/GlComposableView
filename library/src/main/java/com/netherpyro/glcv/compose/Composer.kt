@@ -4,6 +4,9 @@ import android.net.Uri
 import android.opengl.EGLContext
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlComposableView
+import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.compose.template.Template
+import com.netherpyro.glcv.compose.template.ZOrderPosition
 
 /**
  * @author mmikhailov on 28.03.2020.
@@ -36,26 +39,32 @@ class Composer {
             glComposableView?.setAspectRatio(value)
         }
 
-    private val mediaLayers = mutableListOf<MediaLayer>()
+    private val mediaSeqs = mutableListOf<Sequence>()
+    private val transformables = mutableListOf<Transformable>()
 
     fun getSharedEglContext(): EGLContext? = // todo get blocking
             null//glComposableView?.enqueueEvent( Runnable { EGL14.eglGetCurrentContext() })
 
-    fun takeLayerTemplate() = LayerTemplate.from(mediaLayers)
+    fun takeTemplate(): Template {
+        if (transformables.isEmpty()) {
+            throw IllegalStateException("Cannot take template without GL layers set")
+        }
 
-    fun takeSnapshot() = Snapshot(takeLayerTemplate().toLayers(), viewportColor, aspectRatio)
+        return Template.from(aspectRatio, mediaSeqs, transformables)
+    }
 
-    fun applyLayerTemplate(template: LayerTemplate) {
+    fun applyTemplate(template: Template) {
         // todo validate template param
 
-        mediaLayers.clear()
-        mediaLayers.addAll(template.toLayers())
+        mediaSeqs.clear()
+        mediaSeqs.addAll(template.toSequences())
+        // todo add layers to gl view if exists
     }
 
     /**
      * Sets GlSurfaceView
      *
-     * If you want set GlSurfaceView up with template should call [applyLayerTemplate] first,
+     * If you want set GlSurfaceView up with template should apply template [applyTemplate] first,
      * will be set with current media layers otherwise
      *
      * */
@@ -69,31 +78,24 @@ class Composer {
         // todo add media layers to glView
     }
 
-    fun addLayer(tag: String, src: Uri, zOrderPosition: ZOrderPosition = ZOrderPosition.TOP) {
-        // todo convert input data to media layer
-        // todo modify media layer list
+    fun addMedia(tag: String, src: Uri, zOrderPosition: ZOrderPosition = ZOrderPosition.TOP) {
+        // todo convert input data to sequence
+        // todo modify sequence list
         // todo apply to glView if exists
     }
 
-    fun removeLayer(tag: String) {
-        // todo modify media layer list
+    fun removeMedia(tag: String) {
+        // todo modify sequence list
         // todo apply to glView if exists
     }
 
-    fun moveLayerStepForward(tag: String) {
-        // todo modify media layer list
+    fun moveMediaLayerStepForward(tag: String) {
+        // todo modify sequence list
         // todo apply to glView if exists
     }
 
-    fun moveLayerStepBackwards(tag: String) {
-        // todo modify media layer list
+    fun moveMediaLayerStepBackwards(tag: String) {
+        // todo modify sequence list
         // todo apply to glView if exists
     }
-
-    data class Snapshot(
-            val layers: List<MediaLayer>,
-            @ColorInt
-            val viewportColor: Int,
-            val aspectRatio: Float
-    )
 }

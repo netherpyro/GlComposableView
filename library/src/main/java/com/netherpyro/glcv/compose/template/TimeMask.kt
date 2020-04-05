@@ -1,4 +1,6 @@
-package com.netherpyro.glcv.compose
+package com.netherpyro.glcv.compose.template
+
+import com.netherpyro.glcv.compose.Sequence
 
 /**
  * @author mmikhailov on 03.04.2020.
@@ -8,14 +10,15 @@ package com.netherpyro.glcv.compose
 class TimeMask private constructor() {
 
     companion object {
-        fun from(layers: List<MediaLayer>): TimeMask {
-            return TimeMask().assemble(layers)
+        internal fun from(seqs: List<Sequence>): TimeMask {
+            return TimeMask()
+                .assemble(seqs)
         }
     }
 
     val durationMs: Long = 29561000
 
-    private fun assemble(layers: List<MediaLayer>): TimeMask {
+    private fun assemble(seqs: List<Sequence>): TimeMask {
         // todo assemble
 
         return this

@@ -158,7 +158,7 @@ abstract class Layer(
         invalidator.claimLayerPosition(this, position)
     }
 
-    override fun setSize(width: Float, height: Float) {
+    override fun setSize(width: Int, height: Int) {
         // no-op by default
     }
 

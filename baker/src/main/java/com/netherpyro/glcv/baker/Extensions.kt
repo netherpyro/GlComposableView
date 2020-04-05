@@ -23,7 +23,7 @@ fun Composer.renderToVideoFile(
         progressListener: ((progress: Float, completed: Boolean) -> Unit)? = null
 ): Cancellable = Baker.bake(
         context,
-        this.takeSnapshot(),
+        BakerData(viewportColor, takeTemplate()),
         EncoderConfig(outputPath, width, height, fps, iFrameIntervalSecs, bitRate, getSharedEglContext()),
         progressListener
 )
