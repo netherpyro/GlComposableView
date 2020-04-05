@@ -8,7 +8,7 @@ import com.netherpyro.glcv.compose.Sequence
  *
  * Template contains sequences and its transformations
  *
- * //todo make parcelable
+ * todo implement Parcelable
  */
 class Template private constructor(var aspectRatio: Float) {
 
