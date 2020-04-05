@@ -8,12 +8,12 @@ import android.net.Uri
 data class TemplateUnit(
         val tag: String,
         val uri: Uri,
+        val startDelayMs: Long,
+        val trimmedDurationMs: Long,
         val zPosition: Int,
         val scaleFactor: Float,
         val rotationDeg: Float,
         val translateFactorX: Float,
         val translateFactorY: Float,
-        val opacity: Float,
-        val startDelayMs: Long,
-        val trimmedDurationMs: Long
+        val opacity: Float
 )

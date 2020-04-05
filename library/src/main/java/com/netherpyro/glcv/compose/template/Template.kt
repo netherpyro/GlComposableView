@@ -6,40 +6,55 @@ import com.netherpyro.glcv.compose.Sequence
 /**
  * @author mmikhailov on 28.03.2020.
  *
- * Содержит все типы используемых последовательностей, их трансформации
+ * Template contains sequences and its transformations
+ *
+ * //todo make parcelable
  */
 class Template private constructor(var aspectRatio: Float) {
 
-    lateinit var timeMask: TimeMask
-
-    val units = mutableListOf<TemplateUnit>()
+    lateinit var units: List<TemplateUnit>
 
     companion object {
         internal fun from(
                 aspectRatio: Float,
-                seqs: List<Sequence>,
-                transformables: List<Transformable>
+                seqs: Set<Sequence>,
+                transformables: Set<Transformable>
         ) = Template(aspectRatio).assemble(seqs, transformables)
     }
 
-    private fun assemble(seqs: List<Sequence>, transformables: List<Transformable>): Template {
-        // todo assemble
-        timeMask = TimeMask.from(seqs)
+    private fun assemble(seqs: Set<Sequence>, transformables: Set<Transformable>): Template {
+        if (seqs.size != transformables.size) {
+            throw IllegalArgumentException("Sequences and Transformables must be same size.")
+        }
+
+        units = seqs.map { sequence ->
+            val transformable = transformables.find { it.tag == sequence.tag }
+                ?: throw IllegalArgumentException("Sequences and Transformables are differ.")
+
+            return@map TemplateUnit(
+                    tag = sequence.tag,
+                    uri = sequence.uri,
+                    startDelayMs = sequence.startDelayMs,
+                    trimmedDurationMs = sequence.durationMs,
+                    zPosition = transformable.getLayerPosition(),
+                    scaleFactor = transformable.getScale(),
+                    rotationDeg = transformable.getRotation(),
+                    translateFactorX = transformable.getTranslationFactor().first,
+                    translateFactorY = transformable.getTranslationFactor().second,
+                    opacity = transformable.getOpacity()
+            )
+        }
 
         return this
     }
 
-    internal fun toSequences(): List<Sequence> {
-        return listOf()
-    }
-
-    internal fun toTransformables(): List<Sequence> {
-        return listOf()
-    }
-
-
-}
-
-enum class ZOrderPosition {
-    TOP, BOTTOM
+    internal fun toSequences(): List<Sequence> =
+            units.map { unit ->
+                Sequence(
+                        tag = unit.tag,
+                        uri = unit.uri,
+                        startDelayMs = unit.startDelayMs,
+                        durationMs = unit.trimmedDurationMs
+                )
+            }
 }

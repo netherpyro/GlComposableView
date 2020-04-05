@@ -69,7 +69,7 @@ internal class Baker private constructor(
         private val viewport: GlViewport = LayoutHelper(data.template.aspectRatio)
             .onSurfaceChanged(config.width, config.height)
 
-        private val timeMask = data.template.timeMask
+        private val timeMask = TimeMask.from(data.template.units)
         private val totalDurationNanos = timeMask.durationMs * 1_000_000L
         private val frameDurationNanos = 1_000_000_000L / config.fps
 

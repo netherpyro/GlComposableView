@@ -2,11 +2,11 @@ package com.netherpyro.glcv.compose
 
 import android.net.Uri
 import android.opengl.EGLContext
+import android.util.Log
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlComposableView
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.compose.template.Template
-import com.netherpyro.glcv.compose.template.ZOrderPosition
 
 /**
  * @author mmikhailov on 28.03.2020.
@@ -17,85 +17,101 @@ class Composer {
         private const val TAG = "Composer"
     }
 
-    private var glComposableView: GlComposableView? = null
-
     @ColorInt
     var viewportColor: Int = 0
         set(value) {
             field = value
-            glComposableView?.setViewportColor(value)
+            glView?.setViewportColor(value)
         }
 
     @ColorInt
     var baseColor: Int = 0
         set(value) {
             field = value
-            glComposableView?.setBaseColor(value)
+            glView?.setBaseColor(value)
         }
 
     var aspectRatio: Float = 1f
         set(value) {
             field = value
-            glComposableView?.setAspectRatio(value)
+            glView?.setAspectRatio(value)
         }
 
-    private val mediaSeqs = mutableListOf<Sequence>()
-    private val transformables = mutableListOf<Transformable>()
+    private val mediaSeqs = mutableSetOf<Sequence>()
+    private val transformables = mutableSetOf<Transformable>()
+
+    private var glView: GlComposableView? = null
+
+    fun setGlView(glComposableView: GlComposableView) {
+        glView = glComposableView
+
+        glComposableView.setViewportColor(viewportColor)
+        glComposableView.setBaseColor(baseColor)
+        glComposableView.setAspectRatio(aspectRatio)
+
+        try {
+            applyTemplate(takeTemplate())
+        } catch (e: IllegalStateException) {
+            Log.i(TAG, "setGlView::this is first attempt setting GlComposableView")
+        }
+    }
 
     fun getSharedEglContext(): EGLContext? = // todo get blocking
             null//glComposableView?.enqueueEvent( Runnable { EGL14.eglGetCurrentContext() })
 
     fun takeTemplate(): Template {
         if (transformables.isEmpty()) {
-            throw IllegalStateException("Cannot take template without GL layers set")
+            throw IllegalStateException(
+                    "Cannot take template without GL layers added. Use Composer#addMedia method to add a layer"
+            )
         }
 
         return Template.from(aspectRatio, mediaSeqs, transformables)
     }
 
     fun applyTemplate(template: Template) {
-        // todo validate template param
-
-        mediaSeqs.clear()
-        mediaSeqs.addAll(template.toSequences())
-        // todo add layers to gl view if exists
+        checkGlView("applyTemplate") {
+            mediaSeqs.clear()
+            mediaSeqs.addAll(template.toSequences())
+            // todo add layers to gl view
+        }
     }
 
-    /**
-     * Sets GlSurfaceView
-     *
-     * If you want set GlSurfaceView up with template should apply template [applyTemplate] first,
-     * will be set with current media layers otherwise
-     *
-     * */
-    fun setGlView(glView: GlComposableView) {
-        glComposableView = glView
-
-        glView.setViewportColor(viewportColor)
-        glView.setBaseColor(baseColor)
-        glView.setAspectRatio(aspectRatio)
-
-        // todo add media layers to glView
-    }
-
-    fun addMedia(tag: String, src: Uri, zOrderPosition: ZOrderPosition = ZOrderPosition.TOP) {
-        // todo convert input data to sequence
-        // todo modify sequence list
-        // todo apply to glView if exists
+    fun addMedia(tag: String, src: Uri, zOrderDirection: ZOrderDirection = ZOrderDirection.TOP) {
+        checkGlView("addMedia") {
+            // todo convert input data to sequence
+            // todo modify sequence list
+            // todo apply to glView
+        }
     }
 
     fun removeMedia(tag: String) {
-        // todo modify sequence list
-        // todo apply to glView if exists
+        checkGlView("removeMedia") {
+            // todo modify sequence list
+            // todo apply to glView
+        }
     }
 
     fun moveMediaLayerStepForward(tag: String) {
-        // todo modify sequence list
-        // todo apply to glView if exists
+        checkGlView("moveMediaLayerStepForward") {
+            // todo modify sequence list
+            // todo apply to glView
+        }
     }
 
     fun moveMediaLayerStepBackwards(tag: String) {
-        // todo modify sequence list
-        // todo apply to glView if exists
+        checkGlView("moveMediaLayerStepBackwards") {
+            // todo modify sequence list
+            // todo apply to glView
+        }
+    }
+
+    private inline fun checkGlView(op: String, block: () -> Unit) {
+        if (glView == null) {
+            Log.e(TAG, "$op::Cannot perform action without GlComposableView set")
+            return
+        }
+
+        block()
     }
 }

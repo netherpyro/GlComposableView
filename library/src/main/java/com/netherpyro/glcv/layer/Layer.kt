@@ -169,6 +169,7 @@ abstract class Layer(
     override fun getFrustumRect() = frustumRect
     override fun getLayerAspect() = aspect
     override fun getLayerPosition() = position
+    override fun getOpacity() = shader.opacity
 
     override fun toString(): String {
         return """
