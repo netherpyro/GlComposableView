@@ -46,8 +46,6 @@ public class MoviePassiveDecoder extends MoviePlayer {
     private Context mContext;
     private Uri uri;
     private Surface mOutputSurface;
-    private int mVideoWidth;
-    private int mVideoHeight;
 
     /**
      * @param surface The Surface where frames will be sent.
@@ -67,48 +65,6 @@ public class MoviePassiveDecoder extends MoviePlayer {
             throws IOException {
         this.uri = uri;
         this.mContext = context;
-
-        // Pop the file open and pull out the video characteristics.
-        // TODO: consider leaving the extractor open.  Should be able to just seek back to
-        //       the start after each iteration of play.  Need to rearrange the API a bit --
-        //       currently play() is taking an all-in-one open+work+release approach.
-        MediaExtractor extractor = null;
-
-        try {
-            // todo ТУТ можно взять проверку на видео файл и ширину, высоту видео
-            extractor = new MediaExtractor();
-            extractor.setDataSource(context, uri, null);
-            int trackIndex = selectTrack(extractor);
-            if (trackIndex < 0) {
-                throw new RuntimeException("No video track found in " + uri.toString());
-            }
-            extractor.selectTrack(trackIndex);
-
-            MediaFormat format = extractor.getTrackFormat(trackIndex);
-            mVideoWidth = format.getInteger(MediaFormat.KEY_WIDTH);
-            mVideoHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
-            if (VERBOSE) {
-                Log.d(TAG, "Video size is " + mVideoWidth + "x" + mVideoHeight);
-            }
-        } finally {
-            if (extractor != null) {
-                extractor.release();
-            }
-        }
-    }
-
-    /**
-     * Returns the width, in pixels, of the video.
-     */
-    public int getVideoWidth() {
-        return mVideoWidth;
-    }
-
-    /**
-     * Returns the height, in pixels, of the video.
-     */
-    public int getVideoHeight() {
-        return mVideoHeight;
     }
 
     /**

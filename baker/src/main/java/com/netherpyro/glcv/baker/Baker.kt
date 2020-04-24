@@ -11,9 +11,9 @@ import com.netherpyro.glcv.GlRenderer
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.LayoutHelper
 import com.netherpyro.glcv.Transformable
-import com.netherpyro.glcv.baker.decode.DecoderPool
+import com.netherpyro.glcv.baker.decode.PassiveDecoderPool
 import com.netherpyro.glcv.baker.encode.EncoderConfig
-import com.netherpyro.glcv.baker.encode.GlRecoder
+import com.netherpyro.glcv.baker.encode.GlRecorder
 import com.netherpyro.glcv.baker.encode.PostRenderCallback
 import com.netherpyro.glcv.compose.media.Constant
 import com.netherpyro.glcv.compose.media.Type
@@ -62,7 +62,7 @@ internal class Baker private constructor(
         private val FRAME = 2
 
         private lateinit var handler: Handler
-        private lateinit var glRecoder: GlRecoder
+        private lateinit var glRecorder: GlRecorder
         private lateinit var transformables: Array<Transformable>
 
         private val glRenderer = GlRenderer(RenderHostStub, Color.BLACK, data.viewportColor)
@@ -75,7 +75,7 @@ internal class Baker private constructor(
 
         private var presentationTimeNanos = -frameDurationNanos //todo minus needed?
 
-        private val decoders = DecoderPool()
+        private val decoders = PassiveDecoderPool()
 
         @Synchronized
         override fun start() {
@@ -110,8 +110,8 @@ internal class Baker private constructor(
         }
 
         private fun startRecoding(): Boolean {
-            glRecoder = GlRecoder(glRenderer, viewport, config, this)
-            glRecoder.raiseEncoder()
+            glRecorder = GlRecorder(glRenderer, viewport, config, this)
+            glRecorder.raiseEncoder()
             setupGlLayers()
 
             generateFrame()
@@ -120,7 +120,8 @@ internal class Baker private constructor(
         }
 
         private fun stopRecoding(): Boolean {
-            glRecoder.stopRecording()
+            glRecorder.stopRecording()
+            decoders.release()
 
             interrupt()
             quit()
@@ -131,11 +132,16 @@ internal class Baker private constructor(
         private fun setupGlLayers() {
             transformables = Array(data.template.units.size) { index ->
                 data.template.units[index].let { unit ->
-                    val metadata = Util.getMetadata(context, unit.uri, Constant.DEFAULT_IMAGE_DURATION_MS)
+                    val metadata = Util.getMetadata(
+                            context,
+                            unit.uri,
+                            defaultImageDuration = Constant.DEFAULT_IMAGE_DURATION_MS
+                    )
+
                     val transformable = when (metadata.type) {
                         Type.VIDEO -> glRenderer.addSurfaceLayer(
                                 unit.tag,
-                                surfaceConsumer = decoders.createDecoderForTag(unit.tag, context, unit.uri),
+                                surfaceConsumer = decoders.createSurfaceConsumer(unit.tag, context, unit.uri),
                                 position = unit.zPosition
                         )
                         Type.IMAGE -> glRenderer.addBitmapLayer(
@@ -162,17 +168,16 @@ internal class Baker private constructor(
         private fun generateFrame(): Boolean {
             presentationTimeNanos += frameDurationNanos
 
-            invalidateLayersVisibility(presentationTimeNanos / 1_000_000)
-
-            // todo resolve video's timestamps
-            //decoders.advance()
+            val status = timeMask.takeVisibilityStatus(presentationTimeNanos / 1_000_000)
+            invalidateLayersVisibility(status)
+            decoders.advance(status)
 
             val progress = presentationTimeNanos / totalDurationNanos.toFloat()
             val hasFrames = presentationTimeNanos <= totalDurationNanos
             progressListener?.invoke(progress, !hasFrames)
 
             if (hasFrames) {
-                glRecoder.frameAvailable(presentationTimeNanos)
+                glRecorder.frameAvailable(presentationTimeNanos)
             } else {
                 stopRecoding()
             }
@@ -180,9 +185,8 @@ internal class Baker private constructor(
             return true
         }
 
-        private fun invalidateLayersVisibility(timestampMs: Long) {
-            timeMask.takeVisibilityStatus(timestampMs)
-                .values.forEachIndexed { index, visible -> transformables[index].setSkipDraw(!visible) }
+        private fun invalidateLayersVisibility(statuses: List<TimeMask.VisibilityStatus>) {
+            statuses.forEachIndexed { index, status -> transformables[index].setSkipDraw(!status.visible) }
         }
     }
 }

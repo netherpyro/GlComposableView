@@ -17,26 +17,30 @@ class TimeMask private constructor() {
     var durationMs: Long = 0L
         private set
 
-    private lateinit var maskList: List<Mask>
+    private lateinit var maskUnits: List<MaskUnit>
 
-    fun takeVisibilityStatus(positionMs: Long): Map<String, Boolean> {
-        return maskList
-            .map { it.tag to (positionMs in it.range) }
-            .toMap()
-    }
+    fun takeVisibilityStatus(positionMs: Long): List<VisibilityStatus> =
+            maskUnits.map { unit ->
+                unit.status
+                    .apply { visible = positionMs in unit.range }
+            }
 
     private fun assemble(units: List<TemplateUnit>): TimeMask {
         var mostFarEndPosition = 0L
 
-        maskList = units.map { unit ->
+        maskUnits = units.map { unit ->
             val endPosition = unit.startDelayMs + unit.trimmedDurationMs
             if (endPosition > mostFarEndPosition) {
                 mostFarEndPosition = endPosition
             }
 
-            return@map Mask(
+            return@map MaskUnit(
                     tag = unit.tag,
-                    range = unit.startDelayMs..endPosition
+                    range = unit.startDelayMs..endPosition,
+                    status = VisibilityStatus(
+                            tag = unit.tag,
+                            visible = 0 in unit.startDelayMs..endPosition
+                    )
             )
         }
 
@@ -45,8 +49,14 @@ class TimeMask private constructor() {
         return this
     }
 
-    private data class Mask(
+    private data class MaskUnit(
             val tag: String,
-            val range: LongRange
+            val range: LongRange,
+            val status: VisibilityStatus
+    )
+
+    data class VisibilityStatus(
+            val tag: String,
+            var visible: Boolean
     )
 }

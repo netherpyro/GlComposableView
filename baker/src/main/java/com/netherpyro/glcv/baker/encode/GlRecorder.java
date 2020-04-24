@@ -50,7 +50,7 @@ import java.lang.ref.WeakReference;
  * – for each frame, after latching it with SurfaceTexture#updateTexImage(),
  * call TextureMovieEncoder#frameAvailable().
  */
-public class GlRecoder implements Runnable {
+public class GlRecorder implements Runnable {
     private static final String TAG = "GlRecoder";
     private static final boolean VERBOSE = false;
 
@@ -78,7 +78,7 @@ public class GlRecoder implements Runnable {
 
     private final PostRenderCallback mPostRenderCallback;
 
-    public GlRecoder(GlRenderer glRenderer, GlViewport viewport, EncoderConfig config, PostRenderCallback postRenderCallback) {
+    public GlRecorder(GlRenderer glRenderer, GlViewport viewport, EncoderConfig config, PostRenderCallback postRenderCallback) {
         this.glRenderer = glRenderer;
         this.glViewport = viewport;
         this.config = config;
@@ -210,9 +210,9 @@ public class GlRecoder implements Runnable {
      * Handles encoder state change requests.  The handler is created on the encoder thread.
      */
     private static class EncoderHandler extends Handler {
-        private WeakReference<GlRecoder> mWeakEncoder;
+        private WeakReference<GlRecorder> mWeakEncoder;
 
-        EncoderHandler(GlRecoder encoder) {
+        EncoderHandler(GlRecorder encoder) {
             mWeakEncoder = new WeakReference<>(encoder);
         }
 
@@ -221,7 +221,7 @@ public class GlRecoder implements Runnable {
             int what = inputMessage.what;
             Object obj = inputMessage.obj;
 
-            GlRecoder encoder = mWeakEncoder.get();
+            GlRecorder encoder = mWeakEncoder.get();
             if (encoder == null) {
                 Log.w(TAG, "EncoderHandler.handleMessage: encoder is null");
                 return;
