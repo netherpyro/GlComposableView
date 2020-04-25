@@ -45,6 +45,10 @@ object LibraryHelper {
         return loadBitmapFromAsset(image2)
     }
 
+    fun image1Uri() = Uri.parse("${getVideoPath(image1)}")
+
+    fun image2Uri() = Uri.parse("${getVideoPath(image2)}")
+
     private fun getVideoPath(fileName: String): String? {
         var result: String? = null
         try {

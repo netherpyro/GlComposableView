@@ -120,6 +120,7 @@ class GlComposableView @JvmOverloads constructor(
             tag: String? = null,
             surfaceConsumer: SurfaceConsumer,
             position: Int = GlRenderer.TOP_POSITION,
+            initialValues: TransformData? = null,
             onFrameAvailable: ((Long) -> Unit)? = null,
             onTransformable: (Transformable) -> Unit
     ) = enqueueEvent {
@@ -127,6 +128,7 @@ class GlComposableView @JvmOverloads constructor(
                 tag,
                 surfaceConsumer,
                 position,
+                initialValues,
                 onFrameAvailable
         )
         onTransformable(t)
@@ -136,9 +138,10 @@ class GlComposableView @JvmOverloads constructor(
             tag: String? = null,
             bitmap: Bitmap,
             position: Int = GlRenderer.TOP_POSITION,
+            initialValues: TransformData? = null,
             onTransformable: (Transformable) -> Unit
     ) = enqueueEvent {
-        val t: Transformable = renderer.addBitmapLayer(tag, bitmap, position)
+        val t: Transformable = renderer.addBitmapLayer(tag, bitmap, position, initialValues)
         onTransformable(t)
     }
 

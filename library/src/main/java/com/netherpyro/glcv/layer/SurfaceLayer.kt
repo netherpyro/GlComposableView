@@ -5,6 +5,7 @@ import android.graphics.SurfaceTexture.OnFrameAvailableListener
 import android.view.Surface
 import com.netherpyro.glcv.Invalidator
 import com.netherpyro.glcv.SurfaceConsumer
+import com.netherpyro.glcv.TransformData
 import com.netherpyro.glcv.shader.GlExtTextureShader
 import com.netherpyro.glcv.util.EglUtil
 
@@ -20,9 +21,10 @@ internal class SurfaceLayer(
         tag: String?,
         position: Int,
         invalidator: Invalidator,
+        initialValues: TransformData?,
         private val surfaceConsumer: SurfaceConsumer,
         private val onFrameAvailable: ((Long) -> Unit)? = null
-) : Layer(id, tag, position, invalidator), OnFrameAvailableListener {
+) : Layer(id, tag, position, invalidator, initialValues), OnFrameAvailableListener {
 
     override val shader = GlExtTextureShader()
 
@@ -33,6 +35,10 @@ internal class SurfaceLayer(
 
     private val transformMatrix = FloatArray(16)
     private val textureTarget = GlExtTextureShader.GL_TEXTURE_EXTERNAL_OES
+
+    init {
+        shader.opacity = initialValues?.opacity ?: 1f
+    }
 
     /**
      * Must be called in GL thread

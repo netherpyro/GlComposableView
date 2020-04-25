@@ -6,7 +6,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.os.Build
+import android.provider.MediaStore
+import android.util.Size
 
 /**
  * @author mmikhailov on 04.04.2020.
@@ -34,65 +35,99 @@ object Util {
 
     @Throws(Exception::class)
     fun getMetadata(context: Context, uri: Uri, defaultImageDuration: Long): Metadata {
-        val mediaMetadataRetriever = MediaMetadataRetriever()
-        val type: Type
+        val type = getType(context, uri)
         val width: Int
         val height: Int
         val duration: Long
         val orientation: Orientation
 
-        try {
-            mediaMetadataRetriever.setDataSource(context, uri)
-
-            type = when {
-                mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_VIDEO)
-                    ?.toBoolean() == true -> Type.VIDEO
-                mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_IMAGE)
-                    ?.toBoolean() == true -> Type.IMAGE
-                else -> throw Exception("Cannot detect known media format")
-            }
-
-            when (type) {
+        when (type) {
                 Type.VIDEO -> {
-                    width = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                        .toInt()
+                    val mediaMetadataRetriever = MediaMetadataRetriever()
 
-                    height = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-                        .toInt()
+                    try {
+                        mediaMetadataRetriever.setDataSource(context, uri)
 
-                    orientation = mediaMetadataRetriever.extractMetadata(
-                            MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
-                        ?.toInt()
-                        ?.toOrientation() ?: Orientation.DEG_0
+                        width = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                            .toInt()
 
-                    duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                        ?.toLong() ?: 0L
+                        height = mediaMetadataRetriever.extractMetadata(
+                                MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                            .toInt()
+
+                        orientation = mediaMetadataRetriever.extractMetadata(
+                                MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+                            ?.toInt()
+                            ?.toOrientation() ?: Orientation.DEG_0
+
+                        duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                            ?.toLong() ?: 0L
+
+                    } finally {
+                        mediaMetadataRetriever.release()
+                    }
                 }
                 Type.IMAGE -> {
-                    width = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_IMAGE_WIDTH)
-                            .toInt()
-                    } else -1
+                    // todo handle uri of non-content scheme
+                    val cursor = context.contentResolver.query(
+                            uri,
+                            arrayOf(
+                                    MediaStore.Files.FileColumns.WIDTH,
+                                    MediaStore.Files.FileColumns.HEIGHT,
+                                    MediaStore.Files.FileColumns.ORIENTATION
+                            ), null, null, null)
+                        ?: throw NullPointerException("Cursor returned null")
 
-                    height = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_IMAGE_HEIGHT)
-                            .toInt()
-                    } else -1
+                    cursor.moveToFirst()
 
-                    orientation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_IMAGE_ROTATION)
-                            ?.toInt()
-                            ?.toOrientation()
-                            ?: Orientation.DEG_0
-                    } else Orientation.DEG_0
+                    width = cursor.getString(cursor.getColumnIndex(MediaStore.Files.FileColumns.WIDTH))
+                        .toInt()
+
+                    height = cursor.getString(cursor.getColumnIndex(MediaStore.Files.FileColumns.HEIGHT))
+                        .toInt()
+
+                    orientation = cursor.getString(cursor.getColumnIndex(MediaStore.Files.FileColumns.ORIENTATION))
+                        .toInt()
+                        .toOrientation()
 
                     duration = defaultImageDuration
+
+                    cursor.close()
                 }
             }
-        } finally {
-            mediaMetadataRetriever.release()
-        }
 
         return Metadata(type, width, height, duration, orientation)
+    }
+
+    fun resolveResolution(aspectRatio: Float, sidePx: Int): Size {
+        val outputWidth: Int
+        val outputHeight: Int
+
+        when {
+            aspectRatio > 1f -> {
+                outputWidth = (sidePx * aspectRatio).toInt()
+                outputHeight = sidePx
+            }
+            aspectRatio < 1f -> {
+                outputWidth = sidePx
+                outputHeight = (sidePx * aspectRatio).toInt()
+            }
+            else -> {
+                outputWidth = sidePx
+                outputHeight = sidePx
+            }
+        }
+
+        return Size(outputWidth, outputHeight)
+    }
+
+    private fun getType(context: Context, uri: Uri): Type {
+        val mimeType = context.contentResolver.getType(uri)
+
+        return when {
+            mimeType?.startsWith("image") == true -> Type.IMAGE
+            mimeType?.startsWith("video") == true -> Type.VIDEO
+            else -> throw Exception("Cannot detect known media format")
+        }
     }
 }

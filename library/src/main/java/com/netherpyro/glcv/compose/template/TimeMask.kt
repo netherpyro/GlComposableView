@@ -35,7 +35,6 @@ class TimeMask private constructor() {
             }
 
             return@map MaskUnit(
-                    tag = unit.tag,
                     range = unit.startDelayMs..endPosition,
                     status = VisibilityStatus(
                             tag = unit.tag,
@@ -49,14 +48,13 @@ class TimeMask private constructor() {
         return this
     }
 
-    private data class MaskUnit(
-            val tag: String,
-            val range: LongRange,
-            val status: VisibilityStatus
-    )
-
     data class VisibilityStatus(
             val tag: String,
             var visible: Boolean
+    )
+
+    private data class MaskUnit(
+            val range: LongRange,
+            val status: VisibilityStatus
     )
 }

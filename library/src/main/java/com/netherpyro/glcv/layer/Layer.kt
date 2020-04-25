@@ -6,9 +6,11 @@ import android.util.Log
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Invalidator
+import com.netherpyro.glcv.TransformData
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.shader.GlBorderShader
 import com.netherpyro.glcv.shader.GlShader
+import java.util.LinkedList
 import kotlin.math.abs
 
 /**
@@ -18,7 +20,8 @@ abstract class Layer(
         override val id: Int,
         override val tag: String? = null,
         var position: Int,
-        protected val invalidator: Invalidator
+        protected val invalidator: Invalidator,
+        initialValues: TransformData?
 ) : Transformable {
 
     companion object {
@@ -44,31 +47,39 @@ abstract class Layer(
         )
     }
 
-    protected var aspect: Float = 1f
+    protected var aspect: Float = initialValues?.layerSize?.let { it.width / it.height.toFloat() } ?: 1f
         set(value) {
             field = value
             borderShader.setAspect(value)
         }
 
-    private var shouldDraw = true
+    private var shouldDraw = initialValues?.skipDraw?.not() ?: true
 
     private var glTranslationX = 0f
     private var glTranslationY = 0f
 
-    private var scaleFactor = 1f
-    private var rotationDeg = 0f
+    private var scaleFactor = initialValues?.scale ?: 1f
+    private var rotationDeg = initialValues?.rotation ?: 0f
     private var translationX = 0f // pixels
     private var translationY = 0f // pixels
-    private var transFactorX = 0f
-    private var transFactorY = 0f
+    private var transFactorX = initialValues?.xFactor ?: 0f
+    private var transFactorY = initialValues?.yFactor ?: 0f
 
     private lateinit var viewport: GlViewport
 
     private var initialized = false
 
+    private val eventQueue = LinkedList<Runnable>()
+
     fun setup() {
         onSetup()
         borderShader.setup()
+
+        while (eventQueue.isNotEmpty()) {
+            eventQueue.removeFirst()
+                .run()
+        }
+
         initialized = true
     }
 
@@ -92,7 +103,7 @@ abstract class Layer(
     protected abstract fun onDrawFrame()
     protected abstract fun onRelease()
 
-    override fun setScale(scaleFactor: Float) = doIfInitialized {
+    override fun setScale(scaleFactor: Float) = doIfInitialized("setScale") {
         this.scaleFactor = scaleFactor
         borderShader.setScale(scaleFactor)
 
@@ -100,14 +111,14 @@ abstract class Layer(
         invalidator.invalidate()
     }
 
-    override fun setRotation(rotationDeg: Float) = doIfInitialized {
+    override fun setRotation(rotationDeg: Float) = doIfInitialized("setRotation") {
         this.rotationDeg = rotationDeg
 
         recalculateMatrices()
         invalidator.invalidate()
     }
 
-    override fun setTranslation(x: Float, y: Float) = doIfInitialized {
+    override fun setTranslation(x: Float, y: Float) = doIfInitialized("setTranslation") {
         val availWidth = viewport.width.toFloat()
         val availHeight = viewport.height.toFloat()
 
@@ -123,7 +134,7 @@ abstract class Layer(
         invalidator.invalidate()
     }
 
-    override fun setTranslationFactor(xFactor: Float, yFactor: Float) = doIfInitialized {
+    override fun setTranslationFactor(xFactor: Float, yFactor: Float) = doIfInitialized("setTranslationFactor") {
         transFactorX = -xFactor
         transFactorY = yFactor
 
@@ -137,24 +148,24 @@ abstract class Layer(
         invalidator.invalidate()
     }
 
-    override fun setOpacity(opacity: Float) = doIfInitialized {
+    override fun setOpacity(opacity: Float) = doIfInitialized("setOpacity") {
         shader.opacity = opacity
 
         invalidator.invalidate()
     }
 
-    override fun setBorder(width: Float, @ColorInt color: Int) = doIfInitialized {
+    override fun setBorder(width: Float, @ColorInt color: Int) = doIfInitialized("setBorder") {
         borderShader.width = width
         borderShader.color = color
 
         invalidator.invalidate()
     }
 
-    override fun setSkipDraw(skip: Boolean) = doIfInitialized {
+    override fun setSkipDraw(skip: Boolean) = doIfInitialized("setSkipDraw") {
         shouldDraw = !skip
     }
 
-    override fun setLayerPosition(position: Int) = doIfInitialized {
+    override fun setLayerPosition(position: Int) = doIfInitialized("setLayerPosition") {
         invalidator.claimLayerPosition(this, position)
     }
 
@@ -243,6 +254,9 @@ abstract class Layer(
         translationX = transFactorX * viewport.width
         translationY = transFactorY * viewport.height
 
+        glTranslationX = translationX.toGlTranslationX()
+        glTranslationY = translationY.toGlTranslationY()
+
         recalculateMatrices()
     }
 
@@ -265,12 +279,12 @@ abstract class Layer(
         return (this * (abs(frustumRect.top) + abs(frustumRect.bottom)) / viewport.height) / scaleFactor
     }
 
-    private inline fun doIfInitialized(block: () -> Unit) {
-        if (!initialized) {
-            Log.w(TAG, "Transformable was not initialized!")
-            return
+    private inline fun doIfInitialized(op: String, crossinline r: () -> Unit) {
+        if (initialized) {
+            r.invoke()
+        } else {
+            Log.w(TAG, "Transformable not initialized yet. '$op' request queued")
+            eventQueue.addLast(Runnable { r.invoke() })
         }
-
-        block()
     }
 }

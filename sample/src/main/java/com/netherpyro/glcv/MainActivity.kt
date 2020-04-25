@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
         override fun onVideoSizeChanged(width: Int, height: Int, unappliedRotationDegrees: Int,
                                         pixelWidthHeightRatio: Float) {
             transformableList.findTransformable(videoTag)
-                ?.setSize(width * pixelWidthHeightRatio, height * pixelWidthHeightRatio)
+                ?.setSize((width * pixelWidthHeightRatio).toInt(), (height * pixelWidthHeightRatio).toInt())
         }
 
         override fun onRenderedFirstFrame() {}

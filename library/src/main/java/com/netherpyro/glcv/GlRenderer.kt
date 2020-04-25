@@ -113,13 +113,14 @@ class GlRenderer(
             tag: String?,
             surfaceConsumer: SurfaceConsumer,
             position: Int,
+            initialValues: TransformData? = null,
             onFrameAvailable: ((Long) -> Unit)? = null
     ): Transformable =
-            SurfaceLayer(getNextId(), tag, refineAddPosition(position), this, surfaceConsumer, onFrameAvailable)
+            SurfaceLayer(getNextId(), tag, refineAddPosition(position), this, initialValues, surfaceConsumer, onFrameAvailable)
                 .also { addLayer(it) }
 
-    fun addBitmapLayer(tag: String?, bitmap: Bitmap, position: Int): Transformable =
-            BitmapLayer(getNextId(), tag, refineAddPosition(position), this, bitmap)
+    fun addBitmapLayer(tag: String?, bitmap: Bitmap, position: Int, initialValues: TransformData? = null): Transformable =
+            BitmapLayer(getNextId(), tag, refineAddPosition(position), this, initialValues, bitmap)
                 .also { addLayer(it) }
 
     fun removeLayer(transformable: Transformable) {

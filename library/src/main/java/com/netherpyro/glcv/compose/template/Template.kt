@@ -10,7 +10,7 @@ import com.netherpyro.glcv.compose.Sequence
  *
  * todo implement Parcelable
  */
-class Template private constructor(var aspectRatio: Float) {
+class Template private constructor(val aspectRatio: Float) {
 
     lateinit var units: List<TemplateUnit>
 

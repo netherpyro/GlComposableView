@@ -77,16 +77,18 @@ public class GlRecorder implements Runnable {
     private boolean mRunning;
 
     private final PostRenderCallback mPostRenderCallback;
+    private final PrepareCallback mPrepareCallback;
 
-    public GlRecorder(GlRenderer glRenderer, GlViewport viewport, EncoderConfig config, PostRenderCallback postRenderCallback) {
+    public GlRecorder(GlRenderer glRenderer, GlViewport viewport, EncoderConfig config, PostRenderCallback postRenderCallback, PrepareCallback prepareCallback) {
         this.glRenderer = glRenderer;
         this.glViewport = viewport;
         this.config = config;
         this.mPostRenderCallback = postRenderCallback;
+        this.mPrepareCallback = prepareCallback;
     }
 
     /**
-     * Tells the video recorder to start recording.  (Call from non-encoder thread.)
+     * Tells the video recorder to start recording. (Call from non-encoder thread.)
      * <p>
      * Creates a new thread, which will create an encoder using the provided configuration.
      * <p>
@@ -94,14 +96,14 @@ public class GlRecorder implements Runnable {
      * encoder may not yet be fully configured.
      */
     public void raiseEncoder() {
-        Log.d(TAG, "Encoder: startRecording()");
+        Log.d(TAG, "raiseEncoder::startRecording()");
         synchronized (mReadyFence) {
             if (mRunning) {
-                Log.w(TAG, "Encoder thread already running");
+                Log.w(TAG, "raiseEncoder::encoder thread already running");
                 return;
             }
             mRunning = true;
-            new Thread(this, "GlRecoder").start();
+            new Thread(this, TAG).start();
             while (!mReady) {
                 try {
                     mReadyFence.wait();
@@ -324,6 +326,8 @@ public class GlRecorder implements Runnable {
         glRenderer.onSurfaceCreated(null, null);
         glRenderer.onSurfaceChanged(null, config.getWidth(), config.getHeight());
         glRenderer.setViewport(glViewport);
+
+        mPrepareCallback.onPrepared();
     }
 
     private void releaseEncoder() {
