@@ -34,6 +34,12 @@ class ComposerActivity : AppCompatActivity() {
         composer.addImage("image1", Uri.parse("content://media/external/file/129"), startMs = 1000L)
         composer.addImage("image2", Uri.parse("content://media/external/file/135"), startMs = 1500L)
         composer.addImage("image3", Uri.parse("content://media/external/file/136"))
+        // sphere
+        composer.addVideo("video1", Uri.parse("content://media/external/file/3365"), trimmedDuration = 2000L)
+        // filmm
+        composer.addVideo("video2", Uri.parse("content://media/external/file/4024"))
+        // tiger
+        //composer.addVideo("video3", Uri.parse("content://media/external/file/3370"))
 
         a1_1.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
         a3_2.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
@@ -49,7 +55,8 @@ class ComposerActivity : AppCompatActivity() {
             composer.renderToVideoFile(
                     this@ComposerActivity,
                     File(cacheDir, "result.mp4").absolutePath,
-                    outputMinSidePx = 1080
+                    outputMinSidePx = 1080,
+                    fps = 30
             )
         }
 

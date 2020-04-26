@@ -8,7 +8,6 @@ import com.netherpyro.glcv.compose.template.TimeMask
 /**
  * @author mmikhailov on 04.04.2020.
  */
-// todo prepare decoder for manual looping
 internal class PassiveDecoderPool {
 
     private val decoders = mutableMapOf<String, MoviePassiveDecoder>()
@@ -20,14 +19,27 @@ internal class PassiveDecoderPool {
         return decoder
     }
 
-    fun advance(statuses: List<TimeMask.VisibilityStatus>) {
-        decoders.forEach { (tag: String, decoder: MoviePassiveDecoder) ->
+    fun prepare() {
+        decoders.values.forEach { it.raiseDecoder() }
+    }
 
-            decoder.advance()
+    fun advance(statuses: List<TimeMask.VisibilityStatus>) {
+        val iterator = decoders.entries.iterator()
+        while (iterator.hasNext()) {
+            val (tag, decoder) = iterator.next()
+            val visible = statuses.find { it.tag == tag }?.visible ?: false
+
+            when {
+                visible -> decoder.advance()
+                visible.not() && decoder.isUsed -> {
+                    decoder.release()
+                    iterator.remove()
+                }
+            }
         }
     }
 
     fun release() {
-        // todo
+        decoders.values.forEach { it.release() }
     }
 }

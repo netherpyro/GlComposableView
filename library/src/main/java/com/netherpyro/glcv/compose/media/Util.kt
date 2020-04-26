@@ -34,7 +34,7 @@ object Util {
     }
 
     @Throws(Exception::class)
-    fun getMetadata(context: Context, uri: Uri, defaultImageDuration: Long): Metadata {
+    fun getMetadata(context: Context, uri: Uri, defaultImageDuration: Long = Constant.DEFAULT_IMAGE_DURATION_MS): Metadata {
         val type = getType(context, uri)
         val width: Int
         val height: Int

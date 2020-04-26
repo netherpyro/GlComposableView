@@ -101,7 +101,7 @@ class GlComposableView @JvmOverloads constructor(
 
     override fun enqueueEvent(runnable: Runnable) {
         if (viewReady) {
-            queueEvent { runnable.run() }
+            queueEvent(runnable)
         } else {
             eventQueue.addLast(runnable)
         }

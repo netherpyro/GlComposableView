@@ -145,6 +145,7 @@ internal class Baker private constructor(
 
             glRecorder = GlRecorder(glRenderer, viewport, config, this, object : PrepareCallback {
                 override fun onPrepared() {
+                    decoders.prepare()
                     generateFrame()
                 }
             })
@@ -214,8 +215,9 @@ internal class Baker private constructor(
 
             if (VERBOSE)
                 Log.i(TAG,
-                        "generateFrame::pTime=${presentationTimeNanos / 1_000_000} ms, statuses=${status.toTypedArray()
-                            .contentToString()}")
+                        "generateFrame::pTime=${presentationTimeNanos / 1_000_000} ms, " +
+                                "statuses=${status.toTypedArray()
+                                    .contentToString()}")
 
             invalidateLayersVisibility(status)
             decoders.advance(status)
