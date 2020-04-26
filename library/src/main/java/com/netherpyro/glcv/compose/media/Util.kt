@@ -102,19 +102,20 @@ object Util {
     fun resolveResolution(aspectRatio: Float, sidePx: Int): Size {
         val outputWidth: Int
         val outputHeight: Int
+        val coercedSidePx = sidePx - sidePx % 8
 
         when {
             aspectRatio > 1f -> {
-                outputWidth = (sidePx * aspectRatio).toInt()
-                outputHeight = sidePx
+                outputWidth = (coercedSidePx * aspectRatio).toInt().let { it - it % 8 }
+                outputHeight = coercedSidePx
             }
             aspectRatio < 1f -> {
-                outputWidth = sidePx
-                outputHeight = (sidePx * aspectRatio).toInt()
+                outputWidth = coercedSidePx
+                outputHeight = (coercedSidePx * aspectRatio).toInt().let { it - it % 8 }
             }
             else -> {
-                outputWidth = sidePx
-                outputHeight = sidePx
+                outputWidth = coercedSidePx
+                outputHeight = coercedSidePx
             }
         }
 

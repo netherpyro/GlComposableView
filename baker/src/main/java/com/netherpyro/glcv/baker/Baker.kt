@@ -30,6 +30,7 @@ import com.netherpyro.glcv.compose.template.TimeMask
  *
  * Bakes (records) composed [Template] synced with [TimeMask] into video file.
  */
+// todo mux audio track
 internal class Baker private constructor(
         config: EncoderConfig,
         @ColorInt
@@ -214,8 +215,7 @@ internal class Baker private constructor(
             val status = timeMask.takeVisibilityStatus(presentationTimeNanos / 1_000_000)
 
             if (VERBOSE_LOGGING)
-                Log.i(TAG,
-                        "generateFrame::pTime=${presentationTimeNanos / 1_000_000} ms, " +
+                Log.v(TAG, "generateFrame::pTime=${presentationTimeNanos / 1_000_000} ms, " +
                                 "statuses=${status.toTypedArray()
                                     .contentToString()}")
 

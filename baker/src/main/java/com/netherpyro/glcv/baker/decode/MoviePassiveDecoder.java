@@ -60,6 +60,7 @@ class MoviePassiveDecoder extends MoviePlayer {
     private boolean outputDone = false;
     private boolean inputDone = false;
     private boolean used = false;
+    private boolean warmedUp = false;
 
     /**
      * @param surface The Surface where frames will be sent.
@@ -153,6 +154,11 @@ class MoviePassiveDecoder extends MoviePlayer {
             decoder.configure(format, outputSurface, null, 0);
             decoder.start();
             decoderInputBuffers = decoder.getInputBuffers();
+
+            while (!warmedUp) {
+                advanceInternal();
+            }
+
         } catch (IOException e) {
             release();
             throw e;
@@ -160,7 +166,6 @@ class MoviePassiveDecoder extends MoviePlayer {
     }
 
     private void advanceInternal() {
-        if (VERBOSE) Log.d(TAG, "advance::loop");
         // Feed more data to the decoder.
         if (!inputDone) {
             int inputBufIndex = decoder.dequeueInputBuffer(TIMEOUT_USEC);
@@ -170,7 +175,7 @@ class MoviePassiveDecoder extends MoviePlayer {
                 }
 
                 ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
-                // Read the sample data into the ByteBuffer.  This neither respects nor
+                // Read the sample data into the ByteBuffer. This neither respects nor
                 // updates inputBuf's position, limit, etc.
                 int chunkSize = extractor.readSampleData(inputBuf, 0);
                 if (chunkSize < 0) {
@@ -185,8 +190,7 @@ class MoviePassiveDecoder extends MoviePlayer {
                                 extractor.getSampleTrackIndex() + ", expected " + trackIndex);
                     }
                     long presentationTimeUs = extractor.getSampleTime();
-                    decoder.queueInputBuffer(inputBufIndex, 0, chunkSize,
-                            presentationTimeUs, 0);
+                    decoder.queueInputBuffer(inputBufIndex, 0, chunkSize, presentationTimeUs, 0);
                     if (VERBOSE) {
                         Log.d(TAG, "advance::submitted frame " + inputChunk + " to dec, size=" +
                                 chunkSize);
@@ -208,12 +212,11 @@ class MoviePassiveDecoder extends MoviePlayer {
                 // not important for us, since we're using Surface
                 if (VERBOSE) Log.d(TAG, "advance::decoder output buffers changed");
             } else if (decoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                warmedUp = true;
                 MediaFormat newFormat = decoder.getOutputFormat();
                 if (VERBOSE) Log.d(TAG, "advance::decoder output format changed: " + newFormat);
             } else if (decoderStatus < 0) {
-                throw new RuntimeException(
-                        "unexpected result from decoder.dequeueOutputBuffer: " +
-                                decoderStatus);
+                throw new RuntimeException("unexpected result from decoder.dequeueOutputBuffer: " + decoderStatus);
             } else { // decoderStatus >= 0
                 if (firstInputTimeNsec != 0) {
                     // Log the delay from the first buffer of input to the first buffer
