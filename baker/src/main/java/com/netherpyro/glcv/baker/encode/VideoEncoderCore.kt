@@ -22,6 +22,7 @@ import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.util.Log
 import android.view.Surface
+import com.netherpyro.glcv.baker.Baker
 import java.io.IOException
 import java.nio.ByteBuffer
 
@@ -37,7 +38,7 @@ import java.nio.ByteBuffer
  * This class is not thread-safe, with one exception: it is valid to use the input surface
  * on one thread, and drain the output on a different thread.
  */
-@Suppress("ConstantConditionIf")
+@Suppress("ConstantConditionIf", "PrivatePropertyName")
 class VideoEncoderCore internal constructor(
         private val outputPath: String,
         private val width: Int,
@@ -46,6 +47,9 @@ class VideoEncoderCore internal constructor(
         private val bitRate: Int,
         private val iFrameIntervalSecs: Int
 ) {
+
+    private val VERBOSE = Baker.VERBOSE_LOGGING
+
     companion object {
         const val DEFAULT_SIDE_MIN_SIZE = 1080
         const val DEFAULT_FPS = 30
@@ -53,8 +57,8 @@ class VideoEncoderCore internal constructor(
         const val DEFAULT_BIT_RATE = 4000000
 
         private const val TAG = "VideoEncoderCore"
-        private const val VERBOSE = true
         private const val MIME_TYPE = "video/avc"
+
     }
 
     /**

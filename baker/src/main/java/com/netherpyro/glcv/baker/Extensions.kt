@@ -17,6 +17,7 @@ fun Composer.renderToVideoFile(
         fps: Int = DEFAULT_FPS,
         iFrameIntervalSecs: Int = DEFAULT_I_FRAME_INTERVAL_SEC,
         bitRate: Int = DEFAULT_BIT_RATE,
+        verboseLogging: Boolean = false,
         progressListener: ((progress: Float, completed: Boolean) -> Unit)? = null
 ): Cancellable =
         Baker.bake(
@@ -30,4 +31,4 @@ fun Composer.renderToVideoFile(
                 context,
                 getSharedEglContext(),
                 progressListener
-        )
+        ).also { Baker.VERBOSE_LOGGING = verboseLogging }

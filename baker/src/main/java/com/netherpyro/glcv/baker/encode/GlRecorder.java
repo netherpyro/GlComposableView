@@ -24,6 +24,7 @@ import android.util.Log;
 
 import com.netherpyro.glcv.GlRenderer;
 import com.netherpyro.glcv.GlViewport;
+import com.netherpyro.glcv.baker.Baker;
 import com.netherpyro.glcv.baker.gles.EglCore;
 import com.netherpyro.glcv.baker.gles.WindowSurface;
 
@@ -52,7 +53,7 @@ import java.lang.ref.WeakReference;
  */
 public class GlRecorder implements Runnable {
     private static final String TAG = "GlRecoder";
-    private static final boolean VERBOSE = false;
+    private static final boolean VERBOSE = Baker.Companion.getVERBOSE_LOGGING();
 
     private static final int MSG_START_RECORDING = 0;
     private static final int MSG_STOP_RECORDING = 1;

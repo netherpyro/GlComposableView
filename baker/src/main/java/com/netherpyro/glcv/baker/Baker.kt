@@ -40,6 +40,8 @@ internal class Baker private constructor(
 ) : Cancellable {
 
     companion object {
+        var VERBOSE_LOGGING = false
+
         fun bake(
                 @ColorInt
                 viewportColor: Int,
@@ -83,8 +85,6 @@ internal class Baker private constructor(
     private inner class BakerThread(
             private val config: EncoderConfig
     ) : HandlerThread("BakerThread"), Handler.Callback, PostRenderCallback {
-
-        var VERBOSE = true
 
         private val TAG = "BakerThread"
         private val START = 0
@@ -213,14 +213,14 @@ internal class Baker private constructor(
 
             val status = timeMask.takeVisibilityStatus(presentationTimeNanos / 1_000_000)
 
-            if (VERBOSE)
+            if (VERBOSE_LOGGING)
                 Log.i(TAG,
                         "generateFrame::pTime=${presentationTimeNanos / 1_000_000} ms, " +
                                 "statuses=${status.toTypedArray()
                                     .contentToString()}")
 
             invalidateLayersVisibility(status)
-            decoders.advance(status)
+            decoders.advance(presentationTimeNanos / 1_000L, status)
 
             val progress = presentationTimeNanos / totalDurationNanos.toFloat()
             val hasFrames = presentationTimeNanos <= totalDurationNanos

@@ -23,14 +23,14 @@ internal class PassiveDecoderPool {
         decoders.values.forEach { it.raiseDecoder() }
     }
 
-    fun advance(statuses: List<TimeMask.VisibilityStatus>) {
+    fun advance(ptsUsec: Long, statuses: List<TimeMask.VisibilityStatus>) {
         val iterator = decoders.entries.iterator()
         while (iterator.hasNext()) {
             val (tag, decoder) = iterator.next()
             val visible = statuses.find { it.tag == tag }?.visible ?: false
 
             when {
-                visible -> decoder.advance()
+                visible -> decoder.advance(ptsUsec)
                 visible.not() && decoder.isUsed -> {
                     decoder.release()
                     iterator.remove()

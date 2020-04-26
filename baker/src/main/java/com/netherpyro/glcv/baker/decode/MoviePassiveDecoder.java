@@ -24,6 +24,8 @@ import android.net.Uri;
 import android.util.Log;
 import android.view.Surface;
 
+import com.netherpyro.glcv.baker.Baker;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -35,10 +37,10 @@ import java.nio.ByteBuffer;
  * Plays the video track from a movie file to a Surface in a passive way.
  * You should call [MoviePassiveDecoder#advance] to grab next frame.
  */
-// todo add frame speed control
+// todo resolve black frame at the beginning
 class MoviePassiveDecoder extends MoviePlayer {
     private static final String TAG = "MoviePassiveDecoder";
-    private static final boolean VERBOSE = true;
+    private static final boolean VERBOSE = Baker.Companion.getVERBOSE_LOGGING();
     private final static int TIMEOUT_USEC = 10000;
 
     private final Uri uri;
@@ -51,12 +53,12 @@ class MoviePassiveDecoder extends MoviePlayer {
 
     private int trackIndex = -1;
 
+    private SpeedController mSpeedController;
     private ByteBuffer[] decoderInputBuffers;
     private int inputChunk = 0;
     private long firstInputTimeNsec = -1;
     private boolean outputDone = false;
     private boolean inputDone = false;
-
     private boolean used = false;
 
     /**
@@ -71,7 +73,6 @@ class MoviePassiveDecoder extends MoviePlayer {
      * Constructs a Sync passive video decoder .
      *
      * @param uri The content-uri of video file path to open.
-     * @throws IOException
      */
     MoviePassiveDecoder(Context context, Uri uri) {
         this.uri = uri;
@@ -85,6 +86,47 @@ class MoviePassiveDecoder extends MoviePlayer {
             return;
         }
 
+        raiseDecoderInternal();
+    }
+
+    void release() {
+        if (decoder != null) {
+            decoder.stop();
+            decoder.release();
+            decoder = null;
+        }
+        if (extractor != null) {
+            extractor.release();
+            extractor = null;
+        }
+    }
+
+    boolean isUsed() {
+        return used;
+    }
+
+    void advance(long ptsUsec) {
+        if (decoder == null || extractor == null) {
+            Log.w(TAG, "advance::decoder was released!");
+            return;
+        }
+
+        if (outputDone) {
+            Log.w(TAG, "advance::nothing left for playback");
+            return;
+        }
+
+        if (!mSpeedController.test(ptsUsec)) {
+            if (VERBOSE) Log.i(TAG, "advance::skip frame due to frame threshold");
+            return;
+        }
+
+        used = true;
+
+        advanceInternal();
+    }
+
+    private void raiseDecoderInternal() throws IOException {
         try {
             extractor = new MediaExtractor();
             extractor.setDataSource(context, uri, null);
@@ -98,6 +140,11 @@ class MoviePassiveDecoder extends MoviePlayer {
 
             MediaFormat format = extractor.getTrackFormat(trackIndex);
 
+            int fps = format.getInteger(MediaFormat.KEY_FRAME_RATE);
+            Log.i(TAG, "raiseDecoder::video frame rate = " + fps);
+
+            mSpeedController = new SpeedController(fps);
+
             // Create a MediaCodec decoder, and configure it with the MediaFormat from the
             // extractor. It's very important to use the format from the extractor because
             // it contains a copy of the CSD-0/CSD-1 codec-specific data chunks.
@@ -109,38 +156,6 @@ class MoviePassiveDecoder extends MoviePlayer {
         } catch (IOException e) {
             release();
             throw e;
-        }
-    }
-
-    boolean isUsed() {
-        return used;
-    }
-
-    void advance() {
-        if (decoder == null || extractor == null) {
-            Log.w(TAG, "advance::decoder was released!");
-            return;
-        }
-
-        if (outputDone) {
-            Log.w(TAG, "advance::nothing left for playback");
-            return;
-        }
-
-        used = true;
-
-        advanceInternal();
-    }
-
-    void release() {
-        if (decoder != null) {
-            decoder.stop();
-            decoder.release();
-            decoder = null;
-        }
-        if (extractor != null) {
-            extractor.release();
-            extractor = null;
         }
     }
 
@@ -217,18 +232,7 @@ class MoviePassiveDecoder extends MoviePlayer {
                 }
 
                 boolean doRender = (bufferInfo.size != 0);
-
-                // As soon as we call releaseOutputBuffer, the buffer will be forwarded
-                // to SurfaceTexture to convert to a texture.  We can't control when it
-                // appears on-screen, but we can manage the pace at which we release
-                // the buffers.
-                /*if (doRender && frameCallback != null) {
-                    frameCallback.preRender(bufferInfo.presentationTimeUs);
-                }*/
                 decoder.releaseOutputBuffer(decoderStatus, doRender);
-                /*if (doRender && frameCallback != null) {
-                    frameCallback.postRender();
-                }*/
             }
         }
     }
