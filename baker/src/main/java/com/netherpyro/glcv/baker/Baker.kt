@@ -31,13 +31,14 @@ import com.netherpyro.glcv.compose.template.TimeMask
  * Bakes (records) composed [Template] synced with [TimeMask] into video file.
  */
 // todo mux audio track
+// todo handle errors
 internal class Baker private constructor(
         config: EncoderConfig,
         @ColorInt
         val viewportColor: Int,
         val template: Template,
         private val context: Context,
-        private val progressListener: ((progress: Float, completed: Boolean) -> Unit)?
+        private val progressPublisher: BakeProgressPublisher?
 ) : Cancellable {
 
     companion object {
@@ -54,7 +55,7 @@ internal class Baker private constructor(
                 bitRate: Int,
                 context: Context,
                 eglContext: EGLContext?,
-                progressListener: ((progress: Float, completed: Boolean) -> Unit)?
+                progressPublisher: BakeProgressPublisher?
         ): Cancellable {
             val resolution = Util.resolveResolution(template.aspectRatio, outputMinSidePx)
             val config = EncoderConfig(
@@ -67,7 +68,7 @@ internal class Baker private constructor(
                     eglContext
             )
 
-            return Baker(config, viewportColor, template, context, progressListener)
+            return Baker(config, viewportColor, template, context, progressPublisher)
         }
     }
 
@@ -224,7 +225,7 @@ internal class Baker private constructor(
 
             val progress = presentationTimeNanos / totalDurationNanos.toFloat()
             val hasFrames = presentationTimeNanos <= totalDurationNanos
-            progressListener?.invoke(progress, !hasFrames)
+            progressPublisher?.publish(progress, !hasFrames)
 
             if (hasFrames) {
                 glRecorder.frameAvailable(presentationTimeNanos)

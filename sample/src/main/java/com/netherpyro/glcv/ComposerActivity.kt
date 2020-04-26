@@ -1,13 +1,18 @@
 package com.netherpyro.glcv
 
+import android.content.IntentFilter
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
+import com.netherpyro.glcv.baker.BakeProgressReceiver
+import com.netherpyro.glcv.baker.Cancellable
 import com.netherpyro.glcv.baker.renderToVideoFile
+import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
 import kotlinx.android.synthetic.main.activity_compose.*
 import java.io.File
@@ -15,9 +20,17 @@ import java.io.File
 /**
  * @author mmikhailov on 2019-11-30.
  */
+// todo handle broadcast receiver when lifecycle changes
 class ComposerActivity : AppCompatActivity() {
 
     private val composer = Composer()
+
+    private val progressReceiver = BakeProgressReceiver { progress, completed ->
+        handleProgress(progress, completed)
+    }
+
+    private var bakeProcess: Cancellable? = null
+    private var isReceiverRegistered = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +66,24 @@ class ComposerActivity : AppCompatActivity() {
         a9_18.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_9_18.value, true) }
 
         btn_render.setOnClickListener {
-            composer.renderToVideoFile(
+            // todo show dialog with cancel action
+            bakeProcess = composer.renderToVideoFile(
+                    this@ComposerActivity,
+                    File(cacheDir, "result.mp4").absolutePath,
+                    outputMinSidePx = 1080,
+                    fps = 60,
+                    verboseLogging = true,
+                    progressListener = { progress: Float, completed: Boolean ->
+                        runOnUiThread { handleProgress(progress, completed) }
+                    }
+            )
+        }
+
+        btn_render_service.setOnClickListener {
+            // todo show dialog with cancel action
+            registerReceiver(progressReceiver, IntentFilter(BakeProgressReceiver.ACTION_PUBLISH_PROGRESS))
+            isReceiverRegistered = true
+            bakeProcess = composer.renderToVideoFileInSeparateProcess(
                     this@ComposerActivity,
                     File(cacheDir, "result.mp4").absolutePath,
                     outputMinSidePx = 1080,
@@ -124,5 +154,14 @@ class ComposerActivity : AppCompatActivity() {
                 block.invoke(this@alsoOnLaid)
             }
         })
+    }
+
+    private fun handleProgress(value: Float, completed: Boolean) {
+        Log.d("ComposerActivity", "handleProgress::$value : $completed")
+
+        if (completed && isReceiverRegistered) {
+            isReceiverRegistered = false
+            unregisterReceiver(progressReceiver)
+        }
     }
 }
