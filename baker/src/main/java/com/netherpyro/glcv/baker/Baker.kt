@@ -145,7 +145,9 @@ internal class Baker private constructor(
         private fun startEncoding(): Boolean {
             setupGlLayers()
 
-            encoder = Encoder(glRenderer, viewport, config, this,
+            val trackCount = decoders.trackCount
+
+            encoder = Encoder(glRenderer, viewport, config, trackCount, this,
                     object : PrepareCallback {
                         override fun onPrepared() {
                             decoders.prepare()

@@ -180,8 +180,7 @@ class VideoPassiveDecoder implements SurfaceConsumer {
                 int chunkSize = extractor.readSampleData(inputBuf, 0);
                 if (chunkSize < 0) {
                     // End of stream -- send empty frame with EOS flag set.
-                    decoder.queueInputBuffer(inputBufIndex, 0, 0, 0L,
-                            MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+                    decoder.queueInputBuffer(inputBufIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
                     inputDone = true;
                     if (VERBOSE) Log.d(TAG, "advance::sent input EOS");
                 } else {
@@ -189,12 +188,14 @@ class VideoPassiveDecoder implements SurfaceConsumer {
                         Log.w(TAG, "advance::WEIRD: got sample from track " +
                                 extractor.getSampleTrackIndex() + ", expected " + trackIndex);
                     }
+
                     long presentationTimeUs = extractor.getSampleTime();
                     decoder.queueInputBuffer(inputBufIndex, 0, chunkSize, presentationTimeUs, 0);
+
                     if (VERBOSE) {
-                        Log.d(TAG, "advance::submitted frame " + inputChunk + " to dec, size=" +
-                                chunkSize);
+                        Log.d(TAG, "advance::submitted frame " + inputChunk + " to dec, size=" + chunkSize);
                     }
+
                     inputChunk++;
                     extractor.advance();
                 }

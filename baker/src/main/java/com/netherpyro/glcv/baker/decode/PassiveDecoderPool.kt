@@ -12,6 +12,15 @@ internal class PassiveDecoderPool {
 
     private val decoders = mutableMapOf<String, VideoPassiveDecoder>()
 
+    /**
+     * Count of tracks that will be encoded
+     * */
+    // todo count tracks
+    val trackCount: Int
+        get() {
+            return 1
+        }
+
     fun createSurfaceConsumer(tag: String, context: Context, uri: Uri): SurfaceConsumer {
         val decoder = VideoPassiveDecoder(context, uri)
         decoders[tag] = decoder

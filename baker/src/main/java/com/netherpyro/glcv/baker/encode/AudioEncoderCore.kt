@@ -21,71 +21,43 @@ import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.util.Log
-import android.view.Surface
 import com.netherpyro.glcv.baker.Baker
 import java.nio.ByteBuffer
 
 /**
- * @author mmikhailov on 29.03.2020.
- *
- * This class wraps up the core components used for surface-input video encoding.
- *
- * Once created, frames are fed to the input surface.  Remember to provide the presentation
- * time stamp, and always call drainEncoder() before swapBuffers() to ensure that the
- * producer side doesn't get backed up.
- *
- * This class is not thread-safe, with one exception: it is valid to use the input surface
- * on one thread, and drain the output on a different thread.
+ * @author mmikhailov on 27.04.2020.
  */
 @Suppress("ConstantConditionIf")
-internal class VideoEncoderCore internal constructor(
-        width: Int,
-        height: Int,
-        fps: Int,
-        bitRate: Int,
-        iFrameIntervalSecs: Int,
+internal class AudioEncoderCore internal constructor(
+        sampleRate: Int,
+        channelCount: Int,
+        mimeType: String,
         private val muxer: MediaMuxer,
         private val muxerTrackAddedCallback: MuxerTrackAddedCallback
 ) {
     companion object {
-        private const val TAG = "VideoEncoderCore"
-        private const val MIME_TYPE = "video/avc"
+        private const val TAG = "AudioEncoderCore"
+       // private const val MIME_TYPE = "audio/mp4a-latm"
         private const val TIMEOUT_USEC = 10000L
 
         private val VERBOSE = Baker.VERBOSE_LOGGING
-
-        const val DEFAULT_SIDE_MIN_SIZE = 1080
-        const val DEFAULT_FPS = 30
-        const val DEFAULT_I_FRAME_INTERVAL_SEC = 5
-        const val DEFAULT_BIT_RATE = 4000000
     }
 
-    /**
-     * The encoder's input surface.
-     */
-    val inputSurface: Surface
-
-    private val encoder = MediaCodec.createEncoderByType(MIME_TYPE)
+    private val encoder = MediaCodec.createEncoderByType(mimeType)
     private val bufferInfo = MediaCodec.BufferInfo()
 
     private var trackIndex = -1
     private var trackAdded = false
 
     init {
-        // Configure encoder and prepares the input Surface
-
-        val format = MediaFormat.createVideoFormat(MIME_TYPE, width, height)
-        // Set some properties. Failing to specify some of these can cause the MediaCodec
-        // configure() call to throw an unhelpful exception.
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-        format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, fps)
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, iFrameIntervalSecs)
+        val format = MediaFormat.createAudioFormat(mimeType, sampleRate, channelCount)
+        format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
+        format.setInteger(MediaFormat.KEY_CHANNEL_MASK, 16)
+        format.setInteger(MediaFormat.KEY_BIT_RATE, 64 * 1024)
 
         if (VERBOSE) Log.v(TAG, "prepareEncoder::format=$format")
 
         encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        inputSurface = encoder.createInputSurface()
         encoder.start()
     }
 
@@ -97,7 +69,29 @@ internal class VideoEncoderCore internal constructor(
 
         encoder.stop()
         encoder.release()
-        inputSurface.release()
+    }
+
+    fun encode(buffer: ByteBuffer, length: Int, presentationTimeUs: Long) {
+        if (VERBOSE) Log.v(TAG, "encode::buffer=$buffer length:$length")
+
+        val inputIndex: Int = encoder.dequeueInputBuffer(TIMEOUT_USEC)
+
+        if (VERBOSE) Log.v(TAG, "encode::inputIndex=$inputIndex")
+
+        if (inputIndex > 0) {
+            val inputBuffer = encoder.getInputBuffer(inputIndex)!!
+
+            if (VERBOSE) Log.v(TAG, "encode::inputBuffer=$inputBuffer")
+
+//            inputBuffer.clear()
+            inputBuffer.put(buffer)
+
+            if (length <= 0) {
+                encoder.queueInputBuffer(inputIndex, 0, 0, presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+            } else {
+                encoder.queueInputBuffer(inputIndex, 0, length, presentationTimeUs, 0)
+            }
+        }
     }
 
     /**

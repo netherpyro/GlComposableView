@@ -16,6 +16,7 @@
 
 package com.netherpyro.glcv.baker.encode;
 
+import android.media.MediaMuxer;
 import android.opengl.EGLContext;
 import android.os.Handler;
 import android.os.Looper;
@@ -28,6 +29,7 @@ import com.netherpyro.glcv.baker.Baker;
 import com.netherpyro.glcv.baker.gles.EglCore;
 import com.netherpyro.glcv.baker.gles.WindowSurface;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 /**
@@ -64,11 +66,13 @@ public class Encoder implements Runnable {
     private final GlRenderer glRenderer;
     private final GlViewport glViewport;
     private final EncoderConfig config;
+    private final int trackCount;
 
     // ----- accessed exclusively by encoder thread -----
     private WindowSurface mInputWindowSurface;
     private EglCore mEglCore;
     private VideoEncoderCore mVideoEncoder;
+    private MediaMuxer muxer;
 
     // ----- accessed by multiple threads -----
     private volatile EncoderHandler mHandler;
@@ -76,16 +80,25 @@ public class Encoder implements Runnable {
     private final Object mReadyFence = new Object(); // guards ready/running
     private boolean mReady;
     private boolean mRunning;
+    private int addedTrackCount = 0;
 
     private final PostRenderCallback mPostRenderCallback;
     private final PrepareCallback mPrepareCallback;
 
-    public Encoder(GlRenderer glRenderer, GlViewport viewport, EncoderConfig config, PostRenderCallback postRenderCallback, PrepareCallback prepareCallback) {
+    public Encoder(
+            GlRenderer glRenderer,
+            GlViewport viewport,
+            EncoderConfig config,
+            int trackCount,
+            PostRenderCallback postRenderCallback,
+            PrepareCallback prepareCallback
+    ) {
         this.glRenderer = glRenderer;
         this.glViewport = viewport;
         this.config = config;
         this.mPostRenderCallback = postRenderCallback;
         this.mPrepareCallback = prepareCallback;
+        this.trackCount = trackCount;
     }
 
     /**
@@ -148,19 +161,6 @@ public class Encoder implements Runnable {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_UPDATE_SHARED_CONTEXT, sharedContext));
     }
 
-    /**
-     * Tells the video recorder that a new frame is available.  (Call from non-encoder thread.)
-     * <p>
-     * This function sends a message and returns immediately.  This isn't sufficient -- we
-     * don't want the caller to latch a new frame until we're done with this one -- but we
-     * can get away with it so long as the input frame rate is reasonable and the encoder
-     * thread doesn't stall.
-     * <p>
-     * TODO: either block here until the texture has been rendered onto the encoder surface,
-     * or have a separate "block if still busy" method that the caller can execute immediately
-     * before it calls updateTexImage().  The latter is preferred because we don't want to
-     * stall the caller while this thread does work.
-     */
     public void frameAvailable(long frameTimestampNanoSec) {
         synchronized (mReadyFence) {
             if (!mReady) {
@@ -192,19 +192,26 @@ public class Encoder implements Runnable {
      */
     @Override
     public void run() {
-        // Establish a Looper for this thread, and define a Handler for it.
         Looper.prepare();
         synchronized (mReadyFence) {
             mHandler = new EncoderHandler(this);
             mReady = true;
             mReadyFence.notify();
         }
+
         Looper.loop();
 
         Log.d(TAG, "Encoder thread exiting");
+
         synchronized (mReadyFence) {
             mReady = mRunning = false;
             mHandler = null;
+        }
+    }
+
+    private void trackAdded() {
+        if (++addedTrackCount == trackCount) {
+            muxer.start();
         }
     }
 
@@ -225,7 +232,7 @@ public class Encoder implements Runnable {
 
             Encoder encoder = mWeakEncoder.get();
             if (encoder == null) {
-                Log.w(TAG, "EncoderHandler.handleMessage: encoder is null");
+                Log.w(TAG, "EncoderHandler.handleMessage::encoder is null");
                 return;
             }
 
@@ -307,7 +314,25 @@ public class Encoder implements Runnable {
     }
 
     private void handlePrepare(EncoderConfig config) {
-        mVideoEncoder = new VideoEncoderCore(config.getOutputPath(), config.getWidth(), config.getHeight(), config.getFps(), config.getBitRate(), config.getIFrameIntervalSecs());
+        // Create a MediaMuxer. We can't add the video track and start() the muxer here,
+        // because our MediaFormat doesn't have the Magic Goodies. These can only be
+        // obtained from the encoder after it has started processing data.
+        try {
+            muxer = new MediaMuxer(config.getOutputPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        } catch (IOException e) {
+            throw new RuntimeException("handlePrepare::MediaMuxer creation failed", e);
+        }
+
+        mVideoEncoder = new VideoEncoderCore(
+                config.getWidth(),
+                config.getHeight(),
+                config.getFps(),
+                config.getBitRate(),
+                config.getIFrameIntervalSecs(),
+                muxer,
+                this::trackAdded
+        );
+
         mEglCore = new EglCore(config.getEglContext(), EglCore.FLAG_RECORDABLE);
         mInputWindowSurface = new WindowSurface(mEglCore, mVideoEncoder.getInputSurface(), true);
         mInputWindowSurface.makeCurrent();
@@ -321,6 +346,11 @@ public class Encoder implements Runnable {
 
     private void releaseEncoder() {
         mVideoEncoder.release();
+
+        if (muxer != null) {
+            muxer.stop();
+            muxer.release();
+        }
 
         if (mInputWindowSurface != null) {
             mInputWindowSurface.release();
