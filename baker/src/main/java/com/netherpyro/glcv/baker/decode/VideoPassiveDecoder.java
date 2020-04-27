@@ -24,6 +24,7 @@ import android.net.Uri;
 import android.util.Log;
 import android.view.Surface;
 
+import com.netherpyro.glcv.SurfaceConsumer;
 import com.netherpyro.glcv.baker.Baker;
 
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +36,10 @@ import java.nio.ByteBuffer;
  * @author mmikhailov on 25.04.2020.
  *
  * Plays the video track from a movie file to a Surface in a passive way.
- * You should call [MoviePassiveDecoder#advance] to grab next frame.
+ * You should call [VideoPassiveDecoder#advance] to grab next frame.
  */
-// todo resolve black frame at the beginning
-class MoviePassiveDecoder extends MoviePlayer {
-    private static final String TAG = "MoviePassiveDecoder";
+class VideoPassiveDecoder implements SurfaceConsumer {
+    private static final String TAG = "VideoPassiveDecoder";
     private static final boolean VERBOSE = Baker.Companion.getVERBOSE_LOGGING();
     private final static int TIMEOUT_USEC = 10000;
 
@@ -75,7 +75,7 @@ class MoviePassiveDecoder extends MoviePlayer {
      *
      * @param uri The content-uri of video file path to open.
      */
-    MoviePassiveDecoder(Context context, Uri uri) {
+    VideoPassiveDecoder(Context context, Uri uri) {
         this.uri = uri;
         this.context = context;
         this.bufferInfo = new MediaCodec.BufferInfo();

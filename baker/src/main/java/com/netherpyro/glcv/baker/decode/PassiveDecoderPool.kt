@@ -10,10 +10,10 @@ import com.netherpyro.glcv.compose.template.TimeMask
  */
 internal class PassiveDecoderPool {
 
-    private val decoders = mutableMapOf<String, MoviePassiveDecoder>()
+    private val decoders = mutableMapOf<String, VideoPassiveDecoder>()
 
     fun createSurfaceConsumer(tag: String, context: Context, uri: Uri): SurfaceConsumer {
-        val decoder = MoviePassiveDecoder(context, uri)
+        val decoder = VideoPassiveDecoder(context, uri)
         decoders[tag] = decoder
 
         return decoder

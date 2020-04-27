@@ -51,12 +51,12 @@ import java.lang.ref.WeakReference;
  * – for each frame, after latching it with SurfaceTexture#updateTexImage(),
  * call TextureMovieEncoder#frameAvailable().
  */
-public class GlRecorder implements Runnable {
-    private static final String TAG = "GlRecoder";
+public class Encoder implements Runnable {
+    private static final String TAG = "Encoder";
     private static final boolean VERBOSE = Baker.Companion.getVERBOSE_LOGGING();
 
-    private static final int MSG_START_RECORDING = 0;
-    private static final int MSG_STOP_RECORDING = 1;
+    private static final int MSG_PREPARE = 0;
+    private static final int MSG_STOP = 1;
     private static final int MSG_FRAME_AVAILABLE = 2;
     private static final int MSG_UPDATE_SHARED_CONTEXT = 4;
     private static final int MSG_QUIT = 5;
@@ -80,7 +80,7 @@ public class GlRecorder implements Runnable {
     private final PostRenderCallback mPostRenderCallback;
     private final PrepareCallback mPrepareCallback;
 
-    public GlRecorder(GlRenderer glRenderer, GlViewport viewport, EncoderConfig config, PostRenderCallback postRenderCallback, PrepareCallback prepareCallback) {
+    public Encoder(GlRenderer glRenderer, GlViewport viewport, EncoderConfig config, PostRenderCallback postRenderCallback, PrepareCallback prepareCallback) {
         this.glRenderer = glRenderer;
         this.glViewport = viewport;
         this.config = config;
@@ -96,7 +96,7 @@ public class GlRecorder implements Runnable {
      * Returns after the recorder thread has started and is ready to accept Messages. The
      * encoder may not yet be fully configured.
      */
-    public void raiseEncoder() {
+    public void prepare() {
         Log.d(TAG, "raiseEncoder::startRecording()");
         synchronized (mReadyFence) {
             if (mRunning) {
@@ -114,7 +114,7 @@ public class GlRecorder implements Runnable {
             }
         }
 
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_START_RECORDING, config));
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_PREPARE, config));
     }
 
     /**
@@ -122,12 +122,11 @@ public class GlRecorder implements Runnable {
      * <p>
      * Returns immediately; the encoder/muxer may not yet be finished creating the movie.
      * <p>
-     * TODO: have the encoder thread invoke a callback on the UI thread just before it shuts down
      * so we can provide reasonable status UI (and let the caller know that movie encoding
      * has completed).
      */
-    public void stopRecording() {
-        mHandler.sendMessage(mHandler.obtainMessage(MSG_STOP_RECORDING));
+    public void stop() {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_STOP));
         mHandler.sendMessage(mHandler.obtainMessage(MSG_QUIT));
         // We don't know when these will actually finish (or even start).  We don't want to
         // delay the UI thread though, so we return immediately.
@@ -213,9 +212,9 @@ public class GlRecorder implements Runnable {
      * Handles encoder state change requests.  The handler is created on the encoder thread.
      */
     private static class EncoderHandler extends Handler {
-        private WeakReference<GlRecorder> mWeakEncoder;
+        private WeakReference<Encoder> mWeakEncoder;
 
-        EncoderHandler(GlRecorder encoder) {
+        EncoderHandler(Encoder encoder) {
             mWeakEncoder = new WeakReference<>(encoder);
         }
 
@@ -224,18 +223,18 @@ public class GlRecorder implements Runnable {
             int what = inputMessage.what;
             Object obj = inputMessage.obj;
 
-            GlRecorder encoder = mWeakEncoder.get();
+            Encoder encoder = mWeakEncoder.get();
             if (encoder == null) {
                 Log.w(TAG, "EncoderHandler.handleMessage: encoder is null");
                 return;
             }
 
             switch (what) {
-                case MSG_START_RECORDING:
-                    encoder.handleStartRecording((EncoderConfig) obj);
+                case MSG_PREPARE:
+                    encoder.handlePrepare((EncoderConfig) obj);
                     break;
-                case MSG_STOP_RECORDING:
-                    encoder.handleStopRecording();
+                case MSG_STOP:
+                    encoder.handleStop();
                     break;
                 case MSG_FRAME_AVAILABLE:
                     long timestamp = (((long) inputMessage.arg1) << 32) | (((long) inputMessage.arg2) & 0xffffffffL);
@@ -252,14 +251,6 @@ public class GlRecorder implements Runnable {
                     throw new RuntimeException("Unhandled msg what=" + what);
             }
         }
-    }
-
-    /**
-     * Starts recording.
-     */
-    private void handleStartRecording(EncoderConfig config) {
-        Log.d(TAG, "handleStartRecording " + config);
-        prepareEncoder(config);
     }
 
     /**
@@ -282,10 +273,7 @@ public class GlRecorder implements Runnable {
         mPostRenderCallback.onPostRender();
     }
 
-    /**
-     * Handles a request to stop encoding.
-     */
-    private void handleStopRecording() {
+    private void handleStop() {
         Log.d(TAG, "handleStopRecording");
         mVideoEncoder.drain(true);
         releaseEncoder();
@@ -318,7 +306,7 @@ public class GlRecorder implements Runnable {
         glRenderer.setViewport(glViewport); // todo not needed ?
     }
 
-    private void prepareEncoder(EncoderConfig config) {
+    private void handlePrepare(EncoderConfig config) {
         mVideoEncoder = new VideoEncoderCore(config.getOutputPath(), config.getWidth(), config.getHeight(), config.getFps(), config.getBitRate(), config.getIFrameIntervalSecs());
         mEglCore = new EglCore(config.getEglContext(), EglCore.FLAG_RECORDABLE);
         mInputWindowSurface = new WindowSurface(mEglCore, mVideoEncoder.getInputSurface(), true);

@@ -47,7 +47,6 @@ class VideoEncoderCore internal constructor(
         private val bitRate: Int,
         private val iFrameIntervalSecs: Int
 ) {
-
     private val VERBOSE = Baker.VERBOSE_LOGGING
 
     companion object {
@@ -86,8 +85,7 @@ class VideoEncoderCore internal constructor(
     private fun prepare() {
         bufferInfo = MediaCodec.BufferInfo()
 
-        val format = MediaFormat.createVideoFormat(
-                MIME_TYPE, width, height)
+        val format = MediaFormat.createVideoFormat(MIME_TYPE, width, height)
         // Set some properties.  Failing to specify some of these can cause the MediaCodec
         // configure() call to throw an unhelpful exception.
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
@@ -105,8 +103,7 @@ class VideoEncoderCore internal constructor(
         // you will likely want to defer instantiation of CodecInputSurface until after the
         // "display" EGL context is created, then modify the eglCreateContext call to
         // take eglGetCurrentContext() as the share_context argument.
-        encoder = MediaCodec.createEncoderByType(
-                MIME_TYPE)
+        encoder = MediaCodec.createEncoderByType(MIME_TYPE)
         encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         inputSurface = encoder.createInputSurface()
         encoder.start()
@@ -146,8 +143,6 @@ class VideoEncoderCore internal constructor(
         }
 
         if (::muxer.isInitialized) {
-            // TODO: stop() throws an exception if you haven't fed it any data.  Keep track
-            //       of frames submitted, and don't call stop() if we haven't written anything.
             muxer.stop()
             muxer.release()
         }

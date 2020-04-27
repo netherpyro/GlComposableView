@@ -15,8 +15,8 @@ import com.netherpyro.glcv.LayoutHelper
 import com.netherpyro.glcv.TransformData
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.baker.decode.PassiveDecoderPool
+import com.netherpyro.glcv.baker.encode.Encoder
 import com.netherpyro.glcv.baker.encode.EncoderConfig
-import com.netherpyro.glcv.baker.encode.GlRecorder
 import com.netherpyro.glcv.baker.encode.PostRenderCallback
 import com.netherpyro.glcv.baker.encode.PrepareCallback
 import com.netherpyro.glcv.compose.media.Constant
@@ -94,7 +94,7 @@ internal class Baker private constructor(
         private val FRAME = 2
 
         private lateinit var handler: Handler
-        private lateinit var glRecorder: GlRecorder
+        private lateinit var encoder: Encoder
         private lateinit var transformables: Array<Transformable>
 
         private val glRenderer = GlRenderer(RenderHostStub, Color.BLACK, viewportColor)
@@ -123,8 +123,8 @@ internal class Baker private constructor(
             }
 
             return when (msg.what) {
-                START -> startRecoding()
-                STOP -> stopRecoding()
+                START -> startEncoding()
+                STOP -> stopEncoding()
                 FRAME -> generateFrame()
                 else -> false
             }
@@ -142,23 +142,24 @@ internal class Baker private constructor(
             handler.sendEmptyMessage(STOP)
         }
 
-        private fun startRecoding(): Boolean {
+        private fun startEncoding(): Boolean {
             setupGlLayers()
 
-            glRecorder = GlRecorder(glRenderer, viewport, config, this, object : PrepareCallback {
-                override fun onPrepared() {
-                    decoders.prepare()
-                    generateFrame()
-                }
-            })
+            encoder = Encoder(glRenderer, viewport, config, this,
+                    object : PrepareCallback {
+                        override fun onPrepared() {
+                            decoders.prepare()
+                            generateFrame()
+                        }
+                    })
 
-            glRecorder.raiseEncoder()
+            encoder.prepare()
 
             return true
         }
 
-        private fun stopRecoding(): Boolean {
-            glRecorder.stopRecording()
+        private fun stopEncoding(): Boolean {
+            encoder.stop()
             decoders.release()
 
             interrupt()
@@ -228,9 +229,9 @@ internal class Baker private constructor(
             progressPublisher?.publish(progress, !hasFrames)
 
             if (hasFrames) {
-                glRecorder.frameAvailable(presentationTimeNanos)
+                encoder.frameAvailable(presentationTimeNanos)
             } else {
-                stopRecoding()
+                stopEncoding()
             }
 
             return true

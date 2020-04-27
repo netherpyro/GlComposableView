@@ -45,7 +45,7 @@ class ComposerActivity : AppCompatActivity() {
 
         // todo pick content uri
         // tiger
-        composer.addVideo("video3", Uri.parse("content://media/external/file/3370"), trimmedDuration = 2000L)
+//        composer.addVideo("video3", Uri.parse("content://media/external/file/3370"), trimmedDuration = 2000L)
 
         composer.addImage("image1", Uri.parse("content://media/external/file/129"), startMs = 1000L)
         composer.addImage("image2", Uri.parse("content://media/external/file/135"), startMs = 1500L)
@@ -54,6 +54,8 @@ class ComposerActivity : AppCompatActivity() {
         composer.addVideo("video1", Uri.parse("content://media/external/file/3365"))
         // filmm
         composer.addVideo("video2", Uri.parse("content://media/external/file/4024"))
+        //  with audio
+//        composer.addVideo("video4", Uri.parse("content://media/external/file/3371"))
 
         a1_1.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
         a3_2.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
