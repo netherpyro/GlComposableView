@@ -29,7 +29,7 @@ internal class PassiveDecoderPool {
     }
 
     fun prepare() {
-        decoders.values.forEach { it.raiseDecoder() }
+        decoders.values.forEach { it.prepare() }
     }
 
     fun advance(ptsUsec: Long, statuses: List<TimeMask.VisibilityStatus>) {
