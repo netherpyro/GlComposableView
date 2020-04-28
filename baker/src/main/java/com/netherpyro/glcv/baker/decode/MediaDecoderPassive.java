@@ -36,10 +36,10 @@ import java.nio.ByteBuffer;
  * @author mmikhailov on 25.04.2020.
  *
  * Plays the video track from a movie file to a Surface in a passive way.
- * You should call [VideoPassiveDecoder#advance] to grab next frame.
+ * You should call [MediaDecoderPassive#advance] to grab next frame.
  */
-class VideoPassiveDecoder implements SurfaceConsumer {
-    private static final String TAG = "VideoPassiveDecoder";
+class MediaDecoderPassive implements SurfaceConsumer {
+    private static final String TAG = "MediaDecoderPassive";
     private static final boolean VERBOSE = Baker.Companion.getVERBOSE_LOGGING();
     private final static int TIMEOUT_USEC = 10000;
 
@@ -54,7 +54,6 @@ class VideoPassiveDecoder implements SurfaceConsumer {
     private int trackIndex = -1;
 
     private SpeedController mSpeedController;
-    private ByteBuffer[] decoderInputBuffers;
     private int inputChunk = 0;
     private long firstInputTimeNsec = -1;
     private boolean outputDone = false;
@@ -71,11 +70,11 @@ class VideoPassiveDecoder implements SurfaceConsumer {
     }
 
     /**
-     * Constructs a Sync passive video decoder .
+     * Constructs a sync passive video decoder.
      *
      * @param uri The content-uri of video file path to open.
      */
-    VideoPassiveDecoder(Context context, Uri uri) {
+    MediaDecoderPassive(Context context, Uri uri) {
         this.uri = uri;
         this.context = context;
         this.bufferInfo = new MediaCodec.BufferInfo();
@@ -153,7 +152,6 @@ class VideoPassiveDecoder implements SurfaceConsumer {
             decoder = MediaCodec.createDecoderByType(mime);
             decoder.configure(format, outputSurface, null, 0);
             decoder.start();
-            decoderInputBuffers = decoder.getInputBuffers();
 
             while (!warmedUp) {
                 advanceInternal();
@@ -174,7 +172,7 @@ class VideoPassiveDecoder implements SurfaceConsumer {
                     firstInputTimeNsec = System.nanoTime();
                 }
 
-                ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
+                ByteBuffer inputBuf = decoder.getInputBuffer(inputBufIndex);
                 // Read the sample data into the ByteBuffer. This neither respects nor
                 // updates inputBuf's position, limit, etc.
                 int chunkSize = extractor.readSampleData(inputBuf, 0);
