@@ -12,6 +12,7 @@ import com.netherpyro.glcv.compose.Composer
 /**
  * @author mmikhailov on 01.04.2020.
  */
+// todo resolve result video frame rate issue when encoding without service
 fun Composer.renderToVideoFile(
         context: Context,
         outputPath: String,

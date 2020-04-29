@@ -52,11 +52,11 @@ class ComposerActivity : AppCompatActivity() {
         composer.addImage("image2", Uri.parse("content://media/external/file/135"), startMs = 1500L)
         composer.addImage("image3", Uri.parse("content://media/external/file/136"))
         // sphere
-        composer.addVideo("video1", Uri.parse("content://media/external/file/3365"), mutedAudio = false)
+        composer.addVideo("video1", Uri.parse("content://media/external/file/3365"))
         // filmm
 //        composer.addVideo("video2", Uri.parse("content://media/external/file/4024"))
         //  with audio
-//        composer.addVideo("video4", Uri.parse("content://media/external/file/3371"), mutedAudio = true)
+//        composer.addVideo("video4", Uri.parse("content://media/external/file/3371"), mutedAudio = false)
         // harlem shake
 //        composer.addVideo("video5", Uri.parse("content://media/external/file/342"))
 
