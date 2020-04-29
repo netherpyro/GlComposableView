@@ -1,9 +1,11 @@
 package com.netherpyro.glcv
 
+import android.app.Activity
+import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
@@ -22,8 +24,10 @@ import java.io.File
  * @author mmikhailov on 2019-11-30.
  */
 // todo handle broadcast receiver when lifecycle changes
+// todo request storage permission
 class ComposerActivity : AppCompatActivity() {
 
+    private val mediaRequestCode = 7879
     private val composer = Composer()
 
     private val progressReceiver = BakeProgressReceiver { progress, completed ->
@@ -48,7 +52,6 @@ class ComposerActivity : AppCompatActivity() {
         composer.setAspectRatio(16 / 9f)
         composer.setGlView(glView)
 
-        // todo pick content uri
         // tiger
         /*composer.addVideo(
                 "video3",
@@ -56,7 +59,7 @@ class ComposerActivity : AppCompatActivity() {
                 trimmedDuration = 2000L
         ) { transformable -> transformableList.add(transformable) }*/
 
-        composer.addImage(
+        /*composer.addImage(
                 "image1",
                 Uri.parse("content://media/external/file/129"),
                 startMs = 1000L
@@ -77,7 +80,7 @@ class ComposerActivity : AppCompatActivity() {
         composer.addVideo(
                 "video1",
                 Uri.parse("content://media/external/file/3365")
-        ) { transformable -> transformableList.add(transformable) }
+        ) { transformable -> transformableList.add(transformable) }*/
 
         // filmm
         /*composer.addVideo(
@@ -118,6 +121,14 @@ class ComposerActivity : AppCompatActivity() {
         a16_9.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_16_9.value, true) }
         a18_9.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_18_9.value, true) }
         a9_18.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_9_18.value, true) }
+
+        btn_pick.setOnClickListener {
+            startActivityForResult(
+                    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                        .apply { type = "image/* video/*" },
+                    mediaRequestCode
+            )
+        }
 
         btn_render.setOnClickListener {
             startTimeNsec = System.nanoTime()
@@ -234,6 +245,16 @@ class ComposerActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         glView.onPause()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        super.onActivityResult(requestCode, resultCode, intent)
+        if (intent != null && requestCode == mediaRequestCode && resultCode == Activity.RESULT_OK) {
+            val mediaUri = intent.data!!
+            composer.addMedia(mediaUri.toString(), mediaUri) { transformable ->
+                transformableList.add(transformable)
+            }
+        }
     }
 
     private fun Long.toSeconds() = this / 1_000_000_000f

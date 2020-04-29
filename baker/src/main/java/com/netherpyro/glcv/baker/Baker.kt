@@ -193,7 +193,7 @@ internal class Baker private constructor(
                                 initialValues = TransformData(
                                         scale = unit.scaleFactor,
                                         rotation = unit.rotationDeg,
-                                        xFactor = unit.translateFactorX,
+                                        xFactor = -unit.translateFactorX,
                                         yFactor = unit.translateFactorY,
                                         opacity = unit.opacity,
                                         layerSize = Size(metadata.width, metadata.height)
@@ -206,7 +206,7 @@ internal class Baker private constructor(
                                 initialValues = TransformData(
                                         scale = unit.scaleFactor,
                                         rotation = unit.rotationDeg,
-                                        xFactor = unit.translateFactorX,
+                                        xFactor = -unit.translateFactorX,
                                         yFactor = unit.translateFactorY,
                                         opacity = unit.opacity
                                 )

@@ -100,6 +100,34 @@ class Composer {
         }
     }
 
+    fun addMedia(
+            tag: String,
+            src: Uri,
+            zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
+            startMs: Long = 0,
+            trimmedDuration: Long? = null,
+            mutedAudio: Boolean = true, // todo return false after resolving audio issues
+            onTransformable: (Transformable) -> Unit
+    ): Controllable? {
+        checkGlView("addMedia") {
+            val view = glView!!
+            val metadata = Util.getMetadata(view.context, src)
+
+            if (metadata.type != Type.VIDEO && metadata.type != Type.IMAGE) {
+                Log.e(TAG, "addMedia::provided URI is neither an video nor audio file identifier")
+                return null
+            }
+
+            return when (metadata.type) {
+                Type.VIDEO -> addVideo(tag, src, zOrderDirection, startMs, trimmedDuration, mutedAudio, onTransformable)
+                Type.IMAGE -> addImage(tag, src, zOrderDirection, startMs,
+                        trimmedDuration ?: Constant.DEFAULT_IMAGE_DURATION_MS, onTransformable)
+            }
+        }
+
+        return null
+    }
+
     /**
      * Adds an image to project
      *

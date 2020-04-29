@@ -91,8 +91,9 @@ object Util {
                         .toInt()
 
                     orientation = cursor.getString(cursor.getColumnIndex(MediaStore.Files.FileColumns.ORIENTATION))
-                        .toInt()
-                        .toOrientation()
+                        ?.toInt()
+                        ?.toOrientation()
+                        ?: Orientation.DEG_0
 
                     duration = defaultImageDuration
                     hasAudio = false

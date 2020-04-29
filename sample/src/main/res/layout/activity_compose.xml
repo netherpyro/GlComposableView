@@ -88,17 +88,31 @@
 
         </LinearLayout>
 
-        <Button android:id="@+id/btn_render"
-            android:layout_width="wrap_content"
+        <Button android:id="@+id/btn_pick"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="RENDER" />
+            android:text="Pick media" />
 
-        <Button android:id="@+id/btn_render_service"
-            android:layout_width="wrap_content"
+        <LinearLayout android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="RENDER (SERVICE)" />
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/btn_render"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+                android:text="Render" />
+
+            <Button android:id="@+id/btn_render_service"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+                android:text="Render (service)" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
