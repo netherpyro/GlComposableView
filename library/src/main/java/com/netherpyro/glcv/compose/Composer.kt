@@ -136,7 +136,8 @@ class Composer {
                     tag = tag,
                     uri = src,
                     startDelayMs = startMs.coerceAtLeast(0L),
-                    durationMs = durationMs.coerceAtLeast(1000L)
+                    durationMs = durationMs.coerceAtLeast(1000L),
+                    mutedAudio = true
             ))
 
             //todo return Controllable
@@ -148,7 +149,8 @@ class Composer {
             src: Uri,
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
             startMs: Long = 0,
-            trimmedDuration: Long? = null
+            trimmedDuration: Long? = null,
+            mutedAudio: Boolean = true // todo return false after resolving audio issues
     ) {
         checkGlView("addVideo") {
             val view = glView!!
@@ -170,7 +172,8 @@ class Composer {
                     tag = tag,
                     uri = src,
                     startDelayMs = startMs.coerceAtLeast(0L),
-                    durationMs = trimmedDuration?.coerceAtLeast(1000L) ?: metadata.durationMs
+                    durationMs = trimmedDuration?.coerceAtLeast(1000L) ?: metadata.durationMs,
+                    mutedAudio = mutedAudio or metadata.hasAudio.not()
             ))
 
             //todo return Controllable

@@ -39,7 +39,8 @@ class Template private constructor(
                         rotationDeg = transformable.getRotation(),
                         translateFactorX = transformable.getTranslationFactor().first,
                         translateFactorY = transformable.getTranslationFactor().second,
-                        opacity = transformable.getOpacity()
+                        opacity = transformable.getOpacity(),
+                        mutedAudio = sequence.mutedAudio
                 )
             }
 
@@ -74,7 +75,8 @@ class Template private constructor(
                         tag = unit.tag,
                         uri = unit.uri,
                         startDelayMs = unit.startDelayMs,
-                        durationMs = unit.trimmedDurationMs
+                        durationMs = unit.trimmedDurationMs,
+                        mutedAudio = unit.mutedAudio
                 )
             }
 }

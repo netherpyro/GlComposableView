@@ -35,10 +35,11 @@ internal class AudioEncoderCore internal constructor(
 ) {
     companion object {
         private const val TAG = "AudioEncoderCore"
-        private const val MIME_TYPE = "audio/mp4a-latm"
+        private const val MIME_TYPE = MediaFormat.MIMETYPE_AUDIO_AAC
         private const val SAMPLE_RATE = 44100 // 44.1[KHz] is only setting guaranteed to be available on all devices.
         private const val BIT_RATE = 64 * 1024 // 65536
         private const val CHANNEL_COUNT = 2
+        private const val CHANNEL_MASK = AudioFormat.CHANNEL_IN_STEREO
         private const val TIMEOUT_USEC = 10000L
 
         private val VERBOSE = Baker.VERBOSE_LOGGING
@@ -53,7 +54,7 @@ internal class AudioEncoderCore internal constructor(
     init {
         val format = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLE_RATE, CHANNEL_COUNT)
         format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-        format.setInteger(MediaFormat.KEY_CHANNEL_MASK, AudioFormat.CHANNEL_IN_STEREO)
+        format.setInteger(MediaFormat.KEY_CHANNEL_MASK, CHANNEL_MASK)
         format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
 
         if (VERBOSE) Log.v(TAG, "prepareEncoder::format=$format")
@@ -79,6 +80,7 @@ internal class AudioEncoderCore internal constructor(
      * @param length length of byte array, zero means EOS.
      * @param presentationTimeUs
      */
+    //todo resolve buffer overflow
     fun encode(buffer: ByteBuffer?, length: Int, presentationTimeUs: Long) {
         if (VERBOSE) Log.v(TAG, "encode::buffer=$buffer, length:$length")
 

@@ -40,6 +40,7 @@ object Util {
         val height: Int
         val duration: Long
         val orientation: Orientation
+        val hasAudio: Boolean
 
         when (type) {
                 Type.VIDEO -> {
@@ -62,6 +63,9 @@ object Util {
 
                         duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                             ?.toLong() ?: 0L
+
+                        hasAudio = mediaMetadataRetriever.extractMetadata(
+                                MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) == "yes"
 
                     } finally {
                         mediaMetadataRetriever.release()
@@ -91,12 +95,13 @@ object Util {
                         .toOrientation()
 
                     duration = defaultImageDuration
+                    hasAudio = false
 
                     cursor.close()
                 }
             }
 
-        return Metadata(type, width, height, duration, orientation)
+        return Metadata(type, width, height, duration, orientation, hasAudio)
     }
 
     fun resolveResolution(aspectRatio: Float, sidePx: Int): Size {

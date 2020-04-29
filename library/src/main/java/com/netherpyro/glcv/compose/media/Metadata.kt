@@ -8,5 +8,6 @@ data class Metadata(
         val width: Int,
         val height: Int,
         val durationMs: Long,
-        val orientation: Orientation
+        val orientation: Orientation,
+        val hasAudio: Boolean
 )

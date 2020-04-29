@@ -13,15 +13,15 @@ internal class PassiveDecoderPool {
 
     private val decoders = mutableMapOf<String, MediaDecoderPassive>()
 
-    fun createMediaDecoder(context: Context, tag: String, uri: Uri, mute: Boolean): SurfaceConsumer {
-        val decoder = MediaDecoderPassive(context, uri, mute)
+    fun createMediaDecoder(context: Context, tag: String, uri: Uri, decodeAudioTrack: Boolean): SurfaceConsumer {
+        val decoder = MediaDecoderPassive(context, tag, uri, decodeAudioTrack)
         decoders[tag] = decoder
 
         return decoder
     }
 
     fun prepare(audioBufferProvider: AudioBufferProvider) {
-        decoders.forEach { it.value.prepare(audioBufferProvider.provide(it.key)) }
+        decoders.forEach { it.value.prepare(audioBufferProvider) }
     }
 
     fun advance(ptsUsec: Long, statuses: List<TimeMask.VisibilityStatus>) {

@@ -17,7 +17,8 @@ data class TemplateUnit(
         val rotationDeg: Float,
         val translateFactorX: Float,
         val translateFactorY: Float,
-        val opacity: Float
+        val opacity: Float,
+        val mutedAudio: Boolean
 ) : Parcelable {
 
     companion object CREATOR : Parcelable.Creator<TemplateUnit> {
@@ -32,7 +33,8 @@ data class TemplateUnit(
                         parcel.readFloat(),
                         parcel.readFloat(),
                         parcel.readFloat(),
-                        parcel.readFloat()
+                        parcel.readFloat(),
+                        parcel.readInt() == 1
                 )
 
         override fun newArray(size: Int): Array<TemplateUnit?> {
@@ -51,6 +53,7 @@ data class TemplateUnit(
         parcel.writeFloat(translateFactorX)
         parcel.writeFloat(translateFactorY)
         parcel.writeFloat(opacity)
+        parcel.writeInt(if (mutedAudio) 1 else 0)
     }
 
     override fun describeContents(): Int {

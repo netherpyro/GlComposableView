@@ -9,3 +9,7 @@ internal interface AudioBufferProvider {
      */
     fun provide(tag: String): AudioBuffer
 }
+
+internal class AudioBufferProviderStub : AudioBufferProvider{
+    override fun provide(tag: String) = AudioBuffer("stub!")
+}

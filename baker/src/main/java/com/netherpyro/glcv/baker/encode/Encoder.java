@@ -63,12 +63,10 @@ public class Encoder implements Runnable {
     private static final int MSG_UPDATE_SHARED_CONTEXT = 4;
     private static final int MSG_QUIT = 5;
 
-    private static final int ENCODED_TRACK_COUNT = 2; // video and audio
-
     private final GlRenderer glRenderer;
     private final GlViewport glViewport;
-    private final AudioProcessor audioProcessor;
     private final EncoderConfig config;
+    private final int encodedTrackCount; // mandatory video track and optional audio track
 
     // ----- accessed exclusively by encoder thread -----
     private WindowSurface mInputWindowSurface;
@@ -76,6 +74,7 @@ public class Encoder implements Runnable {
     private VideoEncoderCore mVideoEncoder;
     private AudioEncoderCore mAudioEncoder;
     private MediaMuxer muxer;
+    private AudioProcessor audioProcessor;
 
     // ----- accessed by multiple threads -----
     private volatile EncoderHandler mHandler;
@@ -92,17 +91,21 @@ public class Encoder implements Runnable {
     public Encoder(
             GlRenderer glRenderer,
             GlViewport viewport,
-            AudioProcessor audioProcessor,
+            boolean withAudio,
             EncoderConfig config,
             PostRenderCallback postRenderCallback,
             PrepareCallback prepareCallback
     ) {
         this.glRenderer = glRenderer;
         this.glViewport = viewport;
-        this.audioProcessor = audioProcessor;
         this.config = config;
         this.mPostRenderCallback = postRenderCallback;
         this.mPrepareCallback = prepareCallback;
+        this.encodedTrackCount = withAudio ? 2 : 1;
+
+        if (withAudio) {
+            this.audioProcessor = new AudioProcessor();
+        }
     }
 
     /**
@@ -215,7 +218,7 @@ public class Encoder implements Runnable {
 
     private void trackAdded() {
         Log.d(TAG, "trackAdded::");
-        if (++addedTrackCount == ENCODED_TRACK_COUNT) {
+        if (++addedTrackCount == encodedTrackCount) {
             muxer.start();
         }
     }
@@ -277,13 +280,19 @@ public class Encoder implements Runnable {
         lastPts = timestampNanos;
 
         // create audio encoder input
-        if (addedTrackCount > 0) {
-            mAudioEncoder.drain();
-        }
+        if (mAudioEncoder != null) {
+            if (addedTrackCount > 0) {
+                mAudioEncoder.drain();
+            }
 
-        AudioProcessor.EncoderInput encoderInput = audioProcessor.processData();
-        if (encoderInput != null) {
-            mAudioEncoder.encode(encoderInput.getByteBuffer(), encoderInput.getSize(), timestampNanos / 1_000L);
+            AudioProcessor.EncoderInput encoderInput = audioProcessor.processData();
+            if (encoderInput != null) {
+                mAudioEncoder.encode(
+                        encoderInput.getByteBuffer(),
+                        encoderInput.getSize(),
+                        timestampNanos / 1_000L
+                );
+            }
         }
 
         // create video encoder input
@@ -299,8 +308,11 @@ public class Encoder implements Runnable {
 
     private void handleStop() {
         Log.d(TAG, "handleStopRecording");
-        mAudioEncoder.encode(null, 0, lastPts);
-        mAudioEncoder.drain();
+        if (mAudioEncoder != null) {
+            mAudioEncoder.encode(null, 0, lastPts);
+            mAudioEncoder.drain();
+        }
+
         mVideoEncoder.drain(true);
 
         releaseEncoder();
@@ -342,7 +354,10 @@ public class Encoder implements Runnable {
             throw new RuntimeException("handlePrepare::MediaMuxer creation failed", e);
         }
 
-        mAudioEncoder = new AudioEncoderCore(muxer, this::trackAdded);
+        if (encodedTrackCount > 1) {
+            mAudioEncoder = new AudioEncoderCore(muxer, this::trackAdded);
+        }
+
         mVideoEncoder = new VideoEncoderCore(
                 config.getWidth(),
                 config.getHeight(),
@@ -361,12 +376,15 @@ public class Encoder implements Runnable {
         glRenderer.onSurfaceChanged(null, config.getWidth(), config.getHeight());
         glRenderer.setViewport(glViewport);
 
-        mPrepareCallback.onPrepared();
+        mPrepareCallback.onPrepared(audioProcessor != null ? audioProcessor : new AudioBufferProviderStub());
     }
 
     private void releaseEncoder() {
-        mAudioEncoder.release();
         mVideoEncoder.release();
+
+        if (mAudioEncoder != null) {
+            mAudioEncoder.release();
+        }
 
         if (muxer != null) {
             muxer.stop();

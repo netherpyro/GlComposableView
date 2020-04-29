@@ -25,6 +25,7 @@ import android.view.Surface
 import com.netherpyro.glcv.SurfaceConsumer
 import com.netherpyro.glcv.baker.Baker.Companion.VERBOSE_LOGGING
 import com.netherpyro.glcv.baker.encode.AudioBuffer
+import com.netherpyro.glcv.baker.encode.AudioBufferProvider
 import java.io.IOException
 import java.nio.ByteBuffer
 
@@ -34,10 +35,12 @@ import java.nio.ByteBuffer
  * Plays the video track from a movie file to a Surface in a passive way.
  * You should call [MediaDecoderPassive#advance] to grab next frame.
  */
+// todo resolve audio decoding/encoding issues
 internal class MediaDecoderPassive(
         private val context: Context,
+        private val tag: String,
         private val uri: Uri,
-        private val muteAudioTrack: Boolean
+        private val decodeAudioTrack: Boolean
 ) : SurfaceConsumer {
 
     companion object {
@@ -53,6 +56,7 @@ internal class MediaDecoderPassive(
     private lateinit var audioExtractor: MediaExtractor
     private lateinit var videoDecoder: MediaCodec
     private lateinit var audioDecoder: MediaCodec
+    private lateinit var audioBufferProvider: AudioBufferProvider
 
     private var speedController: SpeedController? = null
     private var outputSurface: Surface? = null
@@ -80,13 +84,13 @@ internal class MediaDecoderPassive(
     }
 
     @Throws(IOException::class)
-    fun prepare(buffer: AudioBuffer) {
+    fun prepare(audioBufferProvider: AudioBufferProvider) {
         if (::videoExtractor.isInitialized || ::audioExtractor.isInitialized) {
             Log.w(TAG, "advance::decoder already prepared")
             return
         }
 
-        audioBuffer = buffer
+        this.audioBufferProvider = audioBufferProvider
 
         prepareInternal()
     }
@@ -145,12 +149,13 @@ internal class MediaDecoderPassive(
         try {
             videoExtractor = MediaExtractor().apply { setDataSource(context, uri, null) }
 
-            if (!muteAudioTrack) {
+            if (decodeAudioTrack) {
+                // should be used own extractor instance to avoid performance issues
                 audioExtractor = MediaExtractor().apply { setDataSource(context, uri, null) }
             }
 
             val videoTrackInfo = getTrackInfo(videoExtractor, "video/")
-            val audioTrackInfo = if (!muteAudioTrack) getTrackInfo(audioExtractor, "audio/") else null
+            val audioTrackInfo = if (decodeAudioTrack) getTrackInfo(audioExtractor, "audio/") else null
 
             if (videoTrackInfo == null && audioTrackInfo == null) {
                 throw RuntimeException("prepareInternal::neither video nor audio track selected from $uri")
@@ -181,6 +186,7 @@ internal class MediaDecoderPassive(
 
             if (audioTrackInfo != null) {
                 this.audioTrackInfo = audioTrackInfo
+                this.audioBuffer = audioBufferProvider.provide(tag)
                 audioExtractor.selectTrack(audioTrackInfo.index)
 
                 val mime = audioTrackInfo.format.getString(MediaFormat.KEY_MIME)

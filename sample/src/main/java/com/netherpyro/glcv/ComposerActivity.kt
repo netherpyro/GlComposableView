@@ -52,19 +52,19 @@ class ComposerActivity : AppCompatActivity() {
         composer.addImage("image2", Uri.parse("content://media/external/file/135"), startMs = 1500L)
         composer.addImage("image3", Uri.parse("content://media/external/file/136"))
         // sphere
-//        composer.addVideo("video1", Uri.parse("content://media/external/file/3365"))
+        composer.addVideo("video1", Uri.parse("content://media/external/file/3365"), mutedAudio = false)
         // filmm
 //        composer.addVideo("video2", Uri.parse("content://media/external/file/4024"))
         //  with audio
-//        composer.addVideo("video4", Uri.parse("content://media/external/file/3371"))
+//        composer.addVideo("video4", Uri.parse("content://media/external/file/3371"), mutedAudio = true)
         // harlem shake
 //        composer.addVideo("video5", Uri.parse("content://media/external/file/342"))
 
         // audio video sync
-        composer.addVideo("video6", Uri.parse("content://media/external/file/3366"))
+//        composer.addVideo("video6", Uri.parse("content://media/external/file/3366"))
 
         // rabbit
-//        composer.addVideo("video7", Uri.parse("content://media/external/file/3372"))
+//        composer.addVideo("video7", Uri.parse("content://media/external/file/3372"), mutedAudio = false)
 
         a1_1.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
         a3_2.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
@@ -83,7 +83,7 @@ class ComposerActivity : AppCompatActivity() {
                     this@ComposerActivity,
                     File(cacheDir, "result.mp4").absolutePath,
                     outputMinSidePx = 1080,
-                    fps = 60,
+                    fps = 30,
                     verboseLogging = true,
                     progressListener = { progress: Float, completed: Boolean ->
                         runOnUiThread { handleProgress(progress, completed) }
@@ -100,7 +100,7 @@ class ComposerActivity : AppCompatActivity() {
                     this@ComposerActivity,
                     File(cacheDir, "result.mp4").absolutePath,
                     outputMinSidePx = 1080,
-                    fps = 60,
+                    fps = 30,
                     verboseLogging = true
             )
         }

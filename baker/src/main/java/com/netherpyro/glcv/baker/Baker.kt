@@ -15,7 +15,7 @@ import com.netherpyro.glcv.LayoutHelper
 import com.netherpyro.glcv.TransformData
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.baker.decode.PassiveDecoderPool
-import com.netherpyro.glcv.baker.encode.AudioProcessor
+import com.netherpyro.glcv.baker.encode.AudioBufferProvider
 import com.netherpyro.glcv.baker.encode.Encoder
 import com.netherpyro.glcv.baker.encode.EncoderConfig
 import com.netherpyro.glcv.baker.encode.PostRenderCallback
@@ -99,7 +99,6 @@ internal class Baker private constructor(
         private lateinit var transformables: Array<Transformable>
 
         private val glRenderer = GlRenderer(RenderHostStub, Color.BLACK, viewportColor)
-        private val audioProcessor = AudioProcessor()
 
         private val viewport: GlViewport = LayoutHelper(template.aspectRatio)
             .onSurfaceChanged(config.width, config.height)
@@ -145,12 +144,12 @@ internal class Baker private constructor(
         }
 
         private fun startEncoding(): Boolean {
-            prepareMedia()
+            val hasAudio = prepareMedia()
 
-            encoder = Encoder(glRenderer, viewport, audioProcessor, config, this,
+            encoder = Encoder(glRenderer, viewport, hasAudio, config, this,
                     object : PrepareCallback {
-                        override fun onPrepared() {
-                            decoders.prepare(audioProcessor)
+                        override fun onPrepared(audioBufferProvider: AudioBufferProvider) {
+                            decoders.prepare(audioBufferProvider)
                             generateFrame()
                         }
                     })
@@ -170,7 +169,9 @@ internal class Baker private constructor(
             return true
         }
 
-        private fun prepareMedia() {
+        private fun prepareMedia(): Boolean {
+            val muteCalculator = MuteCalculator()
+
             transformables = Array(template.units.size) { index ->
                 template.units[index].let { unit ->
                     val metadata = Util.getMetadata(
@@ -187,7 +188,7 @@ internal class Baker private constructor(
                                         context,
                                         unit.tag,
                                         unit.uri,
-                                        mute = true // mute any video
+                                        decodeAudioTrack = !muteCalculator.shouldMute(unit.mutedAudio, metadata.hasAudio)
                                 ),
                                 position = unit.zPosition,
                                 initialValues = TransformData(
@@ -216,6 +217,8 @@ internal class Baker private constructor(
                     return@let transformable
                 }
             }
+
+            return muteCalculator.hasAudio()
         }
 
         private fun generateFrame(): Boolean {
