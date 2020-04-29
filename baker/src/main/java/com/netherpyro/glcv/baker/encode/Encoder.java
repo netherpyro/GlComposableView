@@ -63,15 +63,18 @@ public class Encoder implements Runnable {
     private static final int MSG_UPDATE_SHARED_CONTEXT = 4;
     private static final int MSG_QUIT = 5;
 
+    private static final int ENCODED_TRACK_COUNT = 2; // video and audio
+
     private final GlRenderer glRenderer;
     private final GlViewport glViewport;
+    private final AudioProcessor audioProcessor;
     private final EncoderConfig config;
-    private final int trackCount;
 
     // ----- accessed exclusively by encoder thread -----
     private WindowSurface mInputWindowSurface;
     private EglCore mEglCore;
     private VideoEncoderCore mVideoEncoder;
+    private AudioEncoderCore mAudioEncoder;
     private MediaMuxer muxer;
 
     // ----- accessed by multiple threads -----
@@ -81,6 +84,7 @@ public class Encoder implements Runnable {
     private boolean mReady;
     private boolean mRunning;
     private int addedTrackCount = 0;
+    private long lastPts = 0;
 
     private final PostRenderCallback mPostRenderCallback;
     private final PrepareCallback mPrepareCallback;
@@ -88,17 +92,17 @@ public class Encoder implements Runnable {
     public Encoder(
             GlRenderer glRenderer,
             GlViewport viewport,
+            AudioProcessor audioProcessor,
             EncoderConfig config,
-            int trackCount,
             PostRenderCallback postRenderCallback,
             PrepareCallback prepareCallback
     ) {
         this.glRenderer = glRenderer;
         this.glViewport = viewport;
+        this.audioProcessor = audioProcessor;
         this.config = config;
         this.mPostRenderCallback = postRenderCallback;
         this.mPrepareCallback = prepareCallback;
-        this.trackCount = trackCount;
     }
 
     /**
@@ -210,7 +214,8 @@ public class Encoder implements Runnable {
     }
 
     private void trackAdded() {
-        if (++addedTrackCount == trackCount) {
+        Log.d(TAG, "trackAdded::");
+        if (++addedTrackCount == ENCODED_TRACK_COUNT) {
             muxer.start();
         }
     }
@@ -269,7 +274,19 @@ public class Encoder implements Runnable {
      */
     private void handleFrameAvailable(long timestampNanos) {
         if (VERBOSE) Log.v(TAG, "handleFrameAvailable::ts=" + timestampNanos);
+        lastPts = timestampNanos;
 
+        // create audio encoder input
+        if (addedTrackCount > 0) {
+            mAudioEncoder.drain();
+        }
+
+        AudioProcessor.EncoderInput encoderInput = audioProcessor.processData();
+        if (encoderInput != null) {
+            mAudioEncoder.encode(encoderInput.getByteBuffer(), encoderInput.getSize(), timestampNanos / 1_000L);
+        }
+
+        // create video encoder input
         mVideoEncoder.drain(false);
 
         glRenderer.onDrawFrame(null);
@@ -282,7 +299,10 @@ public class Encoder implements Runnable {
 
     private void handleStop() {
         Log.d(TAG, "handleStopRecording");
+        mAudioEncoder.encode(null, 0, lastPts);
+        mAudioEncoder.drain();
         mVideoEncoder.drain(true);
+
         releaseEncoder();
     }
 
@@ -298,7 +318,6 @@ public class Encoder implements Runnable {
 
         // Release the EGLSurface and EGLContext.
         mInputWindowSurface.releaseEglSurface();
-        //mFullScreen.release(false);
         glRenderer.release();
         mEglCore.release();
 
@@ -323,6 +342,7 @@ public class Encoder implements Runnable {
             throw new RuntimeException("handlePrepare::MediaMuxer creation failed", e);
         }
 
+        mAudioEncoder = new AudioEncoderCore(muxer, this::trackAdded);
         mVideoEncoder = new VideoEncoderCore(
                 config.getWidth(),
                 config.getHeight(),
@@ -345,6 +365,7 @@ public class Encoder implements Runnable {
     }
 
     private void releaseEncoder() {
+        mAudioEncoder.release();
         mVideoEncoder.release();
 
         if (muxer != null) {

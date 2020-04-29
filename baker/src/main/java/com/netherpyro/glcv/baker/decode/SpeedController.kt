@@ -11,7 +11,7 @@ internal class SpeedController(fps: Int) {
         private const val TAG = "SpeedControlCallback"
     }
 
-    private val frameDurationUsec: Long = 1000000L / fps
+    private val frameDurationUsec: Long = 1_000_000L / fps
 
     private var prevMonoUsec: Long = 0
 

@@ -24,7 +24,9 @@ import android.util.Log
 import android.view.Surface
 import com.netherpyro.glcv.SurfaceConsumer
 import com.netherpyro.glcv.baker.Baker.Companion.VERBOSE_LOGGING
+import com.netherpyro.glcv.baker.encode.AudioBuffer
 import java.io.IOException
+import java.nio.ByteBuffer
 
 /**
  * @author mmikhailov on 25.04.2020.
@@ -34,7 +36,8 @@ import java.io.IOException
  */
 internal class MediaDecoderPassive(
         private val context: Context,
-        private val uri: Uri
+        private val uri: Uri,
+        private val muteAudioTrack: Boolean
 ) : SurfaceConsumer {
 
     companion object {
@@ -44,45 +47,70 @@ internal class MediaDecoderPassive(
         private val VERBOSE = VERBOSE_LOGGING
     }
 
-    private val bufferInfo: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
-    private lateinit var extractor: MediaExtractor
-    private lateinit var decoder: MediaCodec
-    private lateinit var mSpeedController: SpeedController
+    private val videoBufferInfo: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
+    private val audioBufferInfo: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
+    private lateinit var videoExtractor: MediaExtractor
+    private lateinit var audioExtractor: MediaExtractor
+    private lateinit var videoDecoder: MediaCodec
+    private lateinit var audioDecoder: MediaCodec
 
+    private var speedController: SpeedController? = null
     private var outputSurface: Surface? = null
+    private var audioBuffer: AudioBuffer? = null
 
-    private var trackIndex = -1
-    private var inputChunk = 0
-    private var outputDone = false
-    private var inputDone = false
-    private var warmedUp = false
+    private var videoTrackInfo: TrackInfo? = null
+    private var audioTrackInfo: TrackInfo? = null
+
+    private var videoOutputDone = false
+    private var videoInputDone = false
+    private var audioOutputDone = false
+    private var audioInputDone = false
+    private var videoExtractorWarmedUp = false
+    private var audioExtractorWarmedUp = false
     private var released = false
 
     var isUsed = false
         private set
 
     /**
-     * @param surface The Surface where frames will be sent.
+     * @param surface The Surface where frames will be sent
      */
     override fun consume(surface: Surface) {
         outputSurface = surface
     }
 
     @Throws(IOException::class)
-    fun prepare() {
-        if (::decoder.isInitialized || ::extractor.isInitialized) {
+    fun prepare(buffer: AudioBuffer) {
+        if (::videoExtractor.isInitialized || ::audioExtractor.isInitialized) {
             Log.w(TAG, "advance::decoder already prepared")
             return
         }
+
+        audioBuffer = buffer
 
         prepareInternal()
     }
 
     fun release() {
         released = true
-        decoder.stop()
-        decoder.release()
-        extractor.release()
+
+        if (::videoDecoder.isInitialized) {
+            videoDecoder.stop()
+            videoDecoder.release()
+        }
+
+        if (::audioDecoder.isInitialized) {
+            audioDecoder.stop()
+            audioDecoder.release()
+        }
+
+        if (::videoExtractor.isInitialized) {
+            videoExtractor.release()
+        }
+
+        if (::audioExtractor.isInitialized) {
+            audioExtractor.release()
+        }
     }
 
     fun advance(ptsUsec: Long) {
@@ -91,131 +119,223 @@ internal class MediaDecoderPassive(
             return
         }
 
-        if (outputDone) {
+        if (videoOutputDone && audioOutputDone) {
             Log.w(TAG, "advance::nothing left for playback")
             return
         }
 
-        if (!mSpeedController.test(ptsUsec)) {
+        isUsed = true
+
+        if (audioTrackInfo != null) {
+            advanceAudioExtractor()
+        }
+
+        if (speedController?.test(ptsUsec) == false) {
             if (VERBOSE) Log.i(TAG, "advance::skip frame due to frame threshold")
             return
         }
 
-        isUsed = true
-        advanceInternal()
+        if (videoTrackInfo != null) {
+            advanceVideoExtractor()
+        }
     }
 
     @Throws(IOException::class)
     private fun prepareInternal() {
         try {
-            extractor = MediaExtractor()
-            extractor.setDataSource(context, uri, null)
-            trackIndex = getTrackIndex(extractor, "video/")
+            videoExtractor = MediaExtractor().apply { setDataSource(context, uri, null) }
 
-            if (trackIndex < 0) {
-                throw RuntimeException("raiseDecoder::No video track found in $uri")
+            if (!muteAudioTrack) {
+                audioExtractor = MediaExtractor().apply { setDataSource(context, uri, null) }
             }
 
-            extractor.selectTrack(trackIndex)
+            val videoTrackInfo = getTrackInfo(videoExtractor, "video/")
+            val audioTrackInfo = if (!muteAudioTrack) getTrackInfo(audioExtractor, "audio/") else null
 
-            val format = extractor.getTrackFormat(trackIndex)
-            val fps = format.getInteger(MediaFormat.KEY_FRAME_RATE)
-
-            Log.d(TAG, "raiseDecoder::video frame rate = $fps")
-
-            mSpeedController = SpeedController(fps)
-
-            // Create a MediaCodec decoder, and configure it with the MediaFormat from the
-            // extractor. It's very important to use the format from the extractor because
-            // it contains a copy of the CSD-0/CSD-1 codec-specific data chunks.
-            val mime = format.getString(MediaFormat.KEY_MIME)
-            decoder = MediaCodec.createDecoderByType(mime)
-            decoder.configure(format, outputSurface, null, 0)
-            decoder.start()
-
-            while (!warmedUp) {
-                advanceInternal()
+            if (videoTrackInfo == null && audioTrackInfo == null) {
+                throw RuntimeException("prepareInternal::neither video nor audio track selected from $uri")
             }
 
+            if (videoTrackInfo != null) {
+                this.videoTrackInfo = videoTrackInfo
+                videoExtractor.selectTrack(videoTrackInfo.index)
+
+                val fps = videoTrackInfo.format.getInteger(MediaFormat.KEY_FRAME_RATE)
+
+                Log.d(TAG, "prepareInternal::video frame rate = $fps")
+
+                speedController = SpeedController(fps)
+
+                // Create a MediaCodec decoder, and configure it with the MediaFormat from the
+                // extractor. It's very important to use the format from the extractor because
+                // it contains a copy of the CSD-0/CSD-1 codec-specific data chunks.
+                val mime = videoTrackInfo.format.getString(MediaFormat.KEY_MIME)
+                videoDecoder = MediaCodec.createDecoderByType(mime)
+                videoDecoder.configure(videoTrackInfo.format, outputSurface, null, 0)
+                videoDecoder.start()
+
+                while (!videoExtractorWarmedUp) {
+                    advanceVideoExtractor()
+                }
+            }
+
+            if (audioTrackInfo != null) {
+                this.audioTrackInfo = audioTrackInfo
+                audioExtractor.selectTrack(audioTrackInfo.index)
+
+                val mime = audioTrackInfo.format.getString(MediaFormat.KEY_MIME)
+                audioDecoder = MediaCodec.createDecoderByType(mime)
+                audioDecoder.configure(audioTrackInfo.format, null, null, 0)
+                audioDecoder.start()
+
+                while (!audioExtractorWarmedUp) {
+                    advanceAudioExtractor()
+                }
+            }
         } catch (e: IOException) {
             release()
             throw e
         }
     }
 
-    private fun advanceInternal() {
+    private fun advanceVideoExtractor() {
         // Feed more data to the decoder.
-        if (!inputDone) {
-            val inputBufferIndex = decoder.dequeueInputBuffer(TIMEOUT_USEC)
+        if (!videoInputDone) {
+            val inputBufferIndex = videoDecoder.dequeueInputBuffer(TIMEOUT_USEC)
             if (inputBufferIndex >= 0) {
-                val inputBuffer = decoder.getInputBuffer(inputBufferIndex)
-                    ?: throw RuntimeException("advanceInternal::decoderInputBuffer $inputBufferIndex was null")
+                val inputBuffer = videoDecoder.getInputBuffer(inputBufferIndex)
+                    ?: throw RuntimeException("advanceVideoExtractor::decoderInputBuffer $inputBufferIndex was null")
 
                 // Read the sample data into the ByteBuffer. This neither respects nor
                 // updates input buffer's position, limit, etc.
-                val chunkSize = extractor.readSampleData(inputBuffer, 0)
+                val chunkSize = videoExtractor.readSampleData(inputBuffer, 0)
                 if (chunkSize < 0) {
                     // End of stream -- send empty frame with EOS flag set.
-                    decoder.queueInputBuffer(inputBufferIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                    inputDone = true
+                    videoDecoder.queueInputBuffer(inputBufferIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                    videoInputDone = true
 
-                    if (VERBOSE) Log.v(TAG, "advanceInternal::sent input EOS")
+                    if (VERBOSE) Log.i(TAG, "advanceVideoExtractor::sent input EOS")
                 } else {
-                    if (extractor.sampleTrackIndex != trackIndex) {
-                        Log.w(TAG, "advanceInternal::WEIRD: got sample from track " +
-                                extractor.sampleTrackIndex + ", expected " + trackIndex)
-                    }
+                    val presentationTimeUs = videoExtractor.sampleTime
+                    videoDecoder.queueInputBuffer(inputBufferIndex, 0, chunkSize, presentationTimeUs, 0)
 
-                    val presentationTimeUs = extractor.sampleTime
-                    decoder.queueInputBuffer(inputBufferIndex, 0, chunkSize, presentationTimeUs, 0)
+                    if (VERBOSE) Log.v(TAG, "advanceVideoExtractor::submitted chunk to decoder, size=$chunkSize")
 
-                    if (VERBOSE) Log.v(TAG, "advanceInternal::submitted frame $inputChunk to dec, size=$chunkSize")
-
-                    inputChunk++
-                    extractor.advance()
+                    videoExtractor.advance()
                 }
             } else {
-                if (VERBOSE) Log.v(TAG, "advanceInternal::input buffer not available")
+                if (VERBOSE) Log.i(TAG, "advanceVideoExtractor::input buffer not available")
             }
         }
 
-        if (!outputDone) {
-            val outputBufferIndex = decoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC)
+        if (!videoOutputDone) {
+            val outputBufferIndex = videoDecoder.dequeueOutputBuffer(videoBufferInfo, TIMEOUT_USEC)
             when {
                 outputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER ->
-                    if (VERBOSE) Log.v(TAG, "advanceInternal::no output from decoder available")
+                    if (VERBOSE) Log.i(TAG, "advanceVideoExtractor::no output from decoder available")
                 outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                    warmedUp = true
-                    val newFormat = decoder.outputFormat
-                    if (VERBOSE) Log.v(TAG, "advanceInternal::decoder output format changed: $newFormat")
+                    videoExtractorWarmedUp = true
+                    val newFormat = videoDecoder.outputFormat
+                    if (VERBOSE) Log.i(TAG, "advanceVideoExtractor::decoder output format changed: $newFormat")
                 }
-                outputBufferIndex < 0 -> Log.w(TAG,
-                        "advanceInternal::unexpected result from decoder with status: $outputBufferIndex. Ignoring.")
+                outputBufferIndex < 0 -> Log.w(TAG, "advanceVideoExtractor::" +
+                        "unexpected result from decoder with status: $outputBufferIndex. Ignoring.")
                 else -> {
-                    if (VERBOSE) Log.v(TAG,
-                            "advanceInternal::surface decoder given buffer $outputBufferIndex (size=${bufferInfo.size})")
+                    if (VERBOSE) Log.v(TAG, "advanceVideoExtractor::surface decoder given buffer $outputBufferIndex " +
+                            "with size=${videoBufferInfo.size}")
 
-                    if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                        Log.d(TAG, "advanceInternal::output EOS")
-                        outputDone = true
+                    if (videoBufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                        Log.d(TAG, "advanceVideoExtractor::output EOS")
+                        videoOutputDone = true
                     }
 
-                    val doRender = bufferInfo.size != 0
-                    decoder.releaseOutputBuffer(outputBufferIndex, doRender)
+                    val doRender = videoBufferInfo.size != 0
+                    videoDecoder.releaseOutputBuffer(outputBufferIndex, doRender)
                 }
             }
         }
     }
 
-    private fun getTrackIndex(extractor: MediaExtractor, mimePrefix: String): Int {
-        for (i in 0 until extractor.trackCount) {
-            val mime = extractor.getTrackFormat(i)
-                .getString(MediaFormat.KEY_MIME)
-            if (mime?.startsWith(mimePrefix) == true) {
-                return i
+    private fun advanceAudioExtractor() {
+        // Feed more data to the decoder.
+        if (!audioInputDone) {
+            val inputBufferIndex = audioDecoder.dequeueInputBuffer(TIMEOUT_USEC)
+            if (inputBufferIndex >= 0) {
+                val inputBuffer = audioDecoder.getInputBuffer(inputBufferIndex)
+                    ?: throw RuntimeException("advanceAudioExtractor::decoderInputBuffer $inputBufferIndex was null")
+
+                // Read the sample data into the ByteBuffer. This neither respects nor
+                // updates input buffer's position, limit, etc.
+                val chunkSize = audioExtractor.readSampleData(inputBuffer, 0)
+                if (chunkSize < 0) {
+                    // End of stream -- send empty frame with EOS flag set.
+                    audioDecoder.queueInputBuffer(inputBufferIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                    audioInputDone = true
+
+                    if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::sent input EOS")
+                } else {
+                    val presentationTimeUs = audioExtractor.sampleTime
+                    audioDecoder.queueInputBuffer(inputBufferIndex, 0, chunkSize, presentationTimeUs, 0)
+
+                    if (VERBOSE) Log.v(TAG, "advanceAudioExtractor::submitted chunk to decoder, size=$chunkSize")
+
+                    audioExtractor.advance()
+                }
+            } else {
+                if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::input buffer not available")
             }
         }
 
-        return -1
+        if (!audioOutputDone) {
+            val outputBufferIndex = audioDecoder.dequeueOutputBuffer(audioBufferInfo, TIMEOUT_USEC)
+            when {
+                outputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER ->
+                    if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::no output from decoder available")
+                outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                    audioExtractorWarmedUp = true
+                    val newFormat = audioDecoder.outputFormat
+                    if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::decoder output format changed: $newFormat")
+                }
+                outputBufferIndex < 0 -> Log.w(TAG, "advanceAudioExtractor::" +
+                        "unexpected result from decoder with status: $outputBufferIndex. Ignoring.")
+                else -> {
+                    if (VERBOSE) Log.v(TAG, "advanceAudioExtractor::surface decoder given buffer $outputBufferIndex " +
+                            "with size=${audioBufferInfo.size}")
+
+                    if (audioBufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                        Log.d(TAG, "advanceAudioExtractor::output EOS")
+                        audioOutputDone = true
+                    }
+
+                    val buffer: ByteBuffer? = audioDecoder.getOutputBuffer(outputBufferIndex)
+                    val data: ByteBuffer? =
+                            if (buffer != null)
+                                ByteBuffer.allocateDirect(audioBufferInfo.size)
+                                    .apply { put(buffer); flip() }
+                            else null
+
+                    audioDecoder.releaseOutputBuffer(outputBufferIndex, false)
+                    Log.i(TAG, "advanceAudioExtractor::Audio Buffer data=$data")
+                    audioBuffer?.update(data, audioBufferInfo.size)
+                }
+            }
+        }
     }
+
+    private fun getTrackInfo(extractor: MediaExtractor, mimePrefix: String): TrackInfo? {
+        for (i in 0 until extractor.trackCount) {
+            val format = extractor.getTrackFormat(i)
+            val mime = format.getString(MediaFormat.KEY_MIME)
+            if (mime?.startsWith(mimePrefix) == true) {
+                return TrackInfo(i, format)
+            }
+        }
+
+        return null
+    }
+
+    private data class TrackInfo(
+            val index: Int,
+            val format: MediaFormat
+    )
 }

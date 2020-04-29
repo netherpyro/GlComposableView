@@ -30,29 +30,28 @@ import java.nio.ByteBuffer
  */
 @Suppress("ConstantConditionIf")
 internal class AudioEncoderCore internal constructor(
-        sampleRate: Int,
-        channelCount: Int,
-        mimeType: String,
         private val muxer: MediaMuxer,
         private val muxerTrackAddedCallback: MuxerTrackAddedCallback
 ) {
     companion object {
         private const val TAG = "AudioEncoderCore"
-       // private const val MIME_TYPE = "audio/mp4a-latm"
+        private const val MIME_TYPE = "audio/mp4a-latm"
+        private const val SAMPLE_RATE = 44100 // 44.1[KHz] is only setting guaranteed to be available on all devices.
+        private const val BIT_RATE = 64 * 1024 // 65536
+        private const val CHANNEL_COUNT = 2
         private const val TIMEOUT_USEC = 10000L
-        private const val BIT_RATE = 64 * 1024
 
         private val VERBOSE = Baker.VERBOSE_LOGGING
     }
 
-    private val encoder = MediaCodec.createEncoderByType(mimeType)
+    private val encoder = MediaCodec.createEncoderByType(MIME_TYPE)
     private val bufferInfo = MediaCodec.BufferInfo()
 
     private var trackIndex = -1
     private var trackAdded = false
 
     init {
-        val format = MediaFormat.createAudioFormat(mimeType, sampleRate, channelCount)
+        val format = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLE_RATE, CHANNEL_COUNT)
         format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
         format.setInteger(MediaFormat.KEY_CHANNEL_MASK, AudioFormat.CHANNEL_IN_STEREO)
         format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
@@ -94,43 +93,29 @@ internal class AudioEncoderCore internal constructor(
                 inputBuffer.put(buffer)
             }
 
-            if (length <= 0) {
-                encoder.queueInputBuffer(inputBufferIndex, 0, 0, presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-            } else {
+            if (length > 0) {
                 encoder.queueInputBuffer(inputBufferIndex, 0, length, presentationTimeUs, 0)
+            } else {
+                encoder.queueInputBuffer(inputBufferIndex, 0, 0, presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
             }
 
         } else if (inputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
-            Log.w(TAG, "encode::encoder is not ready to encode. Input index=$inputBufferIndex")
+            Log.w(TAG, "encode::encoder is not ready. Input index=$inputBufferIndex")
             // wait for MediaCodec encoder is ready to encode
             // nothing to do here because MediaCodec#dequeueInputBuffer(TIMEOUT_USEC)
-            // will wait for maximum TIMEOUT_USEC(10 millisec) on each call
+            // will wait for maximum TIMEOUT_USEC on each call
         }
     }
 
-    /**
-     * Extracts all pending data from the encoder.
-     *
-     * If endOfStream is not set, this returns when there is no more data to drain. If it
-     * is set, we send EOS to the encoder, and then iterate until we see EOS on the output.
-     * Calling this with endOfStream set should be done once, right before stopping the muxer.
-     */
-    fun drain(endOfStream: Boolean) {
-        if (VERBOSE) Log.v(TAG, "drainEncoder($endOfStream)")
-
-        if (endOfStream) {
-            if (VERBOSE) Log.v(TAG, "drainEncoder::sending EOS to encoder")
-            encoder.signalEndOfInputStream()
-        }
+    fun drain() {
+        if (VERBOSE) Log.v(TAG, "drainEncoder()")
 
         while_loop@ while (true) {
             val outputBufferIndex: Int = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC)
             when {
                 outputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER -> {
-                    // no output available yet
-                    if (!endOfStream) {
-                        break@while_loop
-                    } else if (VERBOSE) Log.v(TAG, "drainEncoder::no output available, spinning to await EOS")
+                    if (VERBOSE) Log.v(TAG, "drainEncoder::no output available")
+                    break@while_loop
                 }
                 outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                     // should happen before receiving buffers, and should only happen once
@@ -145,8 +130,8 @@ internal class AudioEncoderCore internal constructor(
                     trackAdded = true
                     muxerTrackAddedCallback.onTrackAdded()
                 }
-                outputBufferIndex < 0 -> Log.w(TAG,
-                        "drainEncoder::unexpected result from encoder with status: $outputBufferIndex. Ignoring.")
+                outputBufferIndex < 0 -> Log.w(TAG, "drainEncoder::" +
+                        "unexpected result from encoder with status: $outputBufferIndex. Ignoring.")
                 else -> {
                     val encodedData: ByteBuffer = encoder.getOutputBuffer(outputBufferIndex)
                         ?: throw RuntimeException("drainEncoder::encoderOutputBuffer $outputBufferIndex was null")
@@ -177,9 +162,7 @@ internal class AudioEncoderCore internal constructor(
                     encoder.releaseOutputBuffer(outputBufferIndex, false)
 
                     if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                        if (!endOfStream) {
-                            Log.w(TAG, "drainEncoder::reached end of stream unexpectedly")
-                        } else if (VERBOSE) Log.v(TAG, "drainEncoder::end of stream reached")
+                        if (VERBOSE) Log.v(TAG, "drainEncoder::end of stream reached")
 
                         break@while_loop
                     }

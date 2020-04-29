@@ -119,10 +119,10 @@ internal class VideoEncoderCore internal constructor(
             val outputBufferIndex: Int = encoder.dequeueOutputBuffer(bufferInfo, TIMEOUT_USEC)
             when {
                 outputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER -> {
-                    // no output available yet
+                    if (VERBOSE) Log.v(TAG, "drainEncoder::no output available")
                     if (!endOfStream) {
                         break@while_loop
-                    } else if (VERBOSE) Log.v(TAG, "drainEncoder::no output available, spinning to await EOS")
+                    }
                 }
                 outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                     // should happen before receiving buffers, and should only happen once
@@ -136,9 +136,10 @@ internal class VideoEncoderCore internal constructor(
                     trackIndex = muxer.addTrack(newFormat)
                     trackAdded = true
                     muxerTrackAddedCallback.onTrackAdded()
+                    break@while_loop
                 }
-                outputBufferIndex < 0 -> Log.w(TAG,
-                        "drainEncoder::unexpected result from encoder with status: $outputBufferIndex. Ignoring.")
+                outputBufferIndex < 0 -> Log.w(TAG, "drainEncoder::" +
+                        "unexpected result from encoder with status: $outputBufferIndex. Ignoring.")
                 else -> {
                     val encodedData: ByteBuffer = encoder.getOutputBuffer(outputBufferIndex)
                         ?: throw RuntimeException("drainEncoder::encoderOutputBuffer $outputBufferIndex was null")

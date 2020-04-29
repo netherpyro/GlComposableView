@@ -15,6 +15,7 @@ import com.netherpyro.glcv.LayoutHelper
 import com.netherpyro.glcv.TransformData
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.baker.decode.PassiveDecoderPool
+import com.netherpyro.glcv.baker.encode.AudioProcessor
 import com.netherpyro.glcv.baker.encode.Encoder
 import com.netherpyro.glcv.baker.encode.EncoderConfig
 import com.netherpyro.glcv.baker.encode.PostRenderCallback
@@ -98,6 +99,7 @@ internal class Baker private constructor(
         private lateinit var transformables: Array<Transformable>
 
         private val glRenderer = GlRenderer(RenderHostStub, Color.BLACK, viewportColor)
+        private val audioProcessor = AudioProcessor()
 
         private val viewport: GlViewport = LayoutHelper(template.aspectRatio)
             .onSurfaceChanged(config.width, config.height)
@@ -143,14 +145,12 @@ internal class Baker private constructor(
         }
 
         private fun startEncoding(): Boolean {
-            setupGlLayers()
+            prepareMedia()
 
-            val trackCount = decoders.trackCount
-
-            encoder = Encoder(glRenderer, viewport, config, trackCount, this,
+            encoder = Encoder(glRenderer, viewport, audioProcessor, config, this,
                     object : PrepareCallback {
                         override fun onPrepared() {
-                            decoders.prepare()
+                            decoders.prepare(audioProcessor)
                             generateFrame()
                         }
                     })
@@ -170,7 +170,7 @@ internal class Baker private constructor(
             return true
         }
 
-        private fun setupGlLayers() {
+        private fun prepareMedia() {
             transformables = Array(template.units.size) { index ->
                 template.units[index].let { unit ->
                     val metadata = Util.getMetadata(
@@ -183,7 +183,12 @@ internal class Baker private constructor(
                     val transformable = when (metadata.type) {
                         Type.VIDEO -> glRenderer.addSurfaceLayer(
                                 unit.tag,
-                                surfaceConsumer = decoders.createSurfaceConsumer(unit.tag, context, unit.uri),
+                                surfaceConsumer = decoders.createMediaDecoder(
+                                        context,
+                                        unit.tag,
+                                        unit.uri,
+                                        mute = true // mute any video
+                                ),
                                 position = unit.zPosition,
                                 initialValues = TransformData(
                                         scale = unit.scaleFactor,
