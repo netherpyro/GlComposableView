@@ -114,34 +114,42 @@ class Composer {
             src: Uri,
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
             startMs: Long = 0L,
-            durationMs: Long = Constant.DEFAULT_IMAGE_DURATION_MS
-    ) {
+            durationMs: Long = Constant.DEFAULT_IMAGE_DURATION_MS,
+            onTransformable: (Transformable) -> Unit
+    ): Controllable? {
         checkGlView("addImage") {
             val view = glView!!
             val metadata = Util.getMetadata(view.context, src)
 
             if (metadata.type != Type.IMAGE) {
                 Log.e(TAG, "addImage::provided URI is not an image file identifier")
-                return
+                return null
             }
 
             view.addBitmapLayer(
                     tag,
                     bitmap = Util.getBitmap(view.context, src),
                     position = zOrderDirection.toGlRenderPosition(),
-                    onTransformable = { this@Composer.transformables.add(it) }
+                    onTransformable = {
+                        this@Composer.transformables.add(it)
+                        onTransformable(it)
+                    }
             )
 
-            mediaSeqs.add(Sequence(
+            val sequence = Sequence(
                     tag = tag,
                     uri = src,
                     startDelayMs = startMs.coerceAtLeast(0L),
                     durationMs = durationMs.coerceAtLeast(1000L),
                     mutedAudio = true
-            ))
+            )
 
-            //todo return Controllable
+            mediaSeqs.add(sequence)
+
+            return sequence
         }
+
+        return null
     }
 
     fun addVideo(
@@ -150,34 +158,42 @@ class Composer {
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
             startMs: Long = 0,
             trimmedDuration: Long? = null,
-            mutedAudio: Boolean = true // todo return false after resolving audio issues
-    ) {
+            mutedAudio: Boolean = true, // todo return false after resolving audio issues
+            onTransformable: (Transformable) -> Unit
+    ): Controllable? {
         checkGlView("addVideo") {
             val view = glView!!
             val metadata = Util.getMetadata(view.context, src)
 
             if (metadata.type != Type.VIDEO) {
                 Log.e(TAG, "addVideo::provided URI is not an video file identifier")
-                return
+                return null
             }
 
             view.addSurfaceLayer(
                     tag,
                     surfaceConsumer = SurfaceConsumer { /* todo use video player */ },
                     position = zOrderDirection.toGlRenderPosition(),
-                    onTransformable = { this@Composer.transformables.add(it) }
+                    onTransformable = {
+                        this@Composer.transformables.add(it)
+                        onTransformable(it)
+                    }
                 )
 
-            mediaSeqs.add(Sequence(
+            val sequence = Sequence(
                     tag = tag,
                     uri = src,
                     startDelayMs = startMs.coerceAtLeast(0L),
                     durationMs = trimmedDuration?.coerceAtLeast(1000L) ?: metadata.durationMs,
                     mutedAudio = mutedAudio or metadata.hasAudio.not()
-            ))
+            )
 
-            //todo return Controllable
+            mediaSeqs.add(sequence)
+
+            return sequence
         }
+
+        return null
     }
 
     fun removeMedia(tag: String) {

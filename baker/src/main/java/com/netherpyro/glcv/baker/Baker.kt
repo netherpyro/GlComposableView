@@ -31,7 +31,6 @@ import com.netherpyro.glcv.compose.template.TimeMask
  *
  * Bakes (records) composed [Template] synced with [TimeMask] into video file.
  */
-// todo mux audio track
 // todo handle errors
 internal class Baker private constructor(
         config: EncoderConfig,
@@ -206,10 +205,10 @@ internal class Baker private constructor(
                                 position = unit.zPosition,
                                 initialValues = TransformData(
                                         scale = unit.scaleFactor,
-                                        rotation = if (unit.tag == "image1") 37f else if (unit.tag == "image2") 90f else 180f,//unit.rotationDeg, // todo restore
+                                        rotation = unit.rotationDeg,
                                         xFactor = unit.translateFactorX,
                                         yFactor = unit.translateFactorY,
-                                        opacity = if (unit.tag == "image1") 0.5f else if (unit.tag == "image2") 0.3f else 1f//unit.opacity // todo restore
+                                        opacity = unit.opacity
                                 )
                         )
                     }

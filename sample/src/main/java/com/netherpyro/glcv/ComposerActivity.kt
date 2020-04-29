@@ -14,6 +14,7 @@ import com.netherpyro.glcv.baker.Cancellable
 import com.netherpyro.glcv.baker.renderToVideoFile
 import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
+import com.netherpyro.glcv.touches.LayerTouchListener
 import kotlinx.android.synthetic.main.activity_compose.*
 import java.io.File
 
@@ -29,6 +30,8 @@ class ComposerActivity : AppCompatActivity() {
         handleProgress(progress, completed)
     }
 
+    private val transformableList = mutableListOf<Transformable>()
+
     private var bakeProcess: Cancellable? = null
     private var isReceiverRegistered = false
     private var startTimeNsec: Long = 0
@@ -39,6 +42,7 @@ class ComposerActivity : AppCompatActivity() {
 
         LibraryHelper.setContext(applicationContext)
 
+        glView.enableGestures = true
         composer.setViewportColor(Color.CYAN)
         composer.setBaseColor(Color.YELLOW)
         composer.setAspectRatio(16 / 9f)
@@ -46,25 +50,64 @@ class ComposerActivity : AppCompatActivity() {
 
         // todo pick content uri
         // tiger
-//        composer.addVideo("video3", Uri.parse("content://media/external/file/3370"), trimmedDuration = 2000L)
+        /*composer.addVideo(
+                "video3",
+                Uri.parse("content://media/external/file/3370"),
+                trimmedDuration = 2000L
+        ) { transformable -> transformableList.add(transformable) }*/
 
-        composer.addImage("image1", Uri.parse("content://media/external/file/129"), startMs = 1000L)
-        composer.addImage("image2", Uri.parse("content://media/external/file/135"), startMs = 1500L)
-        composer.addImage("image3", Uri.parse("content://media/external/file/136"))
+        composer.addImage(
+                "image1",
+                Uri.parse("content://media/external/file/129"),
+                startMs = 1000L
+        ) { transformable -> transformableList.add(transformable) }
+
+        composer.addImage(
+                "image2",
+                Uri.parse("content://media/external/file/135"),
+                startMs = 1500L
+        ) { transformable -> transformableList.add(transformable) }
+
+        composer.addImage(
+                "image3",
+                Uri.parse("content://media/external/file/136")
+        ) { transformable -> transformableList.add(transformable) }
+
         // sphere
-        composer.addVideo("video1", Uri.parse("content://media/external/file/3365"))
+        composer.addVideo(
+                "video1",
+                Uri.parse("content://media/external/file/3365")
+        ) { transformable -> transformableList.add(transformable) }
+
         // filmm
-//        composer.addVideo("video2", Uri.parse("content://media/external/file/4024"))
+        /*composer.addVideo(
+                "video2",
+                Uri.parse("content://media/external/file/4024")
+        ) { transformable -> transformableList.add(transformable) }*/
+
         //  with audio
-//        composer.addVideo("video4", Uri.parse("content://media/external/file/3371"), mutedAudio = false)
+        /*composer.addVideo(
+                "video4",
+                Uri.parse("content://media/external/file/3371")
+        ) { transformable -> transformableList.add(transformable) }*/
+
         // harlem shake
-//        composer.addVideo("video5", Uri.parse("content://media/external/file/342"))
+        /*composer.addVideo(
+                "video5",
+                Uri.parse("content://media/external/file/342")
+        ) { transformable -> transformableList.add(transformable) }*/
 
         // audio video sync
-//        composer.addVideo("video6", Uri.parse("content://media/external/file/3366"))
+        /*composer.addVideo(
+                "video6",
+                Uri.parse("content://media/external/file/3366")
+        ) { transformable -> transformableList.add(transformable) }*/
 
         // rabbit
-//        composer.addVideo("video7", Uri.parse("content://media/external/file/3372"), mutedAudio = false)
+        /*composer.addVideo(
+                "video7",
+                Uri.parse("content://media/external/file/3372")
+        ) { transformable -> transformableList.add(transformable) }*/
 
         a1_1.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
         a3_2.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
@@ -148,6 +191,39 @@ class ComposerActivity : AppCompatActivity() {
                 }
             })
         }
+
+        glView.listenTouches(object : LayerTouchListener {
+            override fun onLayerTap(transformable: Transformable): Boolean {
+                transformableList.forEach {
+                    val clicked = it.id == transformable.id
+                    it.enableGesturesTransform = clicked
+                    it.setBorder(if (clicked) 1f else 0f, Color.GREEN)
+
+                    if (clicked) it.setLayerPosition(transformableList.lastIndex)
+                }
+
+                return true
+            }
+
+            override fun onViewportInsideTap(): Boolean {
+                transformableList.forEach {
+                    it.enableGesturesTransform = false
+                    it.setBorder(0f, Color.GREEN)
+                }
+
+                return true
+            }
+
+            override fun onViewportOutsideTap(): Boolean {
+                transformableList.forEach {
+                    if (it.enableGesturesTransform) {
+                        it.setBorder(1f, Color.BLUE)
+                    }
+                }
+
+                return true
+            }
+        })
     }
 
     override fun onResume() {
