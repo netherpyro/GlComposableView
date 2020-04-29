@@ -31,6 +31,7 @@ class ComposerActivity : AppCompatActivity() {
 
     private var bakeProcess: Cancellable? = null
     private var isReceiverRegistered = false
+    private var startTimeNsec: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,11 +52,19 @@ class ComposerActivity : AppCompatActivity() {
         composer.addImage("image2", Uri.parse("content://media/external/file/135"), startMs = 1500L)
         composer.addImage("image3", Uri.parse("content://media/external/file/136"))
         // sphere
-        composer.addVideo("video1", Uri.parse("content://media/external/file/3365"))
+//        composer.addVideo("video1", Uri.parse("content://media/external/file/3365"))
         // filmm
-        composer.addVideo("video2", Uri.parse("content://media/external/file/4024"))
+//        composer.addVideo("video2", Uri.parse("content://media/external/file/4024"))
         //  with audio
 //        composer.addVideo("video4", Uri.parse("content://media/external/file/3371"))
+        // harlem shake
+//        composer.addVideo("video5", Uri.parse("content://media/external/file/342"))
+
+        // audio video sync
+        composer.addVideo("video6", Uri.parse("content://media/external/file/3366"))
+
+        // rabbit
+//        composer.addVideo("video7", Uri.parse("content://media/external/file/3372"))
 
         a1_1.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
         a3_2.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
@@ -68,6 +77,7 @@ class ComposerActivity : AppCompatActivity() {
         a9_18.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_9_18.value, true) }
 
         btn_render.setOnClickListener {
+            startTimeNsec = System.nanoTime()
             // todo show dialog with cancel action
             bakeProcess = composer.renderToVideoFile(
                     this@ComposerActivity,
@@ -82,6 +92,7 @@ class ComposerActivity : AppCompatActivity() {
         }
 
         btn_render_service.setOnClickListener {
+            startTimeNsec = System.nanoTime()
             // todo show dialog with cancel action
             registerReceiver(progressReceiver, IntentFilter(BakeProgressReceiver.ACTION_PUBLISH_PROGRESS))
             isReceiverRegistered = true
@@ -149,6 +160,8 @@ class ComposerActivity : AppCompatActivity() {
         glView.onPause()
     }
 
+    private fun Long.toSeconds() = this / 1_000_000_000f
+
     fun <T : View> T.alsoOnLaid(block: (T) -> Unit) {
         viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
@@ -161,9 +174,13 @@ class ComposerActivity : AppCompatActivity() {
     private fun handleProgress(value: Float, completed: Boolean) {
         Log.d("ComposerActivity", "handleProgress::$value : $completed")
 
-        if (completed && isReceiverRegistered) {
-            isReceiverRegistered = false
-            unregisterReceiver(progressReceiver)
+        if (completed) {
+            Log.d("ComposeActivity", "handleProgress::completed for ${(System.nanoTime() - startTimeNsec).toSeconds()} seconds")
+
+            if (isReceiverRegistered) {
+                isReceiverRegistered = false
+                unregisterReceiver(progressReceiver)
+            }
         }
     }
 }
