@@ -41,7 +41,12 @@ class Composer {
     private val mediaSeqs = mutableSetOf<Sequence>()
     private val transformables = mutableSetOf<Transformable>()
 
-    fun setGlView(glComposableView: GlComposableView) {
+    /**
+     * @param glComposableView
+     * @param onTransformable lambda callback for providing transformable previously set.
+     * Nothing provides if this is first attempt of GlComposableView setting.
+     * */
+    fun setGlView(glComposableView: GlComposableView, onTransformable: (Transformable) -> Unit) {
         glView = glComposableView
 
         glComposableView.setViewportColor(viewportColor)
@@ -49,7 +54,7 @@ class Composer {
         glComposableView.setAspectRatio(aspectRatio)
 
         try {
-            applyTemplate(takeTemplate())
+            applyTemplate(takeTemplate(), onTransformable)
         } catch (e: IllegalStateException) {
             Log.i(TAG, "setGlView::this is first attempt setting GlComposableView")
         }
@@ -74,7 +79,6 @@ class Composer {
     fun getSharedEglContext(): EGLContext? {
         if (glView != null) {
             val exchanger = Exchanger<EGLContext>()
-
             glView?.enqueueEvent(Runnable { exchanger.exchange(EGL14.eglGetCurrentContext()) })
 
             return exchanger.exchange(null)
@@ -92,11 +96,24 @@ class Composer {
         return Template.from(aspectRatio, mediaSeqs, transformables)
     }
 
-    fun applyTemplate(template: Template) {
+    fun applyTemplate(template: Template, onTransformable: (Transformable) -> Unit) {
         checkGlView("applyTemplate") {
             mediaSeqs.clear()
-            mediaSeqs.addAll(template.toSequences())
-            // todo add layers to gl view
+            transformables.clear()
+
+            template.units
+                .sortedBy { it.zPosition }
+                .forEach {
+                    addMedia(
+                            tag = it.tag,
+                            src = it.uri,
+                            zOrderDirection = ZOrderDirection.TOP,
+                            startMs = it.startDelayMs,
+                            trimmedDuration = it.trimmedDurationMs,
+                            mutedAudio = it.mutedAudio,
+                            onTransformable = { transformable -> onTransformable(transformable) }
+                    )
+                }
         }
     }
 

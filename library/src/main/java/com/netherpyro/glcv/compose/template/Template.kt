@@ -68,15 +68,4 @@ class Template private constructor(
     }
 
     override fun describeContents() = units.fold(0) { acc, element -> acc or element.describeContents() }
-
-    internal fun toSequences(): List<Sequence> =
-            units.map { unit ->
-                Sequence(
-                        tag = unit.tag,
-                        uri = unit.uri,
-                        startDelayMs = unit.startDelayMs,
-                        durationMs = unit.trimmedDurationMs,
-                        mutedAudio = unit.mutedAudio
-                )
-            }
 }

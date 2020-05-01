@@ -40,10 +40,16 @@ class ComposerFragment : Fragment() {
         private const val KEY_USE_RECEIVER = "KEY_USE_RECEIVER"
         private const val KEY_START_TIME = "KEY_START_TIME"
 
+        // should be stored at lifecycle aware environment
+        private val composer = Composer().apply {
+            setViewportColor(Color.BLACK)
+            setBaseColor(Color.WHITE)
+            setAspectRatio(16 / 9f)
+        }
+
         private var bakeProcess: Cancellable? = null
     }
 
-    private val composer = Composer()
     private val transformableList = mutableListOf<Transformable>()
 
     private val getMedia = registerForActivityResult(GetMultipleMedia()) {
@@ -94,10 +100,7 @@ class ComposerFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         glView.enableGestures = true
-        composer.setViewportColor(Color.CYAN)
-        composer.setBaseColor(Color.YELLOW)
-        composer.setAspectRatio(16 / 9f)
-        composer.setGlView(glView)
+        composer.setGlView(glView) { transformable -> transformableList.add(transformable) }
 
         // tiger
         /*composer.addVideo(
