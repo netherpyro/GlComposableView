@@ -1,16 +1,18 @@
 package com.netherpyro.glcv.ui
 
-import android.app.Activity
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
+import androidx.activity.invoke
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import com.netherpyro.glcv.AspectRatio
@@ -23,13 +25,13 @@ import com.netherpyro.glcv.baker.renderToVideoFile
 import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
 import com.netherpyro.glcv.touches.LayerTouchListener
+import com.netherpyro.glcv.ui.contract.GetMultipleMedia
 import kotlinx.android.synthetic.main.f_compose.*
 import java.io.File
 
 /**
  * @author mmikhailov on 30.04.2020.
  */
-// todo request storage permission
 class ComposerFragment : Fragment() {
 
     companion object {
@@ -41,9 +43,33 @@ class ComposerFragment : Fragment() {
         private var bakeProcess: Cancellable? = null
     }
 
-    private val mediaRequestCode = 7879
     private val composer = Composer()
     private val transformableList = mutableListOf<Transformable>()
+
+    private val getMedia = registerForActivityResult(GetMultipleMedia()) {
+        it?.forEach { uri ->
+            composer.addMedia(uri.toString(), uri) { transformable -> transformableList.add(transformable) }
+        }
+    }
+
+    private val checkPermissionsAndGetMedia = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissionsResult ->
+        val granted = permissionsResult.values.fold(false) { acc, granted -> acc or granted }
+        if (granted) getMedia("image/* video/*")
+        else {
+            val redirectToSettings = permissionsResult.keys.fold(false) { acc, permission ->
+                acc or shouldShowRequestPermissionRationale(permission).not()
+            }
+            if (redirectToSettings) {
+                startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            .setData(Uri.fromParts("package", requireContext().packageName, null))
+                )
+            }
+        }
+    }
 
     private var progressReceiver: BakeProgressReceiver? = null
     private var progressDialog: ProgressDialog? = null
@@ -143,13 +169,7 @@ class ComposerFragment : Fragment() {
         a18_9.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_18_9.value, true) }
         a9_18.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_9_18.value, true) }
 
-        btn_pick.setOnClickListener {
-            startActivityForResult(
-                    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                        .apply { type = "image/* video/*" },
-                    mediaRequestCode
-            )
-        }
+        btn_pick.setOnClickListener { checkPermissionsAndGetMedia(MainActivity.PERMISSIONS) }
 
         btn_render.setOnClickListener {
             startTimeNsec = System.nanoTime()
@@ -291,16 +311,6 @@ class ComposerFragment : Fragment() {
         outState.putLong(KEY_START_TIME, startTimeNsec)
 
         super.onSaveInstanceState(outState)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        super.onActivityResult(requestCode, resultCode, intent)
-        if (intent != null && requestCode == mediaRequestCode && resultCode == Activity.RESULT_OK) {
-            val mediaUri = intent.data!!
-            composer.addMedia(mediaUri.toString(), mediaUri) { transformable ->
-                transformableList.add(transformable)
-            }
-        }
     }
 
     private fun registerProgressReceiver() {

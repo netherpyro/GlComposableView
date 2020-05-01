@@ -1,5 +1,6 @@
 package com.netherpyro.glcv.ui
 
+import android.Manifest
 import android.os.Bundle
 import android.os.PersistableBundle
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +10,13 @@ import com.netherpyro.glcv.R
  * @author mmikhailov on 2019-11-30.
  */
 class MainActivity : AppCompatActivity(), SelectSampleDialog.SelectSampleListener {
+
+    companion object {
+        val PERMISSIONS = arrayOf(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
