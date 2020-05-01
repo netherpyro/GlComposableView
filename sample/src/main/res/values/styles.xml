@@ -1,10 +1,14 @@
 <resources>
 
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="colorPrimary">@color/stormBright</item>
-        <item name="colorPrimaryDark">@color/stormDark</item>
-        <item name="colorAccent">@color/blue</item>
-        <item name="android:windowBackground">@color/stormDark</item>
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item> <!-- primary -->
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item> <!-- primary dark -->
+        <item name="colorOnPrimary">@color/colorOnPrimary</item> <!-- text on primary -->
+        <item name="colorSecondary">@color/colorSecondary</item> <!-- accent-->
+        <item name="colorOnSecondary">@color/colorOnSecondary</item> <!-- text on accent-->
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+        <item name="android:windowBackground">?attr/colorPrimaryVariant</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
@@ -16,7 +20,7 @@
         <item name="android:layout_width">56dp</item>
         <item name="android:layout_height">56dp</item>
         <item name="android:indeterminate">true</item>
-        <item name="android:indeterminateTint">@color/stormBright</item>
+        <item name="android:indeterminateTint">?attr/colorSecondary</item>
         <item name="android:indeterminateTintMode">src_in</item>
     </style>
 
@@ -25,16 +29,16 @@
         <item name="android:paddingStart">32dp</item>
         <item name="android:paddingTop">20dp</item>
         <item name="android:paddingBottom">10dp</item>
-        <item name="android:background">@drawable/shape_rect_r24_white</item>
+        <item name="android:background">@drawable/shape_rect_r24_surface</item>
     </style>
 
     <style name="Button" parent="Widget.AppCompat.Button.Borderless.Colored">
-        <item name="android:background">@drawable/bg_ripple_rect_r8_nether7</item>
+        <item name="android:background">@drawable/bg_ripple_rect_r8_primary</item>
         <item name="android:paddingStart">18dp</item>
         <item name="android:paddingEnd">18dp</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
-        <item name="android:textColor">@color/stormDark</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
 </resources>

@@ -12,9 +12,9 @@
 
     <View android:id="@+id/topView"
         android:layout_width="match_parent"
-        android:layout_height="194dp"
+        android:layout_height="100dp"
         android:layout_gravity="top"
-        android:background="@color/stormDark" />
+        android:background="?attr/colorPrimary" />
 
     <LinearLayout android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -89,12 +89,6 @@
 
         </LinearLayout>
 
-        <Button android:id="@+id/btn_pick"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="Pick media" />
-
         <LinearLayout android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -117,24 +111,12 @@
 
     </LinearLayout>
 
-    <View android:id="@+id/bottomView"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_gravity="bottom"
-        android:background="@color/stormDark" />
-
-    <SeekBar android:id="@+id/bottomSeek"
-        android:layout_width="match_parent"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fab_pick"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="24dp"
-        android:max="100" />
-
-    <SeekBar android:id="@+id/topSeek"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:layout_marginTop="174dp"
-        android:max="100" />
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_add_24_surface" />
 
 </FrameLayout>

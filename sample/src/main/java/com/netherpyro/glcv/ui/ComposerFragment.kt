@@ -10,7 +10,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.SeekBar
 import androidx.activity.invoke
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -19,6 +18,7 @@ import com.netherpyro.glcv.AspectRatio
 import com.netherpyro.glcv.R
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.alsoOnLaid
+import com.netherpyro.glcv.attrValue
 import com.netherpyro.glcv.baker.BakeProgressReceiver
 import com.netherpyro.glcv.baker.Cancellable
 import com.netherpyro.glcv.baker.renderToVideoFile
@@ -99,6 +99,7 @@ class ComposerFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        composer.setBaseColor(requireContext().attrValue(R.attr.colorSurface))
         glView.enableGestures = true
         composer.setGlView(glView) { transformable -> transformableList.add(transformable) }
 
@@ -172,7 +173,7 @@ class ComposerFragment : Fragment() {
         a18_9.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_18_9.value, true) }
         a9_18.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_9_18.value, true) }
 
-        btn_pick.setOnClickListener { checkPermissionsAndGetMedia(MainActivity.PERMISSIONS) }
+        fab_pick.setOnClickListener { checkPermissionsAndGetMedia(MainActivity.PERMISSIONS) }
 
         btn_render.setOnClickListener {
             startTimeNsec = System.nanoTime()
@@ -205,49 +206,7 @@ class ComposerFragment : Fragment() {
             )
         }
 
-        bottomView.alsoOnLaid { bottomView ->
-            val maxHeight = container.height / 2
-            bottomSeek.progress = ((bottomView.height / maxHeight.toFloat()) * 100).toInt()
-            glView.setViewportMargin(bottom = bottomView.height)
-
-            bottomSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-
-                    val viewHeight = (maxHeight * (progress / 100f)).toInt()
-                    bottomView.layoutParams = bottomView.layoutParams.apply {
-                        height = viewHeight
-                    }
-
-                    glView.setViewportMargin(bottom = viewHeight)
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-            })
-        }
-
-        topView.alsoOnLaid { topView ->
-            val maxHeight = container.height / 2
-            topSeek.progress = ((topView.height / maxHeight.toFloat()) * 100).toInt()
-            glView.setViewportMargin(top = topView.height)
-
-            topSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    val viewHeight = (maxHeight * (progress / 100f)).toInt()
-                    topView.layoutParams = topView.layoutParams.apply {
-                        height = viewHeight
-                    }
-
-                    glView.setViewportMargin(top = viewHeight)
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                }
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                }
-            })
-        }
+        topView.alsoOnLaid { topView -> glView.setViewportMargin(top = topView.height) }
 
         glView.listenTouches(object : LayerTouchListener {
             override fun onLayerTap(transformable: Transformable): Boolean {

@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="194dp"
         android:layout_gravity="top"
-        android:background="@color/stormDark" />
+        android:background="?attr/colorPrimaryVariant" />
 
     <LinearLayout android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -117,7 +117,7 @@
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:layout_gravity="bottom"
-        android:background="@color/stormDark" />
+        android:background="?attr/colorPrimaryVariant" />
 
     <SeekBar android:id="@+id/bottomSeek"
         android:layout_width="match_parent"

@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="stormBright">#7A49A5</color>
-    <color name="stormBright7">#127A49A5</color>
+    <color name="colorPrimary">@color/stormBright</color>
+    <color name="colorPrimaryVariant">@color/stormDark</color>
+    <color name="colorOnPrimary">@android:color/white</color>
+    <color name="colorSecondary">@color/stormBright</color>
+    <color name="colorOnSecondary">@android:color/white</color>
+    <color name="colorSurface">@android:color/white</color>
+    <color name="colorOnSurface">@color/stormDark</color>
+
+    <color name="stormBright">#5f3057</color>
     <color name="stormDark">#3D1F38</color>
-    <color name="blue">#4974a5</color>
+
+    <color name="stormBright7">#125f3057</color>
+
 </resources>

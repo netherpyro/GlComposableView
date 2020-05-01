@@ -4,4 +4,6 @@
     <string name="select_sample_description">Direct use of GlComposableView api or\nthrough handy top-level Composer</string>
     <string name="btn_direct_use">Direct use</string>
     <string name="btn_composer">Composer</string>
+    <string name="add_media">Add media</string>
+    <string name="zero_percent">0%</string>
 </resources>
