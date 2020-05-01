@@ -1,11 +1,40 @@
 <resources>
 
-    <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">@color/stormBright</item>
+        <item name="colorPrimaryDark">@color/stormDark</item>
+        <item name="colorAccent">@color/blue</item>
+        <item name="android:windowBackground">@color/stormDark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="ProgressDialog" parent="ThemeOverlay.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="ProgressBar">
+        <item name="android:layout_width">56dp</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:indeterminate">true</item>
+        <item name="android:indeterminateTint">@color/stormBright</item>
+        <item name="android:indeterminateTintMode">src_in</item>
+    </style>
+
+    <style name="RoundedBackground">
+        <item name="android:paddingEnd">32dp</item>
+        <item name="android:paddingStart">32dp</item>
+        <item name="android:paddingTop">20dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:background">@drawable/shape_rect_r24_white</item>
+    </style>
+
+    <style name="Button" parent="Widget.AppCompat.Button.Borderless.Colored">
+        <item name="android:background">@drawable/bg_ripple_rect_r8_nether7</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingEnd">18dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
+        <item name="android:textColor">@color/stormDark</item>
     </style>
 
 </resources>

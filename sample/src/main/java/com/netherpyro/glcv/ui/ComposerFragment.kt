@@ -1,4 +1,4 @@
-package com.netherpyro.glcv
+package com.netherpyro.glcv.ui
 
 import android.app.Activity
 import android.content.Intent
@@ -7,44 +7,65 @@ import android.graphics.Color
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewTreeObserver
+import android.view.ViewGroup
 import android.widget.SeekBar
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
+import com.netherpyro.glcv.AspectRatio
+import com.netherpyro.glcv.R
+import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.alsoOnLaid
 import com.netherpyro.glcv.baker.BakeProgressReceiver
 import com.netherpyro.glcv.baker.Cancellable
 import com.netherpyro.glcv.baker.renderToVideoFile
 import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
 import com.netherpyro.glcv.touches.LayerTouchListener
-import kotlinx.android.synthetic.main.activity_compose.*
+import kotlinx.android.synthetic.main.f_compose.*
 import java.io.File
 
 /**
- * @author mmikhailov on 2019-11-30.
+ * @author mmikhailov on 30.04.2020.
  */
-// todo handle broadcast receiver when lifecycle changes
 // todo request storage permission
-class ComposerActivity : AppCompatActivity() {
+class ComposerFragment : Fragment() {
+
+    companion object {
+        private const val TAG = "ComposerFragment"
+        private const val TAG_PROGRESS_DIALOG = "TAG_PROGRESS_DIALOG"
+        private const val KEY_USE_RECEIVER = "KEY_USE_RECEIVER"
+        private const val KEY_START_TIME = "KEY_START_TIME"
+
+        private var bakeProcess: Cancellable? = null
+    }
 
     private val mediaRequestCode = 7879
     private val composer = Composer()
-
-    private val progressReceiver = BakeProgressReceiver { progress, completed ->
-        handleProgress(progress, completed)
-    }
-
     private val transformableList = mutableListOf<Transformable>()
 
-    private var bakeProcess: Cancellable? = null
-    private var isReceiverRegistered = false
+    private var progressReceiver: BakeProgressReceiver? = null
+    private var progressDialog: ProgressDialog? = null
+    private var useReceiver = false
     private var startTimeNsec: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_compose)
 
-        LibraryHelper.setContext(applicationContext)
+        childFragmentManager.setFragmentResultListener(ProgressDialog.CODE_REQUEST_CANCEL, this) { _, _ ->
+            bakeProcess?.cancel()
+            bakeProcess = null
+
+            progressDialog = null
+        }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
+            inflater.inflate(R.layout.f_compose, container, false)
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         glView.enableGestures = true
         composer.setViewportColor(Color.CYAN)
@@ -132,27 +153,29 @@ class ComposerActivity : AppCompatActivity() {
 
         btn_render.setOnClickListener {
             startTimeNsec = System.nanoTime()
-            // todo show dialog with cancel action
+            showProgressDialog()
+
             bakeProcess = composer.renderToVideoFile(
-                    this@ComposerActivity,
-                    File(cacheDir, "result.mp4").absolutePath,
+                    requireContext(),
+                    File(requireContext().cacheDir, "result.mp4").absolutePath,
                     outputMinSidePx = 1080,
                     fps = 30,
                     verboseLogging = true,
                     progressListener = { progress: Float, completed: Boolean ->
-                        runOnUiThread { handleProgress(progress, completed) }
+                        requireActivity().runOnUiThread { handleProgress(progress, completed) }
                     }
             )
         }
 
         btn_render_service.setOnClickListener {
+            showProgressDialog()
+            registerProgressReceiver()
+
+            useReceiver = true
             startTimeNsec = System.nanoTime()
-            // todo show dialog with cancel action
-            registerReceiver(progressReceiver, IntentFilter(BakeProgressReceiver.ACTION_PUBLISH_PROGRESS))
-            isReceiverRegistered = true
             bakeProcess = composer.renderToVideoFileInSeparateProcess(
-                    this@ComposerActivity,
-                    File(cacheDir, "result.mp4").absolutePath,
+                    requireContext(),
+                    File(requireContext().cacheDir, "result.mp4").absolutePath,
                     outputMinSidePx = 1080,
                     fps = 30,
                     verboseLogging = true
@@ -237,14 +260,37 @@ class ComposerActivity : AppCompatActivity() {
         })
     }
 
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+
+        if (savedInstanceState != null) {
+            progressDialog = childFragmentManager.findFragmentByTag(TAG_PROGRESS_DIALOG) as? ProgressDialog
+            useReceiver = savedInstanceState.getBoolean(KEY_USE_RECEIVER, false)
+            startTimeNsec = savedInstanceState.getLong(KEY_START_TIME, 0L)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         glView.onResume()
+
+        if (useReceiver) {
+            registerProgressReceiver()
+        }
     }
 
     override fun onPause() {
         super.onPause()
         glView.onPause()
+
+        unregisterProgressReceiver()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(KEY_USE_RECEIVER, useReceiver)
+        outState.putLong(KEY_START_TIME, startTimeNsec)
+
+        super.onSaveInstanceState(outState)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
@@ -257,27 +303,38 @@ class ComposerActivity : AppCompatActivity() {
         }
     }
 
-    private fun Long.toSeconds() = this / 1_000_000_000f
-
-    fun <T : View> T.alsoOnLaid(block: (T) -> Unit) {
-        viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                viewTreeObserver.removeOnGlobalLayoutListener(this)
-                block.invoke(this@alsoOnLaid)
-            }
-        })
+    private fun registerProgressReceiver() {
+        progressReceiver = BakeProgressReceiver { progress, completed -> handleProgress(progress, completed) }
+        requireContext()
+            .registerReceiver(progressReceiver, IntentFilter(BakeProgressReceiver.ACTION_PUBLISH_PROGRESS))
     }
 
+    private fun unregisterProgressReceiver() {
+        if (progressReceiver != null) {
+            requireContext().unregisterReceiver(progressReceiver)
+            progressReceiver = null
+        }
+    }
+
+    private fun showProgressDialog() {
+        progressDialog?.dismiss()
+        progressDialog = ProgressDialog()
+        progressDialog?.show(childFragmentManager, TAG_PROGRESS_DIALOG)
+    }
+
+    private fun Long.toSeconds() = this / 1_000_000_000f
+
     private fun handleProgress(value: Float, completed: Boolean) {
-        Log.d("ComposerActivity", "handleProgress::$value : $completed")
+        Log.d(TAG, "handleProgress::$value : $completed")
+        progressDialog?.setProgress(value)
 
         if (completed) {
-            Log.d("ComposeActivity", "handleProgress::completed for ${(System.nanoTime() - startTimeNsec).toSeconds()} seconds")
+            Log.d(TAG, "handleProgress::completed for ${(System.nanoTime() - startTimeNsec).toSeconds()} seconds")
+            bakeProcess = null
+            progressDialog?.dismiss()
+            progressDialog = null
 
-            if (isReceiverRegistered) {
-                isReceiverRegistered = false
-                unregisterReceiver(progressReceiver)
-            }
+            unregisterProgressReceiver()
         }
     }
 }

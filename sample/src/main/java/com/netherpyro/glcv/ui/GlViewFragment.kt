@@ -1,12 +1,13 @@
-package com.netherpyro.glcv
+package com.netherpyro.glcv.ui
 
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewTreeObserver
+import android.view.ViewGroup
 import android.widget.SeekBar
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.ExoPlayerFactory
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -19,14 +20,25 @@ import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoListener
+import com.netherpyro.glcv.AspectRatio
+import com.netherpyro.glcv.LibraryHelper
+import com.netherpyro.glcv.MySilenceMediaSource
+import com.netherpyro.glcv.R
+import com.netherpyro.glcv.SurfaceConsumer
+import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.alsoOnLaid
 import com.netherpyro.glcv.touches.LayerTouchListener
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.f_glcv.*
 import kotlin.math.abs
 
 /**
- * @author mmikhailov on 2019-11-30.
+ * @author mmikhailov on 30.04.2020.
  */
-class MainActivity : AppCompatActivity() {
+class GlViewFragment : Fragment() {
+
+    companion object {
+        private const val TAG = "GlViewFragment"
+    }
 
     private lateinit var player: SimpleExoPlayer
 
@@ -45,14 +57,16 @@ class MainActivity : AppCompatActivity() {
         override fun onSurfaceSizeChanged(width: Int, height: Int) {}
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
+            inflater.inflate(R.layout.f_glcv, container, false)
 
-        LibraryHelper.setContext(applicationContext)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        LibraryHelper.setContext(requireContext())
 
         val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(
-                this, Util.getUserAgent(this, "GlComposableView"))
+                requireContext(), Util.getUserAgent(requireContext(), "GlComposableView"))
         val videoSource1: MediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(LibraryHelper.video1())
         val videoSource2: MediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
@@ -62,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         val silenceSource: MediaSource = MySilenceMediaSource(10_000_000)
         val concatenatedSource = ConcatenatingMediaSource(videoSource3, videoSource2, videoSource1, silenceSource)
 
-        player = ExoPlayerFactory.newSimpleInstance(this)
+        player = ExoPlayerFactory.newSimpleInstance(requireContext())
         player.addVideoListener(videoListener)
 
         player.prepare(concatenatedSource)
@@ -207,20 +221,11 @@ class MainActivity : AppCompatActivity() {
         player.release()
     }
 
-    fun <T : View> T.alsoOnLaid(block: (T) -> Unit) {
-        viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                viewTreeObserver.removeOnGlobalLayoutListener(this)
-                block.invoke(this@alsoOnLaid)
-            }
-        })
-    }
-
     private fun applyAspectRatio(layerAspectValue: Float) {
         val nearestAspect = AspectRatio.values()
             .minBy { ar -> abs(layerAspectValue - ar.value) }!!
 
-        Log.d("MainActivity", "nearest aspect=$nearestAspect")
+        Log.d(TAG, "nearest aspect=$nearestAspect")
 
         glView.setAspectRatio(nearestAspect.value)
     }
