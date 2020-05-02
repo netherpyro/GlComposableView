@@ -26,6 +26,7 @@ import com.netherpyro.glcv.baker.BakeProgressReceiver
 import com.netherpyro.glcv.baker.Cancellable
 import com.netherpyro.glcv.baker.renderToVideoFile
 import com.netherpyro.glcv.compose.Composer
+import com.netherpyro.glcv.compose.Controllable
 import com.netherpyro.glcv.getActionBarSize
 import com.netherpyro.glcv.touches.LayerTouchListener
 import com.netherpyro.glcv.ui.contract.GetMultipleMedia
@@ -53,10 +54,14 @@ class ComposerFragment : Fragment() {
     }
 
     private val transformableList = mutableListOf<Transformable>()
+    private val controllableList = mutableListOf<Controllable>()
 
-    private val getMedia = registerForActivityResult(GetMultipleMedia()) {
-        it?.forEach { uri ->
+    private val getMedia = registerForActivityResult(GetMultipleMedia()) { uriList ->
+        uriList?.forEach { uri ->
             composer.addMedia(uri.toString(), uri) { transformable -> transformableList.add(transformable) }
+                .also { controllable -> controllable?.let { controllableList.add(it) } }
+
+            invalidateRenderBtn()
         }
     }
 
@@ -109,8 +114,14 @@ class ComposerFragment : Fragment() {
 
         glView.enableGestures = true
         glView.setViewportMargin(top = requireContext().getActionBarSize())
+
         composer.setBaseColor(requireContext().attrValue(R.attr.colorSurface))
-        composer.setGlView(glView) { transformable -> transformableList.add(transformable) }
+
+        val addedControllables = composer.setGlView(glView) { transformable -> transformableList.add(transformable) }
+        controllableList.clear()
+        controllableList.addAll(addedControllables)
+
+        invalidateRenderBtn()
 
         with(rv_aspect_ratio) {
             addDivider()
@@ -210,8 +221,6 @@ class ComposerFragment : Fragment() {
             )
         }*/
 
-        //topView.alsoOnLaid { topView ->  }
-
         glView.listenTouches(object : LayerTouchListener {
             override fun onLayerTap(transformable: Transformable): Boolean {
                 transformableList.forEach {
@@ -282,6 +291,10 @@ class ComposerFragment : Fragment() {
     override fun onDestroyView() {
         rv_aspect_ratio.adapter = null
         super.onDestroyView()
+    }
+
+    private fun invalidateRenderBtn() {
+        btn_render.isEnabled = controllableList.isNotEmpty()
     }
 
     private fun registerProgressReceiver() {

@@ -45,18 +45,20 @@ class Composer {
      * @param glComposableView
      * @param onTransformable lambda callback for providing transformable previously set.
      * Nothing provides if this is first attempt of GlComposableView setting.
+     * @return [Controllable] list
      * */
-    fun setGlView(glComposableView: GlComposableView, onTransformable: (Transformable) -> Unit) {
+    fun setGlView(glComposableView: GlComposableView, onTransformable: (Transformable) -> Unit): List<Controllable> {
         glView = glComposableView
 
         glComposableView.setViewportColor(viewportColor)
         glComposableView.setBaseColor(baseColor)
         glComposableView.setAspectRatio(aspectRatio)
 
-        try {
+        return try {
             applyTemplate(takeTemplate(), onTransformable)
         } catch (e: IllegalStateException) {
             Log.i(TAG, "setGlView::this is first attempt setting GlComposableView")
+            emptyList()
         }
     }
 
@@ -96,7 +98,7 @@ class Composer {
         return Template.from(aspectRatio, mediaSeqs, transformables)
     }
 
-    fun applyTemplate(template: Template, onTransformable: (Transformable) -> Unit) {
+    fun applyTemplate(template: Template, onTransformable: (Transformable) -> Unit): List<Controllable> {
         checkGlView("applyTemplate") {
             mediaSeqs.clear()
             transformables.clear()
@@ -114,7 +116,11 @@ class Composer {
                             onTransformable = { transformable -> onTransformable(transformable) }
                     )
                 }
+
+            return getControllableList()
         }
+
+        return emptyList()
     }
 
     fun addMedia(
@@ -261,6 +267,8 @@ class Composer {
             // todo apply to glView
         }
     }
+
+    fun getControllableList(): List<Controllable> = mediaSeqs.toList()
 
     private inline fun checkGlView(op: String, block: () -> Unit) {
         if (glView == null) {

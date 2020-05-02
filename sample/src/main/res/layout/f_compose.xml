@@ -27,7 +27,7 @@
             android:layout_gravity="end|center_vertical"
             android:contentDescription="@null"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_slow_motion_video_24_onprimary" />
+            android:src="@drawable/ic_render_24" />
 
     </FrameLayout>
 
