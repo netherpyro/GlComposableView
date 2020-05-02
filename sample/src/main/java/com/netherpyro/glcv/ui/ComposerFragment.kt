@@ -10,17 +10,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import androidx.activity.invoke
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.RecyclerView
 import com.netherpyro.glcv.AspectRatio
 import com.netherpyro.glcv.R
 import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.addDivider
 import com.netherpyro.glcv.attrValue
 import com.netherpyro.glcv.baker.BakeProgressReceiver
 import com.netherpyro.glcv.baker.Cancellable
@@ -281,12 +278,5 @@ class ComposerFragment : Fragment() {
 
             unregisterProgressReceiver()
         }
-    }
-
-    private fun RecyclerView.addDivider() {
-        val decoration =
-                DividerItemDecoration(requireContext(), LinearLayout.HORIZONTAL)
-                    .apply { setDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.shape_divider)!!) }
-        addItemDecoration(decoration)
     }
 }

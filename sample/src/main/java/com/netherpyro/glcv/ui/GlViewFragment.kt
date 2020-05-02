@@ -26,6 +26,7 @@ import com.netherpyro.glcv.MySilenceMediaSource
 import com.netherpyro.glcv.R
 import com.netherpyro.glcv.SurfaceConsumer
 import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.addDivider
 import com.netherpyro.glcv.alsoOnLaid
 import com.netherpyro.glcv.touches.LayerTouchListener
 import kotlinx.android.synthetic.main.f_glcv.*
@@ -55,6 +56,15 @@ class GlViewFragment : Fragment() {
 
         override fun onRenderedFirstFrame() {}
         override fun onSurfaceSizeChanged(width: Int, height: Int) {}
+    }
+
+    private val aspectRatioAdapter: AspectRatioAdapter by lazy {
+        AspectRatioAdapter(
+                AspectRatio.values()
+                    .map { ar ->
+                        AspectRatioItem(ar, ar.title, ar.value in glView.aspectRatio - 0.1f..glView.aspectRatio + 0.1f)
+                    }
+        ) { selectedAspectRatio -> glView.setAspectRatio(selectedAspectRatio.value, true) }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
@@ -93,12 +103,6 @@ class GlViewFragment : Fragment() {
 
         glView.enableGestures = true
 
-        // add surface layer
-        glView.addSurfaceLayer(
-                tag = videoTag,
-                surfaceConsumer = SurfaceConsumer { player.setVideoSurface(it) }
-        ) { transformable -> transformableList.add(transformable) }
-
         // add bitmap 1 layer
         LibraryHelper.image1()
             ?.also { bitmap ->
@@ -113,18 +117,20 @@ class GlViewFragment : Fragment() {
                 }
             }
 
-        a1_1.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
-        a3_2.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
-        a2_3.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_2_3.value, true) }
-        a4_5.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_4_5.value, true) }
-        a5_4.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_5_4.value, true) }
-        a9_16.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_9_16.value, true) }
-        a16_9.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_16_9.value, true) }
-        a18_9.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_18_9.value, true) }
-        a9_18.setOnClickListener { glView.setAspectRatio(AspectRatio.RATIO_9_18.value, true) }
+        // add surface layer
+        glView.addSurfaceLayer(
+                tag = videoTag,
+                surfaceConsumer = SurfaceConsumer { player.setVideoSurface(it) }
+        ) { transformable -> transformableList.add(transformable) }
+
         v1.setOnClickListener { player.seekTo(0, 0) }
         v2.setOnClickListener { player.seekTo(1, 0) }
         v3.setOnClickListener { player.seekTo(2, 3000) }
+
+        with(rv_aspect_ratio) {
+            addDivider()
+            adapter = aspectRatioAdapter
+        }
 
         bottomView.alsoOnLaid { bottomView ->
             val maxHeight = container.height / 2
@@ -212,6 +218,11 @@ class GlViewFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         glView.onPause()
+    }
+
+    override fun onDestroyView() {
+        rv_aspect_ratio.adapter = null
+        super.onDestroyView()
     }
 
     override fun onDestroy() {

@@ -36,6 +36,9 @@ class GlComposableView @JvmOverloads constructor(
 
     var enableGestures = false
 
+    val aspectRatio: Float
+        get() = layoutHelper.viewportAspect
+
     private val renderer: GlRenderer
     private val layoutHelper: LayoutHelper
     private val touchHelper: GlTouchHelper
