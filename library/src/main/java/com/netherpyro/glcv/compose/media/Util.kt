@@ -117,7 +117,7 @@ object Util {
             }
             aspectRatio < 1f -> {
                 outputWidth = coercedSidePx
-                outputHeight = (coercedSidePx * aspectRatio).toInt().let { it - it % 8 }
+                outputHeight = (coercedSidePx / aspectRatio).toInt().let { it - it % 8 }
             }
             else -> {
                 outputWidth = coercedSidePx
