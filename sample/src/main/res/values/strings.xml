@@ -6,4 +6,14 @@
     <string name="btn_composer">Composer</string>
     <string name="add_media">Add media</string>
     <string name="zero_percent">0%</string>
+    <string name="bake_to_video_file">Bake to a video file</string>
+    <string name="configure_renderer">Configure renderer</string>
+    <string name="start">Start</string>
+    <string name="rb_24_fps">24 FPS</string>
+    <string name="rb_30_fps">30 FPS</string>
+    <string name="rb_60_fps">60 FPS</string>
+    <string name="rb_720p">720p</string>
+    <string name="rb_1080p">1080p</string>
+    <string name="rb_uhd">UHD</string>
+    <string name="use_service_separate_process">Use service (separate process)</string>
 </resources>

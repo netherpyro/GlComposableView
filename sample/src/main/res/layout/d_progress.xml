@@ -4,11 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     style="@style/RoundedBackground"
     android:layout_width="wrap_content"
-    android:minWidth="140dp"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
     android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp">
+    android:layout_marginEnd="16dp"
+    android:minWidth="140dp">
 
     <ProgressBar android:id="@+id/bar_progress"
         style="@style/ProgressBar"

@@ -25,6 +25,7 @@ import com.netherpyro.glcv.attrValue
 import com.netherpyro.glcv.baker.BakeProgressReceiver
 import com.netherpyro.glcv.baker.Cancellable
 import com.netherpyro.glcv.baker.renderToVideoFile
+import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
 import com.netherpyro.glcv.compose.Controllable
 import com.netherpyro.glcv.getActionBarSize
@@ -41,6 +42,8 @@ class ComposerFragment : Fragment() {
     companion object {
         private const val TAG = "ComposerFragment"
         private const val TAG_PROGRESS_DIALOG = "TAG_PROGRESS_DIALOG"
+        private const val TAG_RENDER_DIALOG = "TAG_RENDER_DIALOG"
+
         private const val KEY_USE_RECEIVER = "KEY_USE_RECEIVER"
         private const val KEY_START_TIME = "KEY_START_TIME"
 
@@ -104,6 +107,44 @@ class ComposerFragment : Fragment() {
             bakeProcess = null
             progressDialog = null
         }
+
+        childFragmentManager.setFragmentResultListener(RenderDialog.CODE_REQUEST_RENDER, this) { _, bundle ->
+            startRender(bundle)
+        }
+    }
+
+    private fun startRender(options: Bundle) {
+        showProgressDialog()
+        startTimeNsec = System.nanoTime()
+        val outputPath = File(requireContext().cacheDir, "result.mp4").absolutePath
+        val fps = options.getInt(RenderDialog.KEY_FPS)
+        val outputMinSidePx = options.getInt(RenderDialog.KEY_SIDE_SIZE)
+
+        Log.d(TAG, "fps=$fps, res=$outputMinSidePx, separate service=${options.getBoolean(RenderDialog.KEY_USE_SERVICE)}")
+
+        if (options.getBoolean(RenderDialog.KEY_USE_SERVICE)) {
+            registerProgressReceiver()
+
+            useReceiver = true
+            bakeProcess = composer.renderToVideoFileInSeparateProcess(
+                    requireContext(),
+                    outputPath,
+                    outputMinSidePx = outputMinSidePx,
+                    fps = fps,
+                    verboseLogging = true
+            )
+        } else {
+            bakeProcess = composer.renderToVideoFile(
+                    requireContext(),
+                    outputPath,
+                    outputMinSidePx = outputMinSidePx,
+                    fps = fps,
+                    verboseLogging = true,
+                    progressListener = { progress: Float, completed: Boolean ->
+                        requireActivity().runOnUiThread { handleProgress(progress, completed) }
+                    }
+            )
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
@@ -128,98 +169,8 @@ class ComposerFragment : Fragment() {
             adapter = aspectRatioAdapter
         }
 
-        // tiger
-        /*composer.addVideo(
-                "video3",
-                Uri.parse("content://media/external/file/3370"),
-                trimmedDuration = 2000L
-        ) { transformable -> transformableList.add(transformable) }*/
-
-        /*composer.addImage(
-                "image1",
-                Uri.parse("content://media/external/file/129"),
-                startMs = 1000L
-        ) { transformable -> transformableList.add(transformable) }
-
-        composer.addImage(
-                "image2",
-                Uri.parse("content://media/external/file/135"),
-                startMs = 1500L
-        ) { transformable -> transformableList.add(transformable) }
-
-        composer.addImage(
-                "image3",
-                Uri.parse("content://media/external/file/136")
-        ) { transformable -> transformableList.add(transformable) }
-
-        // sphere
-        composer.addVideo(
-                "video1",
-                Uri.parse("content://media/external/file/3365")
-        ) { transformable -> transformableList.add(transformable) }*/
-
-        // filmm
-        /*composer.addVideo(
-                "video2",
-                Uri.parse("content://media/external/file/4024")
-        ) { transformable -> transformableList.add(transformable) }*/
-
-        //  with audio
-        /*composer.addVideo(
-                "video4",
-                Uri.parse("content://media/external/file/3371")
-        ) { transformable -> transformableList.add(transformable) }*/
-
-        // harlem shake
-        /*composer.addVideo(
-                "video5",
-                Uri.parse("content://media/external/file/342")
-        ) { transformable -> transformableList.add(transformable) }*/
-
-        // audio video sync
-        /*composer.addVideo(
-                "video6",
-                Uri.parse("content://media/external/file/3366")
-        ) { transformable -> transformableList.add(transformable) }*/
-
-        // rabbit
-        /*composer.addVideo(
-                "video7",
-                Uri.parse("content://media/external/file/3372")
-        ) { transformable -> transformableList.add(transformable) }*/
-
         fab_pick.setOnClickListener { checkPermissionsAndGetMedia(MainActivity.PERMISSIONS) }
-
-        btn_render.setOnClickListener {
-            startTimeNsec = System.nanoTime()
-            showProgressDialog()
-
-            bakeProcess = composer.renderToVideoFile(
-                    requireContext(),
-                    File(requireContext().cacheDir, "result.mp4").absolutePath,
-                    outputMinSidePx = 1080,
-                    fps = 30,
-                    verboseLogging = true,
-                    progressListener = { progress: Float, completed: Boolean ->
-                        requireActivity().runOnUiThread { handleProgress(progress, completed) }
-                    }
-            )
-        }
-
-        /*btn_render_service.setOnClickListener {
-            showProgressDialog()
-            registerProgressReceiver()
-
-            useReceiver = true
-            startTimeNsec = System.nanoTime()
-            bakeProcess = composer.renderToVideoFileInSeparateProcess(
-                    requireContext(),
-                    File(requireContext().cacheDir, "result.mp4").absolutePath,
-                    outputMinSidePx = 1080,
-                    fps = 30,
-                    verboseLogging = true
-            )
-        }*/
+        btn_render.setOnClickListener { RenderDialog().show(childFragmentManager, TAG_RENDER_DIALOG) }
 
         glView.listenTouches(object : LayerTouchListener {
             override fun onLayerTap(transformable: Transformable): Boolean {
