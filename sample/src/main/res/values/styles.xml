@@ -32,13 +32,26 @@
         <item name="android:background">@drawable/shape_rect_r24_surface</item>
     </style>
 
-    <style name="Button" parent="Widget.AppCompat.Button.Borderless.Colored">
-        <item name="android:background">@drawable/bg_ripple_rect_r8_primary</item>
+    <style name="DialogButton" parent="Widget.AppCompat.Button.Borderless.Colored">
+        <item name="android:background">@drawable/bg_ripple_rect_r8_stormb</item>
         <item name="android:paddingStart">18dp</item>
         <item name="android:paddingEnd">18dp</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="BorderedButton" parent="Widget.AppCompat.Button.Small">
+        <item name="android:background">@drawable/bg_ripple_selectable_bordered_r8_stormb</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
+        <item name="android:textColor">@color/col_text_btn_bordered</item>
+    </style>
+
+    <style name="ImageButton" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:minWidth">32dp</item>
+        <item name="android:minHeight">32dp</item>
     </style>
 
 </resources>

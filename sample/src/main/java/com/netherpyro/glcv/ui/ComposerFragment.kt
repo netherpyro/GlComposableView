@@ -10,20 +10,23 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.activity.invoke
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.RecyclerView
 import com.netherpyro.glcv.AspectRatio
 import com.netherpyro.glcv.R
 import com.netherpyro.glcv.Transformable
-import com.netherpyro.glcv.alsoOnLaid
 import com.netherpyro.glcv.attrValue
 import com.netherpyro.glcv.baker.BakeProgressReceiver
 import com.netherpyro.glcv.baker.Cancellable
 import com.netherpyro.glcv.baker.renderToVideoFile
-import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
+import com.netherpyro.glcv.getActionBarSize
 import com.netherpyro.glcv.touches.LayerTouchListener
 import com.netherpyro.glcv.ui.contract.GetMultipleMedia
 import kotlinx.android.synthetic.main.f_compose.*
@@ -44,7 +47,6 @@ class ComposerFragment : Fragment() {
         private val composer = Composer().apply {
             setViewportColor(Color.BLACK)
             setBaseColor(Color.WHITE)
-            setAspectRatio(16 / 9f)
         }
 
         private var bakeProcess: Cancellable? = null
@@ -77,6 +79,13 @@ class ComposerFragment : Fragment() {
         }
     }
 
+    private val aspectRatioAdapter: AspectRatioAdapter = AspectRatioAdapter(
+            AspectRatio.values()
+                .map { ar ->
+                    AspectRatioItem(ar, ar.title, ar.value in composer.aspectRatio - 0.1f..composer.aspectRatio + 0.1f)
+                }
+    ) { selectedAspectRatio -> composer.setAspectRatio(selectedAspectRatio.value, true) }
+
     private var progressReceiver: BakeProgressReceiver? = null
     private var progressDialog: ProgressDialog? = null
     private var useReceiver = false
@@ -88,7 +97,6 @@ class ComposerFragment : Fragment() {
         childFragmentManager.setFragmentResultListener(ProgressDialog.CODE_REQUEST_CANCEL, this) { _, _ ->
             bakeProcess?.cancel()
             bakeProcess = null
-
             progressDialog = null
         }
     }
@@ -99,9 +107,15 @@ class ComposerFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        composer.setBaseColor(requireContext().attrValue(R.attr.colorSurface))
         glView.enableGestures = true
+        glView.setViewportMargin(top = requireContext().getActionBarSize())
+        composer.setBaseColor(requireContext().attrValue(R.attr.colorSurface))
         composer.setGlView(glView) { transformable -> transformableList.add(transformable) }
+
+        with(rv_aspect_ratio) {
+            addDivider()
+            adapter = aspectRatioAdapter
+        }
 
         // tiger
         /*composer.addVideo(
@@ -163,16 +177,6 @@ class ComposerFragment : Fragment() {
                 Uri.parse("content://media/external/file/3372")
         ) { transformable -> transformableList.add(transformable) }*/
 
-        a1_1.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_1_1.value, true) }
-        a3_2.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_3_2.value, true) }
-        a2_3.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_2_3.value, true) }
-        a4_5.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_4_5.value, true) }
-        a5_4.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_5_4.value, true) }
-        a9_16.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_9_16.value, true) }
-        a16_9.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_16_9.value, true) }
-        a18_9.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_18_9.value, true) }
-        a9_18.setOnClickListener { composer.setAspectRatio(AspectRatio.RATIO_9_18.value, true) }
-
         fab_pick.setOnClickListener { checkPermissionsAndGetMedia(MainActivity.PERMISSIONS) }
 
         btn_render.setOnClickListener {
@@ -191,7 +195,7 @@ class ComposerFragment : Fragment() {
             )
         }
 
-        btn_render_service.setOnClickListener {
+        /*btn_render_service.setOnClickListener {
             showProgressDialog()
             registerProgressReceiver()
 
@@ -204,9 +208,9 @@ class ComposerFragment : Fragment() {
                     fps = 30,
                     verboseLogging = true
             )
-        }
+        }*/
 
-        topView.alsoOnLaid { topView -> glView.setViewportMargin(top = topView.height) }
+        //topView.alsoOnLaid { topView ->  }
 
         glView.listenTouches(object : LayerTouchListener {
             override fun onLayerTap(transformable: Transformable): Boolean {
@@ -275,6 +279,11 @@ class ComposerFragment : Fragment() {
         super.onSaveInstanceState(outState)
     }
 
+    override fun onDestroyView() {
+        rv_aspect_ratio.adapter = null
+        super.onDestroyView()
+    }
+
     private fun registerProgressReceiver() {
         progressReceiver = BakeProgressReceiver { progress, completed -> handleProgress(progress, completed) }
         requireContext()
@@ -308,5 +317,12 @@ class ComposerFragment : Fragment() {
 
             unregisterProgressReceiver()
         }
+    }
+
+    private fun RecyclerView.addDivider() {
+        val decoration =
+                DividerItemDecoration(requireContext(), LinearLayout.HORIZONTAL)
+                    .apply { setDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.shape_divider)!!) }
+        addItemDecoration(decoration)
     }
 }

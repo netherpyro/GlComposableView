@@ -26,3 +26,24 @@ fun Context.attrValue(@AttrRes res: Int): Int {
     else throw Resources.NotFoundException("Resource with id $res not found")
     return value
 }
+
+fun Context.dpToPx(dp: Float): Float =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.coerceAtLeast(0f), resources.displayMetrics)
+
+fun Context.getActionBarSize(): Int {
+    var actionBarHeight = 0
+    val typedValue = TypedValue()
+
+    try {
+        if (theme.resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
+            actionBarHeight = TypedValue.complexToDimensionPixelSize(typedValue.data, resources.displayMetrics)
+        }
+    } catch (ignore: Exception) {
+    }
+
+    if (actionBarHeight == 0) {
+        actionBarHeight = dpToPx(52f).toInt()
+    }
+
+    return actionBarHeight
+}
