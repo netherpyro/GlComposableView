@@ -41,7 +41,7 @@ class ProgressDialog : DialogFragment() {
 
     fun setProgress(progress: Float) {
         if (view != null) {
-            val percent = "%.2f".format(progress * 100)
+            val percent = "%.0f".format(progress * 100)
                 .plus("%")
             txt_progress_value.text = percent
         }

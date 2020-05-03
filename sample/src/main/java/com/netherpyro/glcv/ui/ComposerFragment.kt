@@ -26,6 +26,8 @@ import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
 import com.netherpyro.glcv.compose.Controllable
 import com.netherpyro.glcv.getActionBarSize
+import com.netherpyro.glcv.playVideo
+import com.netherpyro.glcv.saveToGallery
 import com.netherpyro.glcv.touches.LayerTouchListener
 import com.netherpyro.glcv.ui.contract.GetMultipleMedia
 import kotlinx.android.synthetic.main.f_compose.*
@@ -53,6 +55,7 @@ class ComposerFragment : Fragment() {
         private var bakeProcess: Cancellable? = null
     }
 
+    private val outputFile by lazy { File(requireContext().cacheDir, "result.mp4") }
     private val transformableList = mutableListOf<Transformable>()
     private val controllableList = mutableListOf<Controllable>()
 
@@ -87,7 +90,7 @@ class ComposerFragment : Fragment() {
     private val aspectRatioAdapter: AspectRatioAdapter = AspectRatioAdapter(
             AspectRatio.values()
                 .map { ar ->
-                    AspectRatioItem(ar, ar.title, ar.value in composer.aspectRatio - 0.1f..composer.aspectRatio + 0.1f)
+                    AspectRatioItem(ar, ar.title, ar.value in composer.aspectRatio - 0.01f..composer.aspectRatio + 0.01f)
                 }
     ) { selectedAspectRatio -> composer.setAspectRatio(selectedAspectRatio.value, true) }
 
@@ -113,7 +116,7 @@ class ComposerFragment : Fragment() {
     private fun startRender(options: Bundle) {
         showProgressDialog()
         startTimeNsec = System.nanoTime()
-        val outputPath = File(requireContext().cacheDir, "result.mp4").absolutePath
+        val outputPath = outputFile.absolutePath
         val fps = options.getInt(RenderDialog.KEY_FPS)
         val outputMinSidePx = options.getInt(RenderDialog.KEY_SIDE_SIZE)
 
@@ -149,6 +152,8 @@ class ComposerFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        requireActivity().window.statusBarColor = requireContext().attrValue(R.attr.colorPrimary)
 
         glView.enableGestures = true
         glView.setViewportMargin(top = requireContext().getActionBarSize())
@@ -277,6 +282,9 @@ class ComposerFragment : Fragment() {
             progressDialog = null
 
             unregisterProgressReceiver()
+
+            // store and play baked video
+            with(requireContext()) { saveToGallery(outputFile)?.let { uri -> playVideo(uri) } }
         }
     }
 }

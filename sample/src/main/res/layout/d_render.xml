@@ -20,14 +20,12 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView android:id="@+id/txt_description"
+        style="@style/TextBodyOnSurface"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:lineSpacingExtra="4sp"
         android:text="@string/configure_renderer"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:textColor="?attr/colorOnSurface"
-        app:layout_constraintBottom_toTopOf="@id/rg_fps"
+        app:layout_constraintBottom_toTopOf="@id/txt_label_fps"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/txt_title" />
@@ -45,14 +43,24 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/chb_service" />
 
-    <RadioGroup android:id="@+id/rg_fps"
+    <TextView android:id="@+id/txt_label_fps"
+        style="@style/TextBodyOnSurface"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
+        android:text="@string/label_fps"
+        app:layout_constraintBottom_toTopOf="@id/rg_fps"
+        app:layout_constraintStart_toStartOf="@id/rg_fps"
+        app:layout_constraintTop_toBottomOf="@id/txt_description" />
+
+    <RadioGroup android:id="@+id/rg_fps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/txt_description">
+        app:layout_constraintTop_toBottomOf="@id/txt_label_fps">
 
         <RadioButton android:id="@+id/rb_24fps"
             android:layout_width="match_parent"
@@ -74,12 +82,22 @@
 
     </RadioGroup>
 
+    <TextView android:id="@+id/txt_label_resolution"
+        style="@style/TextBodyOnSurface"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/label_resolution"
+        app:layout_constraintBottom_toTopOf="@id/rg_resolution"
+        app:layout_constraintStart_toStartOf="@id/rg_resolution"
+        app:layout_constraintTop_toBottomOf="@id/rg_fps" />
+
     <RadioGroup android:id="@+id/rg_resolution"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintStart_toStartOf="@id/rg_fps"
-        app:layout_constraintTop_toBottomOf="@id/rg_fps">
+        app:layout_constraintStart_toStartOf="@id/txt_label_resolution"
+        app:layout_constraintTop_toBottomOf="@id/txt_label_resolution">
 
         <RadioButton android:id="@+id/rb_720"
             android:layout_width="match_parent"

@@ -16,4 +16,7 @@
     <string name="rb_1080p">1080p</string>
     <string name="rb_uhd">UHD</string>
     <string name="use_service_separate_process">Use service (separate process)</string>
+    <string name="screen_title_composer">Composer</string>
+    <string name="label_fps">FPS</string>
+    <string name="label_resolution">Resolution</string>
 </resources>
