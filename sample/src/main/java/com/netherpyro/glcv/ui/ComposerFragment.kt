@@ -5,6 +5,7 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
 import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
@@ -284,7 +285,11 @@ class ComposerFragment : Fragment() {
             unregisterProgressReceiver()
 
             // store and play baked video
-            with(requireContext()) { saveToGallery(outputFile)?.let { uri -> playVideo(uri) } }
+            with(requireContext()) {
+                saveToGallery(outputFile)?.let {
+                    Handler().postDelayed({ playVideo(it) }, 1000L)
+                }
+            }
         }
     }
 }
