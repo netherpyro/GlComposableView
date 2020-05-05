@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.fragment.app.Fragment
-import com.google.android.exoplayer2.ExoPlayerFactory
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
@@ -22,9 +21,9 @@ import com.google.android.exoplayer2.util.Util
 import com.google.android.exoplayer2.video.VideoListener
 import com.netherpyro.glcv.AspectRatio
 import com.netherpyro.glcv.LibraryHelper
-import com.netherpyro.glcv.MySilenceMediaSource
 import com.netherpyro.glcv.R
 import com.netherpyro.glcv.SurfaceConsumer
+import com.netherpyro.glcv.TaggedSilenceMediaSource
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.addDivider
 import com.netherpyro.glcv.alsoOnLaid
@@ -83,17 +82,15 @@ class GlViewFragment : Fragment() {
             .createMediaSource(LibraryHelper.video2())
         val videoSource3: MediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(LibraryHelper.video3())
-        val silenceSource: MediaSource = MySilenceMediaSource(10_000_000)
+        val silenceSource: MediaSource = TaggedSilenceMediaSource(10_000_000, "shh")
         val concatenatedSource = ConcatenatingMediaSource(videoSource3, videoSource2, videoSource1, silenceSource)
 
-        player = ExoPlayerFactory.newSimpleInstance(requireContext())
+        player = SimpleExoPlayer.Builder(requireContext()).build()
         player.addVideoListener(videoListener)
-
         player.prepare(concatenatedSource)
         player.playWhenReady = true
         player.addListener(object : Player.EventListener {
-
-            override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray?) {
+            override fun onTracksChanged(trackGroups: TrackGroupArray, trackSelections: TrackSelectionArray) {
                 transformableList.findTransformable(videoTag)
                     ?.setSkipDraw(trackGroups.isSilence())
 
@@ -245,5 +242,5 @@ class GlViewFragment : Fragment() {
             this.firstOrNull { it.tag == tag }
 
     private fun TrackGroupArray.isSilence() =
-            !this.isEmpty && this[0].getFormat(0).id == MySilenceMediaSource.SILENCE_ID
+            !this.isEmpty && this[0].getFormat(0).id == "shh"
 }

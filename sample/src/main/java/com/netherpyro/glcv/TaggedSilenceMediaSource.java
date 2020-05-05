@@ -38,49 +38,48 @@ import java.util.ArrayList;
 import androidx.annotation.Nullable;
 
 /**
- * Media source with a single period consisting of silent raw audio of a given duration. Has the silence id.
+ * Media source with a single period consisting of silent raw audio of a given duration. Has tag.
  */
-public final class MySilenceMediaSource extends BaseMediaSource {
+public final class TaggedSilenceMediaSource extends BaseMediaSource {
 
-    public static final String SILENCE_ID = "shh";
     private static final int SAMPLE_RATE_HZ = 44100;
     @C.PcmEncoding
     private static final int ENCODING = C.ENCODING_PCM_16BIT;
     private static final int CHANNEL_COUNT = 2;
-    private static final Format FORMAT =
-            Format.createAudioSampleFormat(
-                    /* id=*/ SILENCE_ID,
-                    MimeTypes.AUDIO_RAW,
-                    /* codecs= */ null,
-                    /* bitrate= */ Format.NO_VALUE,
-                    /* maxInputSize= */ Format.NO_VALUE,
-                    CHANNEL_COUNT,
-                    SAMPLE_RATE_HZ,
-                    ENCODING,
-                    /* initializationData= */ null,
-                    /* drmInitData= */ null,
-                    /* selectionFlags= */ 0,
-                    /* language= */ null);
+
     private static final byte[] SILENCE_SAMPLE =
             new byte[Util.getPcmFrameSize(ENCODING, CHANNEL_COUNT) * 1024];
 
     private final long durationUs;
+    private final Format mFormat;
 
     /**
      * Creates a new media source providing silent audio of the given duration.
      *
      * @param durationUs The duration of silent audio to output, in microseconds.
      */
-    public MySilenceMediaSource(long durationUs) {
+    public TaggedSilenceMediaSource(long durationUs, String tag) {
         Assertions.checkArgument(durationUs >= 0);
         this.durationUs = durationUs;
+        this.mFormat = Format.createAudioSampleFormat(
+                /* id=*/ tag,
+                MimeTypes.AUDIO_RAW,
+                /* codecs= */ null,
+                /* bitrate= */ Format.NO_VALUE,
+                /* maxInputSize= */ Format.NO_VALUE,
+                CHANNEL_COUNT,
+                SAMPLE_RATE_HZ,
+                ENCODING,
+                /* initializationData= */ null,
+                /* drmInitData= */ null,
+                /* selectionFlags= */ 0,
+                /* language= */ null);
     }
 
     @Override
     public void prepareSourceInternal(@Nullable TransferListener mediaTransferListener) {
         refreshSourceInfo(
-                new SinglePeriodTimeline(durationUs, /* isSeekable= */ true, /* isDynamic= */ false),
-                /* manifest= */ null);
+                new SinglePeriodTimeline(durationUs, /* isSeekable= */ true, /* isDynamic= */ false, false));
     }
 
     @Override
@@ -89,7 +88,7 @@ public final class MySilenceMediaSource extends BaseMediaSource {
 
     @Override
     public MediaPeriod createPeriod(MediaPeriodId id, Allocator allocator, long startPositionUs) {
-        return new SilenceMediaPeriod(durationUs);
+        return new SilenceMediaPeriod(durationUs, mFormat);
     }
 
     @Override
@@ -102,14 +101,16 @@ public final class MySilenceMediaSource extends BaseMediaSource {
 
     private static final class SilenceMediaPeriod implements MediaPeriod {
 
-        private static final TrackGroupArray TRACKS = new TrackGroupArray(new TrackGroup(FORMAT));
-
+        private final TrackGroupArray mTracks;
         private final long durationUs;
         private final ArrayList<SampleStream> sampleStreams;
+        private final Format mFormat;
 
-        public SilenceMediaPeriod(long durationUs) {
+        public SilenceMediaPeriod(long durationUs, Format format) {
             this.durationUs = durationUs;
             sampleStreams = new ArrayList<>();
+            this.mTracks = new TrackGroupArray(new TrackGroup(format));
+            this.mFormat = format;
         }
 
         @Override
@@ -123,7 +124,7 @@ public final class MySilenceMediaSource extends BaseMediaSource {
 
         @Override
         public TrackGroupArray getTrackGroups() {
-            return TRACKS;
+            return mTracks;
         }
 
         @Override
@@ -140,7 +141,7 @@ public final class MySilenceMediaSource extends BaseMediaSource {
                     streams[i] = null;
                 }
                 if (streams[i] == null && selections[i] != null) {
-                    SilenceSampleStream stream = new SilenceSampleStream(durationUs);
+                    SilenceSampleStream stream = new SilenceSampleStream(durationUs, mFormat);
                     stream.seekTo(positionUs);
                     sampleStreams.add(stream);
                     streams[i] = stream;
@@ -189,6 +190,11 @@ public final class MySilenceMediaSource extends BaseMediaSource {
         }
 
         @Override
+        public boolean isLoading() {
+            return false;
+        }
+
+        @Override
         public void reevaluateBuffer(long positionUs) {
         }
 
@@ -200,11 +206,13 @@ public final class MySilenceMediaSource extends BaseMediaSource {
     private static final class SilenceSampleStream implements SampleStream {
 
         private final long durationBytes;
+        private final Format mFormat;
 
         private boolean sentFormat;
         private long positionBytes;
 
-        public SilenceSampleStream(long durationUs) {
+        public SilenceSampleStream(long durationUs, Format format) {
+            this.mFormat = format;
             durationBytes = getAudioByteCount(durationUs);
             seekTo(0);
         }
@@ -226,7 +234,7 @@ public final class MySilenceMediaSource extends BaseMediaSource {
         public int readData(
                 FormatHolder formatHolder, DecoderInputBuffer buffer, boolean formatRequired) {
             if (!sentFormat || formatRequired) {
-                formatHolder.format = FORMAT;
+                formatHolder.format = mFormat;
                 sentFormat = true;
                 return C.RESULT_FORMAT_READ;
             }

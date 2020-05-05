@@ -6,11 +6,12 @@ import android.opengl.EGLContext
 import android.util.Log
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlComposableView
-import com.netherpyro.glcv.SurfaceConsumer
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.compose.media.Constant
 import com.netherpyro.glcv.compose.media.Type
 import com.netherpyro.glcv.compose.media.Util
+import com.netherpyro.glcv.compose.playback.PlaybackController
+import com.netherpyro.glcv.compose.playback.ProjectDurationHolder
 import com.netherpyro.glcv.compose.template.Template
 import java.util.concurrent.Exchanger
 
@@ -40,6 +41,8 @@ class Composer {
 
     private val mediaSeqs = mutableSetOf<Sequence>()
     private val transformables = mutableSetOf<Transformable>()
+    private val projectDurationHolder = ProjectDurationHolder()
+    private val playbackController = PlaybackController(projectDurationHolder)
 
     /**
      * @param glComposableView
@@ -115,6 +118,8 @@ class Composer {
                             mutedAudio = it.mutedAudio,
                             onTransformable = { transformable -> onTransformable(transformable) }
                     )
+
+                    // todo apply transformations
                 }
 
             return getControllableList()
@@ -128,9 +133,10 @@ class Composer {
             src: Uri,
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
             startMs: Long = 0,
+            beginClipAmountMs: Long? = null,
             trimmedDuration: Long? = null,
             mutedAudio: Boolean = true, // todo return false after resolving audio issues
-            onTransformable: (Transformable) -> Unit
+            onTransformable: ((Transformable) -> Unit)? = null
     ): Controllable? {
         checkGlView("addMedia") {
             val view = glView!!
@@ -142,7 +148,8 @@ class Composer {
             }
 
             return when (metadata.type) {
-                Type.VIDEO -> addVideo(tag, src, zOrderDirection, startMs, trimmedDuration, mutedAudio, onTransformable)
+                Type.VIDEO -> addVideo(tag, src, zOrderDirection, startMs, beginClipAmountMs, trimmedDuration,
+                        mutedAudio, onTransformable)
                 Type.IMAGE -> addImage(tag, src, zOrderDirection, startMs,
                         trimmedDuration ?: Constant.DEFAULT_IMAGE_DURATION_MS, onTransformable)
             }
@@ -166,7 +173,7 @@ class Composer {
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
             startMs: Long = 0L,
             durationMs: Long = Constant.DEFAULT_IMAGE_DURATION_MS,
-            onTransformable: (Transformable) -> Unit
+            onTransformable: ((Transformable) -> Unit)? = null
     ): Controllable? {
         checkGlView("addImage") {
             val view = glView!!
@@ -177,13 +184,17 @@ class Composer {
                 return null
             }
 
+            val appliedStartDelaysMs = startMs.coerceAtLeast(0L)
+            val appliedDurationMs = durationMs.coerceAtLeast(1000L)
+            projectDurationHolder.newSequence(appliedStartDelaysMs, 0L, appliedDurationMs)
+
             view.addBitmapLayer(
                     tag,
                     bitmap = Util.getBitmap(view.context, src),
                     position = zOrderDirection.toGlRenderPosition(),
                     onTransformable = {
                         this@Composer.transformables.add(it)
-                        onTransformable(it)
+                        onTransformable?.invoke(it)
                     }
             )
 
@@ -208,9 +219,10 @@ class Composer {
             src: Uri,
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
             startMs: Long = 0,
+            beginClipAmountMs: Long? = null,
             trimmedDuration: Long? = null,
             mutedAudio: Boolean = true, // todo return false after resolving audio issues
-            onTransformable: (Transformable) -> Unit
+            onTransformable: ((Transformable) -> Unit)?
     ): Controllable? {
         checkGlView("addVideo") {
             val view = glView!!
@@ -221,21 +233,30 @@ class Composer {
                 return null
             }
 
+            val appliedStartDelaysMs = startMs.coerceAtLeast(0L)
+            val appliedBeginClipAmountMs = beginClipAmountMs?.coerceIn(0L, metadata.durationMs) ?: 0L
+            val appliedDurationMs = trimmedDuration?.coerceIn(1000L, metadata.durationMs) ?: metadata.durationMs
+
+            projectDurationHolder.newSequence(appliedStartDelaysMs, appliedBeginClipAmountMs, appliedDurationMs)
+
             view.addSurfaceLayer(
                     tag,
-                    surfaceConsumer = SurfaceConsumer { /* todo use video player */ },
+                    surfaceConsumer = playbackController.createPlayer(
+                            view.context, tag, src, appliedStartDelaysMs, appliedBeginClipAmountMs, appliedDurationMs
+                    ),
                     position = zOrderDirection.toGlRenderPosition(),
                     onTransformable = {
+                        it.setSize(metadata.width, metadata.height)
                         this@Composer.transformables.add(it)
-                        onTransformable(it)
+                        onTransformable?.invoke(it)
                     }
                 )
 
             val sequence = Sequence(
                     tag = tag,
                     uri = src,
-                    startDelayMs = startMs.coerceAtLeast(0L),
-                    durationMs = trimmedDuration?.coerceAtLeast(1000L) ?: metadata.durationMs,
+                    startDelayMs = appliedStartDelaysMs,
+                    durationMs = appliedDurationMs,
                     mutedAudio = mutedAudio or metadata.hasAudio.not()
             )
 

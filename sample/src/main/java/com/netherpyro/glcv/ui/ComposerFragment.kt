@@ -231,6 +231,7 @@ class ComposerFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         glView.onPause()
+        // todo pause playback controller
 
         unregisterProgressReceiver()
     }
