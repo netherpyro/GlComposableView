@@ -4,9 +4,12 @@ import android.net.Uri
 import android.opengl.EGL14
 import android.opengl.EGLContext
 import android.util.Log
+import android.util.Size
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlComposableView
+import com.netherpyro.glcv.TransformData
 import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.asTransformData
 import com.netherpyro.glcv.compose.media.Constant
 import com.netherpyro.glcv.compose.media.Type
 import com.netherpyro.glcv.compose.media.Util
@@ -108,18 +111,17 @@ class Composer {
 
             template.units
                 .sortedBy { it.zPosition }
-                .forEach {
+                .forEach { unit ->
                     addMedia(
-                            tag = it.tag,
-                            src = it.uri,
+                            tag = unit.tag,
+                            src = unit.uri,
                             zOrderDirection = ZOrderDirection.TOP,
-                            startMs = it.startDelayMs,
-                            trimmedDuration = it.trimmedDurationMs,
-                            mutedAudio = it.mutedAudio,
+                            startMs = unit.startDelayMs,
+                            trimmedDuration = unit.trimmedDurationMs,
+                            mutedAudio = unit.mutedAudio,
+                            transformData = unit.asTransformData(),
                             onTransformable = { transformable -> onTransformable(transformable) }
                     )
-
-                    // todo apply transformations
                 }
 
             return getControllableList()
@@ -136,6 +138,7 @@ class Composer {
             beginClipAmountMs: Long? = null,
             trimmedDuration: Long? = null,
             mutedAudio: Boolean = true, // todo return false after resolving audio issues
+            transformData: TransformData? = null,
             onTransformable: ((Transformable) -> Unit)? = null
     ): Controllable? {
         checkGlView("addMedia") {
@@ -149,9 +152,9 @@ class Composer {
 
             return when (metadata.type) {
                 Type.VIDEO -> addVideo(tag, src, zOrderDirection, startMs, beginClipAmountMs, trimmedDuration,
-                        mutedAudio, onTransformable)
+                        mutedAudio, transformData, onTransformable)
                 Type.IMAGE -> addImage(tag, src, zOrderDirection, startMs,
-                        trimmedDuration ?: Constant.DEFAULT_IMAGE_DURATION_MS, onTransformable)
+                        trimmedDuration ?: Constant.DEFAULT_IMAGE_DURATION_MS, transformData, onTransformable)
             }
         }
 
@@ -173,6 +176,7 @@ class Composer {
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
             startMs: Long = 0L,
             durationMs: Long = Constant.DEFAULT_IMAGE_DURATION_MS,
+            transformData: TransformData? = null,
             onTransformable: ((Transformable) -> Unit)? = null
     ): Controllable? {
         checkGlView("addImage") {
@@ -192,6 +196,7 @@ class Composer {
                     tag,
                     bitmap = Util.getBitmap(view.context, src),
                     position = zOrderDirection.toGlRenderPosition(),
+                    initialValues = transformData,
                     onTransformable = {
                         this@Composer.transformables.add(it)
                         onTransformable?.invoke(it)
@@ -222,6 +227,7 @@ class Composer {
             beginClipAmountMs: Long? = null,
             trimmedDuration: Long? = null,
             mutedAudio: Boolean = true, // todo return false after resolving audio issues
+            transformData: TransformData? = null,
             onTransformable: ((Transformable) -> Unit)?
     ): Controllable? {
         checkGlView("addVideo") {
@@ -245,8 +251,9 @@ class Composer {
                             view.context, tag, src, appliedStartDelaysMs, appliedBeginClipAmountMs, appliedDurationMs
                     ),
                     position = zOrderDirection.toGlRenderPosition(),
+                    initialValues = transformData?.copy(layerSize = Size(metadata.width, metadata.height)),
                     onTransformable = {
-                        it.setSize(metadata.width, metadata.height)
+                        if (transformData == null) it.setSize(metadata.width, metadata.height)
                         this@Composer.transformables.add(it)
                         onTransformable?.invoke(it)
                     }

@@ -7,13 +7,12 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
 import android.util.Log
-import android.util.Size
 import androidx.annotation.ColorInt
 import com.netherpyro.glcv.GlRenderer
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.LayoutHelper
-import com.netherpyro.glcv.TransformData
 import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.asTransformData
 import com.netherpyro.glcv.baker.decode.PassiveDecoderPool
 import com.netherpyro.glcv.baker.encode.AudioBufferProvider
 import com.netherpyro.glcv.baker.encode.Encoder
@@ -190,26 +189,13 @@ internal class Baker private constructor(
                                         decodeAudioTrack = !muteCalculator.shouldMute(unit.mutedAudio, metadata.hasAudio)
                                 ),
                                 position = unit.zPosition,
-                                initialValues = TransformData(
-                                        scale = unit.scaleFactor,
-                                        rotation = unit.rotationDeg,
-                                        xFactor = -unit.translateFactorX,
-                                        yFactor = unit.translateFactorY,
-                                        opacity = unit.opacity,
-                                        layerSize = Size(metadata.width, metadata.height)
-                                )
+                                initialValues = unit.asTransformData(metadata.width, metadata.height)
                         )
                         Type.IMAGE -> glRenderer.addBitmapLayer(
                                 unit.tag,
                                 bitmap = Util.getBitmap(context, unit.uri),
                                 position = unit.zPosition,
-                                initialValues = TransformData(
-                                        scale = unit.scaleFactor,
-                                        rotation = unit.rotationDeg,
-                                        xFactor = -unit.translateFactorX,
-                                        yFactor = unit.translateFactorY,
-                                        opacity = unit.opacity
-                                )
+                                initialValues = unit.asTransformData()
                         )
                     }
 
