@@ -45,7 +45,9 @@ class Composer {
     private val mediaSeqs = mutableSetOf<Sequence>()
     private val transformables = mutableSetOf<Transformable>()
     private val projectDurationHolder = ProjectDurationHolder()
-    private val playbackController = PlaybackController(projectDurationHolder)
+    private val playbackController = PlaybackController(projectDurationHolder) { tag, visible ->
+        setLayerVisibility(tag, visible)
+    }
 
     /**
      * @param glComposableView
@@ -297,6 +299,14 @@ class Composer {
     }
 
     fun getControllableList(): List<Controllable> = mediaSeqs.toList()
+
+    private fun setLayerVisibility(tag: String, visible: Boolean) {
+        transformables.find { it.tag == tag }
+            ?.apply {
+                setSkipDraw(!visible)
+                glView?.requestRender()
+            }
+    }
 
     private inline fun checkGlView(op: String, block: () -> Unit) {
         if (glView == null) {

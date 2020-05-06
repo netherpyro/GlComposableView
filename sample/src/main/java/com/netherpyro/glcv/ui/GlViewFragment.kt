@@ -23,10 +23,10 @@ import com.netherpyro.glcv.AspectRatio
 import com.netherpyro.glcv.LibraryHelper
 import com.netherpyro.glcv.R
 import com.netherpyro.glcv.SurfaceConsumer
-import com.netherpyro.glcv.TaggedSilenceMediaSource
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.addDivider
 import com.netherpyro.glcv.alsoOnLaid
+import com.netherpyro.glcv.compose.playback.TaggedSilenceMediaSource
 import com.netherpyro.glcv.touches.LayerTouchListener
 import kotlinx.android.synthetic.main.f_glcv.*
 import kotlin.math.abs
@@ -82,7 +82,8 @@ class GlViewFragment : Fragment() {
             .createMediaSource(LibraryHelper.video2())
         val videoSource3: MediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(LibraryHelper.video3())
-        val silenceSource: MediaSource = TaggedSilenceMediaSource(10_000_000, "shh")
+        val silenceSource: MediaSource = TaggedSilenceMediaSource(
+                10_000_000, "shh")
         val concatenatedSource = ConcatenatingMediaSource(videoSource3, videoSource2, videoSource1, silenceSource)
 
         player = SimpleExoPlayer.Builder(requireContext()).build()

@@ -49,7 +49,7 @@ class ComposerFragment : Fragment() {
 
         // should be stored at lifecycle aware environment
         private val composer = Composer().apply {
-            setViewportColor(Color.BLACK)
+            setViewportColor(Color.DKGRAY)
             setBaseColor(Color.WHITE)
         }
 

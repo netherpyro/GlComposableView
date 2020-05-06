@@ -8,10 +8,7 @@ package com.netherpyro.glcv.compose.template
 class TimeMask private constructor() {
 
     companion object {
-        fun from(units: List<TemplateUnit>): TimeMask {
-            return TimeMask()
-                .assemble(units)
-        }
+        fun from(units: List<TemplateUnit>) = TimeMask().assemble(units)
     }
 
     var durationMs: Long = 0L

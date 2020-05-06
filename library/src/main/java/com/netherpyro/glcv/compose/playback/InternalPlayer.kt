@@ -14,7 +14,8 @@ import com.google.android.exoplayer2.source.ClippingMediaSource
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.source.SilenceMediaSource
+import com.google.android.exoplayer2.source.TrackGroupArray
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
@@ -92,6 +93,8 @@ class InternalPlayer(
         private val PLAY = 4
         private val PAUSE = 5
         private val SEEK = 6
+
+        private val SILENCE_TAG = "SILENCE_TAG"
 
         private lateinit var handler: Handler
         private lateinit var player: SimpleExoPlayer
@@ -180,10 +183,21 @@ class InternalPlayer(
                 .apply {
                     invalidatePlayerSource()
                     prepare(playerDataSource)
+                    addListener(object : Player.EventListener {
+                        override fun onTracksChanged(trackGroups: TrackGroupArray,
+                                                     trackSelections: TrackSelectionArray) {
+                            if (trackGroups.isSilence()) {
+                                Log.i(TAG, "onTracksChanged::went to silence")
+                                invalidateDrawing(true)
+                            } else {
+                                Log.v(TAG, "onTracksChanged::went to video track")
+                            }
+                        }
+                    })
                     setVideoFrameMetadataListener { presentationTimeUs, _, _, _ ->
                         nowPositionMs = startDelayMs + presentationTimeUs / 1000L
-                        Log.d(TAG, "nowPts=$nowPositionMs")
-                        invalidateDrawing()
+                        // Log.d(TAG, "nowPts=$nowPositionMs")
+                        invalidateDrawing(false)
                     }
 
                     // todo remove these {
@@ -208,27 +222,39 @@ class InternalPlayer(
             val silenceDurationAfter = projectDuration - (silenceDurationBefore + trimmedDuration)
 
             if (silenceDurationBefore > 0) {
-                playerDataSource.addMediaSource(SilenceMediaSource(silenceDurationBefore.times(1000)))
+                playerDataSource.addMediaSource(
+                        TaggedSilenceMediaSource(silenceDurationBefore.times(1000), SILENCE_TAG)
+                )
             }
 
             playerDataSource.addMediaSource(
-                    createClippingSource(videoSource, beginClipAmountMs, beginClipAmountMs + trimmedDuration)
+                    createClippingSource(videoSource, beginClipAmountMs, trimmedDuration)
             )
 
             if (silenceDurationAfter > 0) {
-                playerDataSource.addMediaSource(SilenceMediaSource(silenceDurationAfter.times(1000)))
+                playerDataSource.addMediaSource(
+                        TaggedSilenceMediaSource(silenceDurationAfter.times(1000), SILENCE_TAG)
+                )
             }
 
-            invalidateDrawing()
+            invalidateDrawing(false)
 
             return true
         }
 
-        private fun invalidateDrawing() {
-            val shouldDrawNow = nowPositionMs in startDelayMs..(startDelayMs + trimmedDuration) && nowPositionMs <= projectDuration
-            if (shouldDrawNow != currentlyDrawing) {
-                currentlyDrawing = shouldDrawNow
-                shouldDrawChangedListener(shouldDrawNow)
+        private fun invalidateDrawing(forceInvisible: Boolean) {
+            if (forceInvisible) {
+                Log.w(TAG, "invalidateDrawing::force not drawing")
+                currentlyDrawing = false
+                shouldDrawChangedListener(currentlyDrawing)
+            } else {
+                val shouldDrawNow = nowPositionMs in startDelayMs + beginClipAmountMs..(startDelayMs + beginClipAmountMs + trimmedDuration)
+                        && nowPositionMs <= projectDuration
+                if (shouldDrawNow != currentlyDrawing) {
+                    currentlyDrawing = shouldDrawNow
+                    Log.d(TAG, "invalidateDrawing::${if (currentlyDrawing) "drawing" else "not drawing"}")
+                    shouldDrawChangedListener(currentlyDrawing)
+                }
             }
         }
 
@@ -251,5 +277,7 @@ class InternalPlayer(
         }
 
         private fun Timeline.Period.realDuration(): Long = durationMs + positionInWindowMs
+
+        private fun TrackGroupArray.isSilence() = !this.isEmpty && this[0].getFormat(0).id == SILENCE_TAG
     }
 }
