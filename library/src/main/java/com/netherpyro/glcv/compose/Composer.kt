@@ -139,7 +139,7 @@ class Composer {
             startMs: Long = 0,
             beginClipAmountMs: Long? = null,
             trimmedDuration: Long? = null,
-            mutedAudio: Boolean = true, // todo return false after resolving audio issues
+            mutedAudio: Boolean = false,
             transformData: TransformData? = null,
             onTransformable: ((Transformable) -> Unit)? = null
     ): Controllable? {
@@ -228,7 +228,7 @@ class Composer {
             startMs: Long = 0,
             beginClipAmountMs: Long? = null,
             trimmedDuration: Long? = null,
-            mutedAudio: Boolean = true, // todo return false after resolving audio issues
+            mutedAudio: Boolean = false,
             transformData: TransformData? = null,
             onTransformable: ((Transformable) -> Unit)?
     ): Controllable? {

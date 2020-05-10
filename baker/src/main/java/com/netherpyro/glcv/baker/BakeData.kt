@@ -23,7 +23,7 @@ data class BakeData(
     companion object CREATOR : Parcelable.Creator<BakeData> {
         override fun createFromParcel(parcel: Parcel) = BakeData(
                 parcel.readInt(),
-                parcel.readParcelable(Template::class.java.classLoader)!!, // todo check if right
+                parcel.readParcelable(Template::class.java.classLoader)!!,
                 parcel.readString()!!,
                 parcel.readInt(),
                 parcel.readInt(),
@@ -39,7 +39,7 @@ data class BakeData(
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(viewportColor)
-        parcel.writeParcelable(template, flags)// todo flags
+        parcel.writeParcelable(template, flags)
         parcel.writeString(outputPath)
         parcel.writeInt(outputMinSidePx)
         parcel.writeInt(fps)

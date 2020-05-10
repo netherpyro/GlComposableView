@@ -56,8 +56,8 @@ internal class VideoEncoderCore internal constructor(
 
         const val DEFAULT_SIDE_MIN_SIZE = 1080
         const val DEFAULT_FPS = 30
-        const val DEFAULT_I_FRAME_INTERVAL_SEC = 5
-        const val DEFAULT_BIT_RATE = 4000000
+        const val DEFAULT_I_FRAME_INTERVAL_SEC = 2
+        const val DEFAULT_BIT_RATE = 921600
     }
 
     /**

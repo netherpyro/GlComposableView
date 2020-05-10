@@ -186,7 +186,7 @@ internal class Baker private constructor(
                                         context,
                                         unit.tag,
                                         unit.uri,
-                                        decodeAudioTrack = !muteCalculator.shouldMute(unit.mutedAudio, metadata.hasAudio)
+                                        decodeAudioTrack = false//!muteCalculator.shouldMute(unit.mutedAudio, metadata.hasAudio)  // todo restore after resolving audio issues
                                 ),
                                 position = unit.zPosition,
                                 initialValues = unit.asTransformData(metadata.width, metadata.height)

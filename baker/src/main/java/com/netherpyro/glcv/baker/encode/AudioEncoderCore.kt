@@ -89,9 +89,8 @@ internal class AudioEncoderCore internal constructor(
             val inputBuffer: ByteBuffer = encoder.getInputBuffer(inputBufferIndex)
                 ?: throw RuntimeException("drainEncoder::encoderInputBuffer $inputBufferIndex was null")
 
-            inputBuffer.clear()
-
             if (buffer != null) {
+                inputBuffer.position(0)
                 inputBuffer.put(buffer)
             }
 

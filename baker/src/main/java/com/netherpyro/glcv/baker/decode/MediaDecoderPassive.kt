@@ -130,13 +130,13 @@ internal class MediaDecoderPassive(
 
         isUsed = true
 
-        if (audioTrackInfo != null) {
-            advanceAudioExtractor()
-        }
-
         if (speedController?.test(ptsUsec) == false) {
             if (VERBOSE) Log.i(TAG, "advance::skip frame due to frame threshold")
             return
+        }
+
+        if (audioTrackInfo != null) {
+            advanceAudioExtractor()
         }
 
         if (videoTrackInfo != null) {
@@ -280,8 +280,7 @@ internal class MediaDecoderPassive(
 
                     if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::sent input EOS")
                 } else {
-                    val presentationTimeUs = audioExtractor.sampleTime
-                    audioDecoder.queueInputBuffer(inputBufferIndex, 0, chunkSize, presentationTimeUs, 0)
+                    audioDecoder.queueInputBuffer(inputBufferIndex, 0, chunkSize, audioExtractor.sampleTime, audioExtractor.sampleFlags)
 
                     if (VERBOSE) Log.v(TAG, "advanceAudioExtractor::submitted chunk to decoder, size=$chunkSize")
 
@@ -313,16 +312,13 @@ internal class MediaDecoderPassive(
                         audioOutputDone = true
                     }
 
-                    val buffer: ByteBuffer? = audioDecoder.getOutputBuffer(outputBufferIndex)
-                    val data: ByteBuffer? =
-                            if (buffer != null)
-                                ByteBuffer.allocateDirect(audioBufferInfo.size)
-                                    .apply { put(buffer); flip() }
-                            else null
+                    val buffer: ByteBuffer? = audioDecoder.getOutputBuffer(outputBufferIndex)?.duplicate()
+                    buffer?.position(audioBufferInfo.offset)
+                    buffer?.limit(audioBufferInfo.offset + audioBufferInfo.size)
 
+                    Log.i(TAG, "advanceAudioExtractor::Audio Buffer data=$buffer")
+                    audioBuffer?.update(buffer, audioBufferInfo.size)
                     audioDecoder.releaseOutputBuffer(outputBufferIndex, false)
-                    Log.i(TAG, "advanceAudioExtractor::Audio Buffer data=$data")
-                    audioBuffer?.update(data, audioBufferInfo.size)
                 }
             }
         }

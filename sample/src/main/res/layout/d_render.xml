@@ -122,6 +122,7 @@
     <CheckBox android:id="@+id/chb_service"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:checked="true"
         android:text="@string/use_service_separate_process"
         app:layout_constraintBottom_toTopOf="@id/btn_start"
         app:layout_constraintStart_toStartOf="@id/rg_resolution"
