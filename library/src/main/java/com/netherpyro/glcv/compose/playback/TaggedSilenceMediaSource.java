@@ -53,6 +53,8 @@ public final class TaggedSilenceMediaSource extends BaseMediaSource {
     private final long durationUs;
     private final Format mFormat;
 
+    private PtsListener mPtsListener;
+
     /**
      * Creates a new media source providing silent audio of the given duration.
      *
@@ -88,7 +90,7 @@ public final class TaggedSilenceMediaSource extends BaseMediaSource {
 
     @Override
     public MediaPeriod createPeriod(MediaPeriodId id, Allocator allocator, long startPositionUs) {
-        return new SilenceMediaPeriod(durationUs, mFormat);
+        return new SilenceMediaPeriod(durationUs, mFormat, mPtsListener);
     }
 
     @Override
@@ -99,18 +101,24 @@ public final class TaggedSilenceMediaSource extends BaseMediaSource {
     public void releaseSourceInternal() {
     }
 
+    public void setPtsListener(PtsListener ptsListener) {
+        mPtsListener = ptsListener;
+    }
+
     private static final class SilenceMediaPeriod implements MediaPeriod {
 
         private final TrackGroupArray mTracks;
         private final long durationUs;
         private final ArrayList<SampleStream> sampleStreams;
         private final Format mFormat;
+        private final PtsListener mPtsListener;
 
-        public SilenceMediaPeriod(long durationUs, Format format) {
+        public SilenceMediaPeriod(long durationUs, Format format, PtsListener ptsListener) {
             this.durationUs = durationUs;
             sampleStreams = new ArrayList<>();
             this.mTracks = new TrackGroupArray(new TrackGroup(format));
             this.mFormat = format;
+            this.mPtsListener = ptsListener;
         }
 
         @Override
@@ -141,7 +149,7 @@ public final class TaggedSilenceMediaSource extends BaseMediaSource {
                     streams[i] = null;
                 }
                 if (streams[i] == null && selections[i] != null) {
-                    SilenceSampleStream stream = new SilenceSampleStream(durationUs, mFormat);
+                    SilenceSampleStream stream = new SilenceSampleStream(durationUs, mFormat, mPtsListener);
                     stream.seekTo(positionUs);
                     sampleStreams.add(stream);
                     streams[i] = stream;
@@ -207,12 +215,14 @@ public final class TaggedSilenceMediaSource extends BaseMediaSource {
 
         private final long durationBytes;
         private final Format mFormat;
+        private final PtsListener mPtsListener;
 
         private boolean sentFormat;
         private long positionBytes;
 
-        public SilenceSampleStream(long durationUs, Format format) {
+        public SilenceSampleStream(long durationUs, Format format, PtsListener ptsListener) {
             this.mFormat = format;
+            this.mPtsListener = ptsListener;
             durationBytes = getAudioByteCount(durationUs);
             seekTo(0);
         }
@@ -250,6 +260,7 @@ public final class TaggedSilenceMediaSource extends BaseMediaSource {
             buffer.addFlag(C.BUFFER_FLAG_KEY_FRAME);
             buffer.data.put(SILENCE_SAMPLE, /* offset= */ 0, bytesToWrite);
             buffer.timeUs = getAudioPositionUs(positionBytes);
+            if (mPtsListener != null) mPtsListener.onPts(buffer.timeUs);
             positionBytes += bytesToWrite;
             return C.RESULT_BUFFER_READ;
         }
@@ -270,5 +281,9 @@ public final class TaggedSilenceMediaSource extends BaseMediaSource {
     private static long getAudioPositionUs(long bytes) {
         long audioSampleCount = bytes / Util.getPcmFrameSize(ENCODING, CHANNEL_COUNT);
         return audioSampleCount * C.MICROS_PER_SECOND / SAMPLE_RATE_HZ;
+    }
+
+    public interface PtsListener {
+        void onPts(Long valueUs);
     }
 }

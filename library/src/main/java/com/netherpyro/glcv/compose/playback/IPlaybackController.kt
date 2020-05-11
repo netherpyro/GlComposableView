@@ -11,4 +11,6 @@ interface IPlaybackController {
     fun release()
     fun isPlaying(): Boolean
     fun togglePlay()
+    fun getCurrentPosition(): Long
+    fun setPlaybackEventsListener(listener: PlaybackEventListener?)
 }

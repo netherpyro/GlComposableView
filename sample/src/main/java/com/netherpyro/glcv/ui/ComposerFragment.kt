@@ -17,6 +17,7 @@ import androidx.core.view.marginBottom
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
+import com.netherpyro.glcv.App
 import com.netherpyro.glcv.AspectRatio
 import com.netherpyro.glcv.R
 import com.netherpyro.glcv.Transformable
@@ -30,6 +31,7 @@ import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
 import com.netherpyro.glcv.compose.Controllable
 import com.netherpyro.glcv.compose.playback.IPlaybackController
+import com.netherpyro.glcv.compose.playback.PlaybackEventListener
 import com.netherpyro.glcv.getActionBarSize
 import com.netherpyro.glcv.playVideo
 import com.netherpyro.glcv.saveToGallery
@@ -52,7 +54,7 @@ class ComposerFragment : Fragment() {
         private const val KEY_START_TIME = "KEY_START_TIME"
 
         // should be stored at lifecycle aware environment
-        private val composer = Composer().apply {
+        private val composer = Composer(App.instance).apply {
             setViewportColor(Color.DKGRAY)
             setBaseColor(Color.WHITE)
         }
@@ -100,6 +102,21 @@ class ComposerFragment : Fragment() {
                     AspectRatioItem(ar, ar.title, ar.value in composer.aspectRatio - 0.01f..composer.aspectRatio + 0.01f)
                 }
     ) { selectedAspectRatio -> composer.setAspectRatio(selectedAspectRatio.value, true) }
+
+    private val playbackEventListener = object : PlaybackEventListener {
+        override fun onProgress(positionMs: Long) {
+            // todo show progress view
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            invalidatePlayPauseBtn()
+        }
+
+        override fun onPlaybackEnded() {
+            playbackController.seek(0L)
+            playbackController.play()
+        }
+    }
 
     private var progressReceiver: BakeProgressReceiver? = null
     private var progressDialog: ProgressDialog? = null
@@ -154,8 +171,11 @@ class ComposerFragment : Fragment() {
         }
 
         fab_pick.setOnClickListener { checkPermissionsAndGetMedia(MainActivity.PERMISSIONS) }
-        btn_render.setOnClickListener { RenderDialog().show(childFragmentManager, TAG_RENDER_DIALOG) }
-        btn_play_pause.setOnClickListener { playbackController.togglePlay(); invalidatePlayPauseBtn() }
+        btn_render.setOnClickListener {
+            RenderDialog().show(childFragmentManager, TAG_RENDER_DIALOG)
+            playbackController.pause()
+        }
+        btn_play_pause.setOnClickListener { playbackController.togglePlay() }
         btn_replay.setOnClickListener { playbackController.seek(0) }
 
         glView.listenTouches(object : LayerTouchListener {
@@ -209,12 +229,15 @@ class ComposerFragment : Fragment() {
         if (useReceiver) {
             registerProgressReceiver()
         }
+
+        playbackController.setPlaybackEventsListener(playbackEventListener)
     }
 
     override fun onPause() {
         super.onPause()
         glView.onPause()
         playbackController.pause()
+        playbackController.setPlaybackEventsListener(null)
 
         unregisterProgressReceiver()
     }

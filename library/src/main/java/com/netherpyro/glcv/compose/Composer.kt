@@ -1,5 +1,6 @@
 package com.netherpyro.glcv.compose
 
+import android.content.Context
 import android.net.Uri
 import android.opengl.EGL14
 import android.opengl.EGLContext
@@ -24,7 +25,7 @@ import java.util.concurrent.Exchanger
  *
  * Wrapper around GlComposableView with timing capabilities
  */
-class Composer {
+class Composer(context: Context) {
 
     companion object {
         private const val TAG = "Composer"
@@ -46,7 +47,7 @@ class Composer {
     private val mediaSeqs = mutableSetOf<Sequence>()
     private val transformables = mutableSetOf<Transformable>()
     private val projectDurationHolder = ProjectDurationHolder()
-    private val playbackController = PlaybackController(projectDurationHolder) { tag, visible ->
+    private val playbackController = PlaybackController(context, projectDurationHolder) { tag, visible ->
         setLayerVisibility(tag, visible)
     }
 

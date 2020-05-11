@@ -24,7 +24,7 @@ import com.netherpyro.glcv.SurfaceConsumer
 /**
  * @author mmikhailov on 04.05.2020.
  */
-internal class InternalPlayer(
+internal class VideoPlayer(
         private val context: Context,
         private val tag: String,
         private val src: Uri,
