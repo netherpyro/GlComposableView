@@ -14,4 +14,8 @@ class ProjectDurationHolder {
         val endTimeMs = startDelaysMs + beginClipAmountMs + durationMs
         projectDuration = max(projectDuration, endTimeMs)
     }
+
+    fun reset() {
+        projectDuration = 0
+    }
 }

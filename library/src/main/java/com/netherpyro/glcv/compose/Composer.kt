@@ -13,6 +13,7 @@ import com.netherpyro.glcv.asTransformData
 import com.netherpyro.glcv.compose.media.Constant
 import com.netherpyro.glcv.compose.media.Type
 import com.netherpyro.glcv.compose.media.Util
+import com.netherpyro.glcv.compose.playback.IPlaybackController
 import com.netherpyro.glcv.compose.playback.PlaybackController
 import com.netherpyro.glcv.compose.playback.ProjectDurationHolder
 import com.netherpyro.glcv.compose.template.Template
@@ -299,6 +300,16 @@ class Composer {
     }
 
     fun getControllableList(): List<Controllable> = mediaSeqs.toList()
+
+    fun getPlaybackController(): IPlaybackController = playbackController
+
+    fun release() {
+        glView = null
+        playbackController.release()
+        projectDurationHolder.reset()
+        transformables.clear()
+        mediaSeqs.clear()
+    }
 
     private fun setLayerVisibility(tag: String, visible: Boolean) {
         transformables.find { it.tag == tag }

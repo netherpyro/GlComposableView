@@ -24,7 +24,7 @@ import com.netherpyro.glcv.SurfaceConsumer
 /**
  * @author mmikhailov on 04.05.2020.
  */
-class InternalPlayer(
+internal class InternalPlayer(
         private val context: Context,
         private val tag: String,
         private val src: Uri,
@@ -199,11 +199,6 @@ class InternalPlayer(
                         // Log.d(TAG, "nowPts=$nowPositionMs")
                         invalidateDrawing(false)
                     }
-
-                    // todo remove these {
-                    playWhenReady = true
-                    repeatMode = Player.REPEAT_MODE_ALL
-                    // }
                 }
 
             return true

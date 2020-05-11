@@ -9,13 +9,14 @@ import com.netherpyro.glcv.SurfaceConsumer
 /**
  * @author mmikhailov on 04.05.2020.
  */
-// todo provide control interface
-class PlaybackController(
+internal class PlaybackController(
         private val durationHolder: ProjectDurationHolder,
         private val changeLayerVisibilityListener: (String, Boolean) -> Unit
-) {
+) : IPlaybackController {
     private val handler = Handler(Looper.myLooper() ?: Looper.getMainLooper())
     private val playerList = mutableMapOf<String, InternalPlayer>()
+
+    private var isPlaying = false
 
     fun createPlayer(
             context: Context,
@@ -38,5 +39,27 @@ class PlaybackController(
         playerList[tag] = player
 
         return player
+    }
+
+    override fun play() {
+        isPlaying = true
+        playerList.values.forEach { it.play() }
+    }
+
+    override fun pause() {
+        isPlaying = false
+        playerList.values.forEach { it.pause() }
+    }
+
+    override fun isPlaying(): Boolean = isPlaying
+
+    override fun togglePlay() { if (isPlaying) pause() else play() }
+
+    override fun seek(ms: Long) { playerList.values.forEach { it.seek(ms) } }
+
+    override fun release() {
+        isPlaying = false
+        playerList.values.forEach { it.release() }
+        playerList.clear()
     }
 }

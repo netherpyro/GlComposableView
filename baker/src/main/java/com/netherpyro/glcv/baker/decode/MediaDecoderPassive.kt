@@ -190,6 +190,7 @@ internal class MediaDecoderPassive(
                 audioExtractor.selectTrack(audioTrackInfo.index)
 
                 val mime = audioTrackInfo.format.getString(MediaFormat.KEY_MIME)
+                // todo handle "audio/unknown" mime
                 audioDecoder = MediaCodec.createDecoderByType(mime)
                 audioDecoder.configure(audioTrackInfo.format, null, null, 0)
                 audioDecoder.start()

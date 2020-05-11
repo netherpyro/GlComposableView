@@ -13,12 +13,15 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.invoke
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.marginBottom
+import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import com.netherpyro.glcv.AspectRatio
 import com.netherpyro.glcv.R
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.addDivider
+import com.netherpyro.glcv.alsoOnLaid
 import com.netherpyro.glcv.attrValue
 import com.netherpyro.glcv.baker.BakeProgressReceiver
 import com.netherpyro.glcv.baker.Cancellable
@@ -26,6 +29,7 @@ import com.netherpyro.glcv.baker.renderToVideoFile
 import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
 import com.netherpyro.glcv.compose.Controllable
+import com.netherpyro.glcv.compose.playback.IPlaybackController
 import com.netherpyro.glcv.getActionBarSize
 import com.netherpyro.glcv.playVideo
 import com.netherpyro.glcv.saveToGallery
@@ -54,6 +58,7 @@ class ComposerFragment : Fragment() {
         }
 
         private var bakeProcess: Cancellable? = null
+        private val playbackController: IPlaybackController = composer.getPlaybackController()
     }
 
     private val outputFile by lazy { File(requireContext().cacheDir, "result.mp4") }
@@ -66,6 +71,7 @@ class ComposerFragment : Fragment() {
                 .also { controllable -> controllable?.let { controllableList.add(it) } }
 
             invalidateRenderBtn()
+            invalidatePlayPauseBtn()
         }
     }
 
@@ -99,6 +105,7 @@ class ComposerFragment : Fragment() {
     private var progressDialog: ProgressDialog? = null
     private var useReceiver = false
     private var startTimeNsec: Long = 0
+    private var primaryColor: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -114,50 +121,23 @@ class ComposerFragment : Fragment() {
         }
     }
 
-    private fun startRender(options: Bundle) {
-        showProgressDialog()
-        startTimeNsec = System.nanoTime()
-        val outputPath = outputFile.absolutePath
-        val fps = options.getInt(RenderDialog.KEY_FPS)
-        val outputMinSidePx = options.getInt(RenderDialog.KEY_SIDE_SIZE)
-
-        Log.d(TAG, "fps=$fps, res=$outputMinSidePx, separate service=${options.getBoolean(RenderDialog.KEY_USE_SERVICE)}")
-
-        if (options.getBoolean(RenderDialog.KEY_USE_SERVICE)) {
-            registerProgressReceiver()
-
-            useReceiver = true
-            bakeProcess = composer.renderToVideoFileInSeparateProcess(
-                    requireContext(),
-                    outputPath,
-                    outputMinSidePx = outputMinSidePx,
-                    fps = fps,
-                    verboseLogging = true
-            )
-        } else {
-            bakeProcess = composer.renderToVideoFile(
-                    requireContext(),
-                    outputPath,
-                    outputMinSidePx = outputMinSidePx,
-                    fps = fps,
-                    verboseLogging = true,
-                    progressListener = { progress: Float, completed: Boolean ->
-                        requireActivity().runOnUiThread { handleProgress(progress, completed) }
-                    }
-            )
-        }
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
             inflater.inflate(R.layout.f_compose, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        requireActivity().window.statusBarColor = requireContext().attrValue(R.attr.colorPrimary)
+        primaryColor = requireContext().attrValue(R.attr.colorPrimary)
+        requireActivity().window.statusBarColor = primaryColor
 
         glView.enableGestures = true
-        glView.setViewportMargin(top = requireContext().getActionBarSize())
+
+        rv_aspect_ratio.alsoOnLaid {
+            glView.setViewportMargin(
+                    top = requireContext().getActionBarSize() + it.height + it.marginTop + it.marginBottom
+            )
+        }
+        pane_control.alsoOnLaid { glView.setViewportMargin(bottom = it.height + it.marginBottom + it.marginTop) }
 
         composer.setBaseColor(requireContext().attrValue(R.attr.colorSurface))
 
@@ -166,6 +146,7 @@ class ComposerFragment : Fragment() {
         controllableList.addAll(addedControllables)
 
         invalidateRenderBtn()
+        invalidatePlayPauseBtn()
 
         with(rv_aspect_ratio) {
             addDivider()
@@ -174,13 +155,15 @@ class ComposerFragment : Fragment() {
 
         fab_pick.setOnClickListener { checkPermissionsAndGetMedia(MainActivity.PERMISSIONS) }
         btn_render.setOnClickListener { RenderDialog().show(childFragmentManager, TAG_RENDER_DIALOG) }
+        btn_play_pause.setOnClickListener { playbackController.togglePlay(); invalidatePlayPauseBtn() }
+        btn_replay.setOnClickListener { playbackController.seek(0) }
 
         glView.listenTouches(object : LayerTouchListener {
             override fun onLayerTap(transformable: Transformable): Boolean {
                 transformableList.forEach {
                     val clicked = it.id == transformable.id
                     it.enableGesturesTransform = clicked
-                    it.setBorder(if (clicked) 1f else 0f, Color.GREEN)
+                    it.setBorder(if (clicked) 1f else 0f, primaryColor)
 
                     if (clicked) it.setLayerPosition(transformableList.lastIndex)
                 }
@@ -191,7 +174,7 @@ class ComposerFragment : Fragment() {
             override fun onViewportInsideTap(): Boolean {
                 transformableList.forEach {
                     it.enableGesturesTransform = false
-                    it.setBorder(0f, Color.GREEN)
+                    it.setBorder(0f, primaryColor)
                 }
 
                 return true
@@ -200,7 +183,7 @@ class ComposerFragment : Fragment() {
             override fun onViewportOutsideTap(): Boolean {
                 transformableList.forEach {
                     if (it.enableGesturesTransform) {
-                        it.setBorder(1f, Color.BLUE)
+                        it.setBorder(0f, primaryColor)
                     }
                 }
 
@@ -231,7 +214,7 @@ class ComposerFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         glView.onPause()
-        // todo pause playback controller
+        playbackController.pause()
 
         unregisterProgressReceiver()
     }
@@ -250,6 +233,13 @@ class ComposerFragment : Fragment() {
 
     private fun invalidateRenderBtn() {
         btn_render.isEnabled = controllableList.isNotEmpty()
+    }
+
+    private fun invalidatePlayPauseBtn() {
+        btn_play_pause.isEnabled = controllableList.isNotEmpty()
+        btn_replay.isEnabled = controllableList.isNotEmpty()
+        btn_play_pause.setImageResource(
+                if (playbackController.isPlaying()) R.drawable.ic_pause_24 else R.drawable.ic_play_24)
     }
 
     private fun registerProgressReceiver() {
@@ -271,7 +261,40 @@ class ComposerFragment : Fragment() {
         progressDialog?.show(childFragmentManager, TAG_PROGRESS_DIALOG)
     }
 
-    private fun Long.toSeconds() = this / 1_000_000_000f
+    private fun startRender(options: Bundle) {
+        showProgressDialog()
+        startTimeNsec = System.nanoTime()
+        val outputPath = outputFile.absolutePath
+        val fps = options.getInt(RenderDialog.KEY_FPS)
+        val outputMinSidePx = options.getInt(RenderDialog.KEY_SIDE_SIZE)
+
+        Log.d(TAG,
+                "fps=$fps, res=$outputMinSidePx, separate service=${options.getBoolean(RenderDialog.KEY_USE_SERVICE)}")
+
+        if (options.getBoolean(RenderDialog.KEY_USE_SERVICE)) {
+            registerProgressReceiver()
+
+            useReceiver = true
+            bakeProcess = composer.renderToVideoFileInSeparateProcess(
+                    requireContext(),
+                    outputPath,
+                    outputMinSidePx = outputMinSidePx,
+                    fps = fps,
+                    verboseLogging = true
+            )
+        } else {
+            bakeProcess = composer.renderToVideoFile(
+                    requireContext(),
+                    outputPath,
+                    outputMinSidePx = outputMinSidePx,
+                    fps = fps,
+                    verboseLogging = true,
+                    progressListener = { progress: Float, completed: Boolean ->
+                        requireActivity().runOnUiThread { handleProgress(progress, completed) }
+                    }
+            )
+        }
+    }
 
     private fun handleProgress(value: Float, completed: Boolean) {
         Log.d(TAG, "handleProgress::$value : $completed")
@@ -293,4 +316,6 @@ class ComposerFragment : Fragment() {
             }
         }
     }
+
+    private fun Long.toSeconds() = this / 1_000_000_000f
 }

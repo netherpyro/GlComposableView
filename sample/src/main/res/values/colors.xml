@@ -12,6 +12,7 @@
     <color name="stormDark">#3D1F38</color>
 
     <color name="stormBright7">#125f3057</color>
+    <color name="stormBright40">#665f3057</color>
     <color name="white40">#66ffffff</color>
 
 </resources>
