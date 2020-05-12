@@ -184,6 +184,7 @@ class ComposerFragment : Fragment() {
                     val clicked = it.id == transformable.id
                     it.enableGesturesTransform = clicked
                     it.setBorder(if (clicked) 1f else 0f, primaryColor)
+                    it.setOpacity(if (clicked) 1f else 0.3f)
 
                     if (clicked) it.setLayerPosition(transformableList.lastIndex)
                 }
@@ -195,6 +196,7 @@ class ComposerFragment : Fragment() {
                 transformableList.forEach {
                     it.enableGesturesTransform = false
                     it.setBorder(0f, primaryColor)
+                    it.setOpacity(1f)
                 }
 
                 return true
@@ -205,6 +207,8 @@ class ComposerFragment : Fragment() {
                     if (it.enableGesturesTransform) {
                         it.setBorder(0f, primaryColor)
                     }
+
+                    it.setOpacity(1f)
                 }
 
                 return true

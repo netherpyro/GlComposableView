@@ -36,7 +36,7 @@ open class GlShader @JvmOverloads constructor(
 
                 "void main() {\n" +
                     "mediump vec4 textureColor = texture2D(sTexture, vTextureCoord);\n" +
-                    "gl_FragColor = vec4(textureColor.rgb, u_opacity);\n" +
+                    "gl_FragColor = vec4(textureColor.rgb, u_opacity * textureColor.a);\n" +
                 "}\n"
 
         private val VERTICES_DATA = floatArrayOf( // X, Y, Z, U, V
