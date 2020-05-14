@@ -194,12 +194,10 @@ internal class GlRenderer(
     private fun getNextId() = nextId++
 
     private fun refineAddPosition(desiredPos: Int): Int {
-        val currentMaxPosition: Int = layers.maxBy { it.position }?.position ?: -1
-
-        return when {
-            desiredPos < 0 -> 0 // bottom position
-            desiredPos > currentMaxPosition -> currentMaxPosition + 1 // top position
-            else -> desiredPos // desired position
+        return if (desiredPos < 0) {
+            0
+        } else {
+            desiredPos
         }
     }
 }
