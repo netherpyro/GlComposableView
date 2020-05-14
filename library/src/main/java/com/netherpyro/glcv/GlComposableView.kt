@@ -179,6 +179,14 @@ class GlComposableView @JvmOverloads constructor(
         updateViewport(viewport)
     }
 
+    fun setMaxScale(factor: Float) {
+        touchHelper.maxScale = factor
+    }
+
+    fun setMinScale(factor: Float) {
+        touchHelper.minScale = factor
+    }
+
     private fun setAspectRatioInternal(targetValue: Float, animated: Boolean) {
         val currentValue = layoutHelper.viewportAspect
 
