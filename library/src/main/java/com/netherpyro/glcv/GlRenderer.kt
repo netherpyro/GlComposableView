@@ -48,7 +48,7 @@ internal class GlRenderer(
     override fun onSurfaceCreated() {
         glDisable(GLES20.GL_DEPTH_TEST)
         glEnable(GLES20.GL_BLEND)
-        glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         glClearColor(backgroundColor.red(), backgroundColor.green(), backgroundColor.blue(), backgroundColor.alpha())
 
         layers.forEach { it.setup() }
