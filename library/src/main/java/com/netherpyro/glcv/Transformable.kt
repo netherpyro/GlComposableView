@@ -33,4 +33,5 @@ interface Transformable {
     fun getFrustumRect(): RectF
     fun getLayerAspect(): Float
     fun getLayerPosition(): Int
+    fun getOpacity(): Float
 }
