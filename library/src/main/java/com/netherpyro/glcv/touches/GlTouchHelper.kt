@@ -127,7 +127,7 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
         return rotation || scale || translate
     }
 
-    fun setSnapEnabled(enabled: Boolean) {
+    fun setRotateSnapEnabled(enabled: Boolean) {
         rotationGestureDetector.isSnapEnabled = enabled
     }
 
