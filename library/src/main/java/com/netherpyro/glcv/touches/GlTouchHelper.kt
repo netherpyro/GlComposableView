@@ -4,12 +4,14 @@ import android.content.Context
 import android.graphics.PointF
 import android.graphics.RectF
 import android.util.Log
+import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.TransformableObservable
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -27,6 +29,8 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
     var minScale = 0.5f
 
     private val transformables = mutableListOf<Transformable>()
+
+    private val deviation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, context.resources.displayMetrics)
 
     init {
         val existingTransformables: List<Transformable>
@@ -74,6 +78,8 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
                 }
             })
 
+    var isCenterSnapEnabled: Boolean = false
+
     // pan & click
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
 
@@ -81,7 +87,11 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
             transformables.filter { it.enableGesturesTransform }
                 .forEach { transformable ->
                     val (curX, curY) = transformable.getTranslation()
-                    transformable.setTranslation(curX + distanceX, curY + distanceY)
+
+                    val newX = if (isCenterSnapEnabled) snappingCenter(curX + distanceX) else curX + distanceX
+                    val newY = if (isCenterSnapEnabled) snappingCenter(curY + distanceY) else curY + distanceY
+
+                    transformable.setTranslation(newX, newY)
                 }
 
             return true
@@ -119,7 +129,8 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
     })
 
     fun onTouchEvent(event: MotionEvent): Boolean {
-        val prevRotationAngle = transformables.firstOrNull { it.enableGesturesTransform }?.getRotation()
+        val prevRotationAngle = transformables.firstOrNull { it.enableGesturesTransform }
+            ?.getRotation()
         val rotation = rotationGestureDetector.onTouchEvent(event, prevRotationAngle)
         val scale = scaleGestureDetector.onTouchEvent(event)
         val translate = gestureDetector.onTouchEvent(event)
@@ -131,12 +142,18 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
         rotationGestureDetector.isSnapEnabled = enabled
     }
 
+    private fun snappingCenter(position: Float): Float {
+        return if (abs(position) > deviation) position
+        else 0f
+    }
+
     private fun hitTest(tapPoint: PointF, transformable: Transformable): Boolean {
         val (trX, trY) = transformable.getTranslation()
         val scaleFactor = transformable.getScale()
         val layerFrustum = transformable.getFrustumRect()
         val layerAspect = transformable.getLayerAspect()
-        val layerAngleRad = Math.toRadians(transformable.getRotation().toDouble())
+        val layerAngleRad = Math.toRadians(transformable.getRotation()
+            .toDouble())
 
         val layerWidth = 1f / (layerFrustum.right - layerFrustum.left) * layerAspect * scaleFactor * 2f * viewport.width
         val layerHeight = 1f / (layerFrustum.top - layerFrustum.bottom) * scaleFactor * 2f * viewport.height
