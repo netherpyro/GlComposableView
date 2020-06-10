@@ -81,7 +81,7 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
 
     var isCenterSnapEnabled: Boolean = false
 
-    var isSideSnapEnabled: Boolean = true
+    var isSideSnapEnabled: Boolean = false
 
     // pan & click
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -92,11 +92,13 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
                     val (curX, curY) = transformable.getTranslation()
 
                     val newX = when {
+                        isCenterSnapEnabled && isSideSnapEnabled -> snappingX(snappingCenter(curX + distanceX), transformable)
                         isCenterSnapEnabled -> snappingCenter(curX + distanceX)
                         isSideSnapEnabled -> snappingX(curX + distanceX, transformable)
                         else -> curX + distanceX
                     }
                     val newY = when {
+                        isCenterSnapEnabled && isSideSnapEnabled -> snappingX(snappingCenter(curY + distanceY), transformable)
                         isCenterSnapEnabled -> snappingCenter(curY + distanceY)
                         isSideSnapEnabled -> snappingY(curY + distanceY, transformable)
                         else -> curY + distanceY
