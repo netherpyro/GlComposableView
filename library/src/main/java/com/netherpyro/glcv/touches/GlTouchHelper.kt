@@ -92,15 +92,15 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
                     val (curX, curY) = transformable.getTranslation()
 
                     val newX = when {
-                        isCenterSnapEnabled -> {
-                            snappingCenter(curX + distanceX)
-                        }
-                        isSideSnapEnabled -> {
-                            snappingX(curX + distanceX, transformable)
-                        }
+                        isCenterSnapEnabled -> snappingCenter(curX + distanceX)
+                        isSideSnapEnabled -> snappingX(curX + distanceX, transformable)
                         else -> curX + distanceX
                     }
-                    val newY = if (isCenterSnapEnabled) snappingCenter(curY + distanceY) else curY + distanceY
+                    val newY = when {
+                        isCenterSnapEnabled -> snappingCenter(curY + distanceY)
+                        isSideSnapEnabled -> snappingY(curY + distanceY, transformable)
+                        else -> curY + distanceY
+                    }
 
                     transformable.setTranslation(newX, newY)
                 }
@@ -175,8 +175,25 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
                 else position
             }
         }
+    }
 
+    private fun snappingY(position: Float, transformable: Transformable): Float {
+        val halfSize = min(viewport.width, viewport.height) / 2
+        val topSide = viewport.height / 2
+        val bottomSide = viewport.height / -2
+        val layerTopPosition = position + halfSize * transformable.getScale()
+        val layerBottomPosition = position - halfSize * transformable.getScale()
 
+        return when {
+            abs(topSide - layerTopPosition) > abs(bottomSide - layerBottomPosition) -> {
+                if (deviation > abs(bottomSide - layerBottomPosition)) bottomSide.toFloat() + halfSize * transformable.getScale()
+                else position
+            }
+            else -> {
+                if (deviation > abs(topSide - layerTopPosition)) topSide.toFloat() - halfSize * transformable.getScale()
+                else position
+            }
+        }
     }
 
     private fun hitTest(tapPoint: PointF, transformable: Transformable): Boolean {

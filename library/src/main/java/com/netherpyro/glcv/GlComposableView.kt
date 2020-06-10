@@ -167,6 +167,10 @@ class GlComposableView @JvmOverloads constructor(
         touchHelper.isCenterSnapEnabled = enabled
     }
 
+    fun setSideSnapEnabled(enabled: Boolean) {
+        touchHelper.isSideSnapEnabled = enabled
+    }
+
     fun setBaseColor(@ColorInt color: Int) = enqueueEvent {
         renderer.backgroundColor = color
         requestRender()
