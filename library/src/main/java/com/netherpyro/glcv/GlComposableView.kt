@@ -159,6 +159,10 @@ class GlComposableView @JvmOverloads constructor(
         setAspectRatioInternal(aspect, animated)
     }
 
+    fun setSnapEnabled(enabled: Boolean) {
+        touchHelper.setSnapEnabled(enabled)
+    }
+
     fun setBaseColor(@ColorInt color: Int) = enqueueEvent {
         renderer.backgroundColor = color
         requestRender()

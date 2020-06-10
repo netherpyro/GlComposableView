@@ -6,7 +6,7 @@ import kotlin.math.atan2
 /**
  * Credits https://stackoverflow.com/questions/10682019/android-two-finger-rotation
  * */
-class RotationGestureDetector(private val listener: (Float) -> Unit) {
+internal class RotationGestureDetector(private val listener: (Float) -> Unit) {
 
     companion object {
         private const val INVALID_POINTER_ID = -1
@@ -21,6 +21,8 @@ class RotationGestureDetector(private val listener: (Float) -> Unit) {
 
     var angle = 0f
         private set
+
+    var isSnapEnabled: Boolean = false
 
     private var oldAngle = 0f
 
@@ -46,7 +48,11 @@ class RotationGestureDetector(private val listener: (Float) -> Unit) {
                 val nfX: Float = event.getX(event.findPointerIndex(ptrID2))
                 val nfY: Float = event.getY(event.findPointerIndex(ptrID2))
 
-                angle = (angleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY) + oldAngle) % 360f
+                angle =if (isSnapEnabled) {
+                    snappingAngle((angleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY) + oldAngle) % 360f)
+                } else {
+                    (angleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY) + oldAngle) % 360f
+                }
 
                 listener(angle)
             }
@@ -76,5 +82,16 @@ class RotationGestureDetector(private val listener: (Float) -> Unit) {
         if (angle > 180f) angle -= 360.0f
 
         return angle
+    }
+
+    private fun snappingAngle(angle: Float): Float {
+        val deviation = angle % 45
+        return when {
+            (0f..4f).contains(deviation) && angle > 0 -> angle - deviation
+            (41f..45f).contains(deviation) && angle > 0 -> angle + (45f - deviation)
+            (-4f..0f).contains(deviation) && angle < 0 -> angle - deviation
+            (-45f..-41f).contains(deviation) && angle < 0 -> angle + (-45f - deviation)
+            else -> angle
+        }
     }
 }

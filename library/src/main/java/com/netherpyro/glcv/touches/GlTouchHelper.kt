@@ -127,6 +127,10 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
         return rotation || scale || translate
     }
 
+    fun setSnapEnabled(enabled: Boolean) {
+        rotationGestureDetector.isSnapEnabled = enabled
+    }
+
     private fun hitTest(tapPoint: PointF, transformable: Transformable): Boolean {
         val (trX, trY) = transformable.getTranslation()
         val scaleFactor = transformable.getScale()
