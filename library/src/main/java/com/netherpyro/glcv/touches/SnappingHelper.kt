@@ -23,38 +23,13 @@ internal class SnappingHelper(
             return position
         }
 
-        val halfSize = min(viewport.width, viewport.height) / 2
         val leftSide = viewport.width / 2
         val rightSide = viewport.width / -2
-        val viewportAspect = viewport.width.toFloat() / viewport.height
-        val s: Float = transformable.getLayerAspect() / viewportAspect
-        val layerLeftPosition = if (viewportAspect > 1f) { //horizontal view port
-            if (s > 1f) {
-                position + halfSize * transformable.getScale() * viewportAspect
-            } else {
-                position + halfSize * transformable.getScale() * transformable.getLayerAspect()
-            }
-        } else { // vertical view port
-            if (s > 1f) {
-                position + halfSize * transformable.getScale()
-            } else {
-                position + halfSize * transformable.getScale() * s
-            }
-        }
 
-        val layerRightPosition = if (viewportAspect > 1f) { //horizontal view port
-            if (s > 1f) { //
-                position - halfSize * transformable.getScale() * viewportAspect
-            } else {
-                position - halfSize * transformable.getScale() * transformable.getLayerAspect()
-            }
-        } else { // vertical view port
-            if (s > 1f) {
-                position - halfSize * transformable.getScale()
-            } else {
-                position - halfSize * transformable.getScale() * s
-            }
-        }
+        val halfLayerWidth = transformable.calculateHalfWidth()
+
+        val layerLeftPosition = position + halfLayerWidth
+        val layerRightPosition = position - halfLayerWidth
 
         val leftSideDeviation = abs(leftSide - layerLeftPosition)
         val rightSideDeviation = abs(rightSide - layerRightPosition)
@@ -81,40 +56,13 @@ internal class SnappingHelper(
             return position
         }
 
-        val halfSize = min(viewport.width, viewport.height) / 2
         val topSide = viewport.height / 2
         val bottomSide = viewport.height / -2
 
-        val viewportAspect = viewport.width.toFloat() / viewport.height
-        val s: Float = transformable.getLayerAspect() / viewportAspect
+        val halfHeight = transformable.calculateHalfHeight()
 
-        val layerTopPosition = if (viewportAspect > 1f) { //horizontal view port
-            if (s > 1f) {
-                position + halfSize * transformable.getScale() / s
-            } else {
-                position + halfSize * transformable.getScale()
-            }
-        } else { // vertical view port
-            if (s > 1f) {
-                position + halfSize * transformable.getScale() / transformable.getLayerAspect()
-            } else {
-                position + halfSize * transformable.getScale() / viewportAspect
-            }
-        }
-
-        val layerBottomPosition = if (viewportAspect > 1f) { //horizontal view port
-            if (s > 1f) {
-                position - halfSize * transformable.getScale() / s
-            } else {
-                position - halfSize * transformable.getScale()
-            }
-        } else { // vertical view port
-            if (s > 1f) {
-                position - halfSize * transformable.getScale() / transformable.getLayerAspect()
-            } else {
-                position - halfSize * transformable.getScale() / viewportAspect
-            }
-        }
+        val layerTopPosition = position + halfHeight
+        val layerBottomPosition = position - halfHeight
 
         val topSideDeviation = abs(topSide - layerTopPosition)
         val bottomSideDeviation = abs(bottomSide - layerBottomPosition)
@@ -141,40 +89,13 @@ internal class SnappingHelper(
             return position
         }
 
-        val halfSize = min(viewport.width, viewport.height) / 2
         val leftSide = viewport.width / 2
         val rightSide = viewport.width / -2
 
-        val viewportAspect = viewport.width.toFloat() / viewport.height
-        val s: Float = transformable.getLayerAspect() / viewportAspect
+        val halfLayerWidth = transformable.calculateHalfWidth()
 
-        val layerLeftPosition = if (viewportAspect > 1f) { //horizontal view port
-            if (s > 1f) {
-                position + halfSize * transformable.getScale() * viewportAspect
-            } else {
-                position + halfSize * transformable.getScale() * transformable.getLayerAspect()
-            }
-        } else { // vertical view port
-            if (s > 1f) {
-                position + halfSize * transformable.getScale()
-            } else {
-                position + halfSize * transformable.getScale() * s
-            }
-        }
-
-        val layerRightPosition = if (viewportAspect > 1f) { //horizontal view port
-            if (s > 1f) { //
-                position - halfSize * transformable.getScale() * viewportAspect
-            } else {
-                position - halfSize * transformable.getScale() * transformable.getLayerAspect()
-            }
-        } else { // vertical view port
-            if (s > 1f) {
-                position - halfSize * transformable.getScale()
-            } else {
-                position - halfSize * transformable.getScale() * s
-            }
-        }
+        val layerLeftPosition = position + halfLayerWidth
+        val layerRightPosition = position - halfLayerWidth
 
         val leftSideDeviation = abs(leftSide - layerLeftPosition)
         val rightSideDeviation = abs(rightSide - layerRightPosition)
@@ -196,40 +117,13 @@ internal class SnappingHelper(
             return position
         }
 
-        val halfSize = min(viewport.width, viewport.height) / 2
         val topSide = viewport.height / 2
         val bottomSide = viewport.height / -2
 
-        val viewportAspect = viewport.width.toFloat() / viewport.height
-        val s: Float = transformable.getLayerAspect() / viewportAspect
+         val halfHeight = transformable.calculateHalfHeight()
 
-        val layerTopPosition = if (viewportAspect > 1f) { //horizontal view port
-            if (s > 1f) {
-                position + halfSize * transformable.getScale() / s
-            } else {
-                position + halfSize * transformable.getScale()
-            }
-        } else { // vertical view port
-            if (s > 1f) {
-                position + halfSize * transformable.getScale() / transformable.getLayerAspect()
-            } else {
-                position + halfSize * transformable.getScale() / viewportAspect
-            }
-        }
-
-        val layerBottomPosition = if (viewportAspect > 1f) { //horizontal view port
-            if (s > 1f) {
-                position - halfSize * transformable.getScale() / s
-            } else {
-                position - halfSize * transformable.getScale()
-            }
-        } else { // vertical view port
-            if (s > 1f) {
-                position - halfSize * transformable.getScale() / transformable.getLayerAspect()
-            } else {
-                position - halfSize * transformable.getScale() / viewportAspect
-            }
-        }
+        val layerTopPosition = position + halfHeight
+        val layerBottomPosition = position - halfHeight
 
         val topSideDeviation = abs(topSide - layerTopPosition)
         val bottomSideDeviation = abs(bottomSide - layerBottomPosition)
@@ -244,5 +138,52 @@ internal class SnappingHelper(
                 else position
             }
         }
+    }
+
+    private fun Transformable.calculateHalfWidth(): Float {
+        val halfSize = min(viewport.width, viewport.height) / 2
+        val viewportAspect = viewport.width.toFloat() / viewport.height
+
+        val s: Float = getLayerAspect() / viewportAspect
+        return if (viewportAspect > 1f) { //horizontal view port
+            if (s > 1f) {
+                halfSize * getScale() * viewportAspect
+            } else {
+                halfSize * getScale() * getLayerAspect()
+            }
+        } else { // vertical view port
+            if (s > 1f) {
+                halfSize * getScale()
+            } else {
+                halfSize * getScale() * s
+            }
+        }
+            .let {
+                if (getRotation() % 180 == 0f) it
+                else it / getLayerAspect()
+            }
+    }
+
+    private fun Transformable.calculateHalfHeight() : Float {
+        val halfSize = min(viewport.width, viewport.height) / 2
+        val viewportAspect = viewport.width.toFloat() / viewport.height
+        val s: Float = getLayerAspect() / viewportAspect
+        return if (viewportAspect > 1f) { //horizontal view port
+            if (s > 1f) {
+                halfSize * getScale() / s
+            } else {
+                halfSize * getScale()
+            }
+        } else { // vertical view port
+            if (s > 1f) {
+                halfSize * getScale() / getLayerAspect()
+            } else {
+                halfSize * getScale() / viewportAspect
+            }
+        }
+            .let {
+                if (getRotation() % 180 == 0f) it
+                else it * getLayerAspect()
+            }
     }
 }
