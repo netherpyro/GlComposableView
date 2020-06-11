@@ -135,19 +135,48 @@ internal class SnappingHelper(
         val halfSize = min(viewport.width, viewport.height) / 2
         val topSide = viewport.height / 2
         val bottomSide = viewport.height / -2
-        val layerTopPosition = position + halfSize * transformable.getScale()
-        val layerBottomPosition = position - halfSize * transformable.getScale()
+
+        val viewportAspect = viewport.width.toFloat() / viewport.height
+        val s: Float = transformable.getLayerAspect() / viewportAspect
+
+        val layerTopPosition = if (viewportAspect > 1f) { //horizontal view port
+            if (s > 1f) {
+                position + halfSize * transformable.getScale() / s
+            } else {
+                position + halfSize * transformable.getScale()
+            }
+        } else { // vertical view port
+            if (s > 1f) {
+                position + halfSize * transformable.getScale() / transformable.getLayerAspect()
+            } else {
+                position + halfSize * transformable.getScale() / viewportAspect
+            }
+        }
+
+        val layerBottomPosition = if (viewportAspect > 1f) { //horizontal view port
+            if (s > 1f) {
+                position + halfSize * transformable.getScale() / s
+            } else {
+                position + halfSize * transformable.getScale()
+            }
+        } else { // vertical view port
+            if (s > 1f) {
+                position - halfSize * transformable.getScale() / transformable.getLayerAspect()
+            } else {
+                position - halfSize * transformable.getScale() / viewportAspect
+            }
+        }
 
         val topDeviation = abs(topSide - layerTopPosition)
         val bottomDeviation = abs(bottomSide - layerBottomPosition)
 
         return when {
             topDeviation > bottomDeviation -> {
-                if (deviation > bottomDeviation) bottomSide.toFloat() + halfSize * transformable.getScale()
+                if (deviation > bottomDeviation) position + (bottomSide - layerBottomPosition)
                 else position
             }
             else -> {
-                if (deviation > topDeviation) topSide.toFloat() - halfSize * transformable.getScale()
+                if (deviation > topDeviation) position + (topSide - layerTopPosition)
                 else position
             }
         }
