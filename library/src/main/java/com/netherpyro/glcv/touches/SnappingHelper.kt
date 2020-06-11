@@ -72,7 +72,11 @@ internal class SnappingHelper(
         }
     }
 
-    fun snappingX(position: Float, transformable: Transformable): Float {
+    fun snappingXSide(position: Float, transformable: Transformable): Float {
+        if (transformable.getRotation() % 90 != 0f) {
+            return position
+        }
+
         val halfSize = min(viewport.width, viewport.height) / 2
         val leftSide = viewport.width / 2
         val rightSide = viewport.width / -2
@@ -94,7 +98,11 @@ internal class SnappingHelper(
         }
     }
 
-    fun snappingY(position: Float, transformable: Transformable): Float {
+    fun snappingYSide(position: Float, transformable: Transformable): Float {
+        if (transformable.getRotation() % 90 != 0f) {
+            return position
+        }
+
         val halfSize = min(viewport.width, viewport.height) / 2
         val topSide = viewport.height / 2
         val bottomSide = viewport.height / -2

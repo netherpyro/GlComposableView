@@ -99,13 +99,13 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
                     val newX = when {
                         isCenterSnapEnabled && isSideSnapEnabled -> snappingHelper.snappingXSideAndCenter(curX + distanceX, transformable)
                         isCenterSnapEnabled -> snappingHelper.snappingCenter(curX + distanceX)
-                        isSideSnapEnabled -> snappingHelper.snappingX(curX + distanceX, transformable)
+                        isSideSnapEnabled -> snappingHelper.snappingXSide(curX + distanceX, transformable)
                         else -> curX + distanceX
                     }
                     val newY = when {
                         isCenterSnapEnabled && isSideSnapEnabled -> snappingHelper.snappingYSideAndCenter(curY + distanceY, transformable)
                         isCenterSnapEnabled -> snappingHelper.snappingCenter(curY + distanceY)
-                        isSideSnapEnabled -> snappingHelper.snappingY(curY + distanceY, transformable)
+                        isSideSnapEnabled -> snappingHelper.snappingYSide(curY + distanceY, transformable)
                         else -> curY + distanceY
                     }
 
