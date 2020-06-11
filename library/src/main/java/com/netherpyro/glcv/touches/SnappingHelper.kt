@@ -22,8 +22,35 @@ internal class SnappingHelper(
         val halfSize = min(viewport.width, viewport.height) / 2
         val leftSide = viewport.width / 2
         val rightSide = viewport.width / -2
-        val layerLeftPosition = position + halfSize * transformable.getScale()
-        val layerRightPosition = position - halfSize * transformable.getScale()
+        val viewportAspect = viewport.width.toFloat() / viewport.height
+        val s: Float = transformable.getLayerAspect() / viewportAspect
+        val layerLeftPosition = if (viewportAspect > 1f) { //horizontal view port
+            if (s > 1f) {
+                position + halfSize * transformable.getScale() * viewportAspect
+            } else {
+                position + halfSize * transformable.getScale() * transformable.getLayerAspect()
+            }
+        } else { // vertical view port
+            if (s > 1f) {
+                position + halfSize * transformable.getScale()
+            } else {
+                position + halfSize * transformable.getScale() * s
+            }
+        }
+
+        val layerRightPosition = if (viewportAspect > 1f) { //horizontal view port
+            if (s > 1f) { //
+                position - halfSize * transformable.getScale() * viewportAspect
+            } else {
+                position - halfSize * transformable.getScale() * transformable.getLayerAspect()
+            }
+        } else { // vertical view port
+            if (s > 1f) {
+                position - halfSize * transformable.getScale()
+            } else {
+                position - halfSize * transformable.getScale() * s
+            }
+        }
 
         val leftSideDeviation = abs(leftSide - layerLeftPosition)
         val rightSideDeviation = abs(rightSide - layerRightPosition)
@@ -31,11 +58,11 @@ internal class SnappingHelper(
 
         return when (minOf(leftSideDeviation, rightSideDeviation, centerDeviation)) {
             leftSideDeviation -> {
-                if (deviation > leftSideDeviation) leftSide.toFloat() - halfSize * transformable.getScale()
+                if (deviation > leftSideDeviation) position + (leftSide - layerLeftPosition)
                 else position
             }
             rightSideDeviation -> {
-                if (deviation > rightSideDeviation) rightSide.toFloat() + halfSize * transformable.getScale()
+                if (deviation > rightSideDeviation) position + (rightSide - layerRightPosition)
                 else position
             }
             else -> {
@@ -49,8 +76,37 @@ internal class SnappingHelper(
         val halfSize = min(viewport.width, viewport.height) / 2
         val topSide = viewport.height / 2
         val bottomSide = viewport.height / -2
-        val layerTopPosition = position + halfSize * transformable.getScale()
-        val layerBottomPosition = position - halfSize * transformable.getScale()
+
+        val viewportAspect = viewport.width.toFloat() / viewport.height
+        val s: Float = transformable.getLayerAspect() / viewportAspect
+
+        val layerTopPosition = if (viewportAspect > 1f) { //horizontal view port
+            if (s > 1f) {
+                position + halfSize * transformable.getScale() / s
+            } else {
+                position + halfSize * transformable.getScale()
+            }
+        } else { // vertical view port
+            if (s > 1f) {
+                position + halfSize * transformable.getScale() / transformable.getLayerAspect()
+            } else {
+                position + halfSize * transformable.getScale() / viewportAspect
+            }
+        }
+
+        val layerBottomPosition = if (viewportAspect > 1f) { //horizontal view port
+            if (s > 1f) {
+                position - halfSize * transformable.getScale() / s
+            } else {
+                position - halfSize * transformable.getScale()
+            }
+        } else { // vertical view port
+            if (s > 1f) {
+                position - halfSize * transformable.getScale() / transformable.getLayerAspect()
+            } else {
+                position - halfSize * transformable.getScale() / viewportAspect
+            }
+        }
 
         val topSideDeviation = abs(topSide - layerTopPosition)
         val bottomSideDeviation = abs(bottomSide - layerBottomPosition)
@@ -58,11 +114,11 @@ internal class SnappingHelper(
 
         return when (minOf(topSideDeviation, bottomSideDeviation, centerDeviation)) {
             topSideDeviation -> {
-                if (deviation > topSideDeviation) topSide.toFloat() - halfSize * transformable.getScale()
+                if (deviation > topSideDeviation) position + (topSide - layerTopPosition)
                 else position
             }
             bottomSideDeviation -> {
-                if (deviation > bottomSideDeviation) bottomSide.toFloat() + halfSize * transformable.getScale()
+                if (deviation > bottomSideDeviation) position + (bottomSide - layerBottomPosition)
                 else position
             }
             else -> {
@@ -112,16 +168,16 @@ internal class SnappingHelper(
             }
         }
 
-        val leftDeviation = abs(leftSide - layerLeftPosition)
-        val rightDeviation = abs(rightSide - layerRightPosition)
+        val leftSideDeviation = abs(leftSide - layerLeftPosition)
+        val rightSideDeviation = abs(rightSide - layerRightPosition)
 
         return when {
-            leftDeviation > rightDeviation -> {
-                if (deviation > rightDeviation) position + (rightSide - layerRightPosition)
+            leftSideDeviation > rightSideDeviation -> {
+                if (deviation > rightSideDeviation) position + (rightSide - layerRightPosition)
                 else position
             }
             else -> {
-                if (deviation > leftDeviation) position + (leftSide - layerLeftPosition)
+                if (deviation > leftSideDeviation) position + (leftSide - layerLeftPosition)
                 else position
             }
         }
@@ -155,9 +211,9 @@ internal class SnappingHelper(
 
         val layerBottomPosition = if (viewportAspect > 1f) { //horizontal view port
             if (s > 1f) {
-                position + halfSize * transformable.getScale() / s
+                position - halfSize * transformable.getScale() / s
             } else {
-                position + halfSize * transformable.getScale()
+                position - halfSize * transformable.getScale()
             }
         } else { // vertical view port
             if (s > 1f) {
@@ -167,16 +223,16 @@ internal class SnappingHelper(
             }
         }
 
-        val topDeviation = abs(topSide - layerTopPosition)
-        val bottomDeviation = abs(bottomSide - layerBottomPosition)
+        val topSideDeviation = abs(topSide - layerTopPosition)
+        val bottomSideDeviation = abs(bottomSide - layerBottomPosition)
 
         return when {
-            topDeviation > bottomDeviation -> {
-                if (deviation > bottomDeviation) position + (bottomSide - layerBottomPosition)
+            topSideDeviation > bottomSideDeviation -> {
+                if (deviation > bottomSideDeviation) position + (bottomSide - layerBottomPosition)
                 else position
             }
             else -> {
-                if (deviation > topDeviation) position + (topSide - layerTopPosition)
+                if (deviation > topSideDeviation) position + (topSide - layerTopPosition)
                 else position
             }
         }
