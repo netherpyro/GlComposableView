@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.PointF
 import android.graphics.RectF
 import android.util.Log
+import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
@@ -19,6 +20,11 @@ import kotlin.math.sin
 internal class GlTouchHelper(context: Context, observable: TransformableObservable) {
 
     var viewport = GlViewport()
+        set(value) {
+            snappingHelper.viewport = value
+            field = value
+        }
+
     var viewHeight: Int = 0
 
     var touchesListener: LayerTouchListener? = null
@@ -27,6 +33,10 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
     var minScale = 0.5f
 
     private val transformables = mutableListOf<Transformable>()
+
+    private val divergence = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, context.resources.displayMetrics)
+
+    private val snappingHelper = SnappingHelper(viewport, divergence)
 
     init {
         val existingTransformables: List<Transformable>
@@ -74,6 +84,10 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
                 }
             })
 
+    var isCenterSnapEnabled: Boolean = false
+
+    var isSideSnapEnabled: Boolean = false
+
     // pan & click
     private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
 
@@ -81,7 +95,21 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
             transformables.filter { it.enableGesturesTransform }
                 .forEach { transformable ->
                     val (curX, curY) = transformable.getTranslation()
-                    transformable.setTranslation(curX + distanceX, curY + distanceY)
+
+                    val newX = when {
+                        isCenterSnapEnabled && isSideSnapEnabled -> snappingHelper.snappingXSideAndCenter(curX + distanceX, transformable)
+                        isCenterSnapEnabled -> snappingHelper.snappingCenter(curX + distanceX)
+                        isSideSnapEnabled -> snappingHelper.snappingXSide(curX + distanceX, transformable)
+                        else -> curX + distanceX
+                    }
+                    val newY = when {
+                        isCenterSnapEnabled && isSideSnapEnabled -> snappingHelper.snappingYSideAndCenter(curY + distanceY, transformable)
+                        isCenterSnapEnabled -> snappingHelper.snappingCenter(curY + distanceY)
+                        isSideSnapEnabled -> snappingHelper.snappingYSide(curY + distanceY, transformable)
+                        else -> curY + distanceY
+                    }
+
+                    transformable.setTranslation(newX, newY)
                 }
 
             return true
@@ -119,7 +147,8 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
     })
 
     fun onTouchEvent(event: MotionEvent): Boolean {
-        val prevRotationAngle = transformables.firstOrNull { it.enableGesturesTransform }?.getRotation()
+        val prevRotationAngle = transformables.firstOrNull { it.enableGesturesTransform }
+            ?.getRotation()
         val rotation = rotationGestureDetector.onTouchEvent(event, prevRotationAngle)
         val scale = scaleGestureDetector.onTouchEvent(event)
         val translate = gestureDetector.onTouchEvent(event)
@@ -127,12 +156,17 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
         return rotation || scale || translate
     }
 
+    fun setRotateSnapEnabled(enabled: Boolean) {
+        rotationGestureDetector.isSnapEnabled = enabled
+    }
+
     private fun hitTest(tapPoint: PointF, transformable: Transformable): Boolean {
         val (trX, trY) = transformable.getTranslation()
         val scaleFactor = transformable.getScale()
         val layerFrustum = transformable.getFrustumRect()
         val layerAspect = transformable.getLayerAspect()
-        val layerAngleRad = Math.toRadians(transformable.getRotation().toDouble())
+        val layerAngleRad = Math.toRadians(transformable.getRotation()
+            .toDouble())
 
         val layerWidth = 1f / (layerFrustum.right - layerFrustum.left) * layerAspect * scaleFactor * 2f * viewport.width
         val layerHeight = 1f / (layerFrustum.top - layerFrustum.bottom) * scaleFactor * 2f * viewport.height
