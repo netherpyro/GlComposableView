@@ -31,21 +31,21 @@ internal class SnappingHelper(
         val layerLeftPosition = position + halfLayerWidth
         val layerRightPosition = position - halfLayerWidth
 
-        val leftSideDeviation = abs(leftSide - layerLeftPosition)
-        val rightSideDeviation = abs(rightSide - layerRightPosition)
-        val centerDeviation = abs(position)
+        val leftSideDivergence = abs(leftSide - layerLeftPosition)
+        val rightSideDivergence = abs(rightSide - layerRightPosition)
+        val centerDivergence = abs(position)
 
-        return when (minOf(leftSideDeviation, rightSideDeviation, centerDeviation)) {
-            leftSideDeviation -> {
-                if (divergence > leftSideDeviation) position + (leftSide - layerLeftPosition)
+        return when (minOf(leftSideDivergence, rightSideDivergence, centerDivergence)) {
+            leftSideDivergence -> {
+                if (divergence > leftSideDivergence) position + (leftSide - layerLeftPosition)
                 else position
             }
-            rightSideDeviation -> {
-                if (divergence > rightSideDeviation) position + (rightSide - layerRightPosition)
+            rightSideDivergence -> {
+                if (divergence > rightSideDivergence) position + (rightSide - layerRightPosition)
                 else position
             }
             else -> {
-                if (centerDeviation > divergence) position
+                if (centerDivergence > divergence) position
                 else 0f
             }
         }
@@ -64,21 +64,21 @@ internal class SnappingHelper(
         val layerTopPosition = position + halfHeight
         val layerBottomPosition = position - halfHeight
 
-        val topSideDeviation = abs(topSide - layerTopPosition)
-        val bottomSideDeviation = abs(bottomSide - layerBottomPosition)
-        val centerDeviation = abs(position)
+        val topSideDivergence = abs(topSide - layerTopPosition)
+        val bottomSideDivergence = abs(bottomSide - layerBottomPosition)
+        val centerDivergence = abs(position)
 
-        return when (minOf(topSideDeviation, bottomSideDeviation, centerDeviation)) {
-            topSideDeviation -> {
-                if (divergence > topSideDeviation) position + (topSide - layerTopPosition)
+        return when (minOf(topSideDivergence, bottomSideDivergence, centerDivergence)) {
+            topSideDivergence -> {
+                if (divergence > topSideDivergence) position + (topSide - layerTopPosition)
                 else position
             }
-            bottomSideDeviation -> {
-                if (divergence > bottomSideDeviation) position + (bottomSide - layerBottomPosition)
+            bottomSideDivergence -> {
+                if (divergence > bottomSideDivergence) position + (bottomSide - layerBottomPosition)
                 else position
             }
             else -> {
-                if (centerDeviation > divergence) position
+                if (centerDivergence > divergence) position
                 else 0f
             }
         }
@@ -97,16 +97,16 @@ internal class SnappingHelper(
         val layerLeftPosition = position + halfLayerWidth
         val layerRightPosition = position - halfLayerWidth
 
-        val leftSideDeviation = abs(leftSide - layerLeftPosition)
-        val rightSideDeviation = abs(rightSide - layerRightPosition)
+        val leftSideDivergence = abs(leftSide - layerLeftPosition)
+        val rightSideDivergence = abs(rightSide - layerRightPosition)
 
         return when {
-            leftSideDeviation > rightSideDeviation -> {
-                if (divergence > rightSideDeviation) position + (rightSide - layerRightPosition)
+            leftSideDivergence > rightSideDivergence -> {
+                if (divergence > rightSideDivergence) position + (rightSide - layerRightPosition)
                 else position
             }
             else -> {
-                if (divergence > leftSideDeviation) position + (leftSide - layerLeftPosition)
+                if (divergence > leftSideDivergence) position + (leftSide - layerLeftPosition)
                 else position
             }
         }
@@ -125,16 +125,16 @@ internal class SnappingHelper(
         val layerTopPosition = position + halfHeight
         val layerBottomPosition = position - halfHeight
 
-        val topSideDeviation = abs(topSide - layerTopPosition)
-        val bottomSideDeviation = abs(bottomSide - layerBottomPosition)
+        val topSideDivergence = abs(topSide - layerTopPosition)
+        val bottomSideDivergence = abs(bottomSide - layerBottomPosition)
 
         return when {
-            topSideDeviation > bottomSideDeviation -> {
-                if (divergence > bottomSideDeviation) position + (bottomSide - layerBottomPosition)
+            topSideDivergence > bottomSideDivergence -> {
+                if (divergence > bottomSideDivergence) position + (bottomSide - layerBottomPosition)
                 else position
             }
             else -> {
-                if (divergence > topSideDeviation) position + (topSide - layerTopPosition)
+                if (divergence > topSideDivergence) position + (topSide - layerTopPosition)
                 else position
             }
         }
