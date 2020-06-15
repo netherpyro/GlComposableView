@@ -48,7 +48,7 @@ internal class RotationGestureDetector(private val listener: (Float) -> Unit) {
                 val nfX: Float = event.getX(event.findPointerIndex(ptrID2))
                 val nfY: Float = event.getY(event.findPointerIndex(ptrID2))
 
-                angle =if (isSnapEnabled) {
+                angle = if (isSnapEnabled) {
                     snappingAngle((angleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY) + oldAngle) % 360f)
                 } else {
                     (angleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY) + oldAngle) % 360f
