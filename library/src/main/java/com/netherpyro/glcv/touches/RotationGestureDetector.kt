@@ -85,12 +85,12 @@ internal class RotationGestureDetector(private val listener: (Float) -> Unit) {
     }
 
     private fun snappingAngle(angle: Float): Float {
-        val deviation = angle % 45
+        val divergence = angle % 45
         return when {
-            (0f..4f).contains(deviation) && angle > 0 -> angle - deviation
-            (41f..45f).contains(deviation) && angle > 0 -> angle + (45f - deviation)
-            (-4f..0f).contains(deviation) && angle < 0 -> angle - deviation
-            (-45f..-41f).contains(deviation) && angle < 0 -> angle + (-45f - deviation)
+            (0f..4f).contains(divergence) && angle > 0 -> angle - divergence
+            (41f..45f).contains(divergence) && angle > 0 -> angle + (45f - divergence)
+            (-4f..0f).contains(divergence) && angle < 0 -> angle - divergence
+            (-45f..-41f).contains(divergence) && angle < 0 -> angle + (-45f - divergence)
             else -> angle
         }
     }

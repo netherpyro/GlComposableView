@@ -34,9 +34,9 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
 
     private val transformables = mutableListOf<Transformable>()
 
-    private val deviation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, context.resources.displayMetrics)
+    private val divergence = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, context.resources.displayMetrics)
 
-    private val snappingHelper = SnappingHelper(viewport, deviation)
+    private val snappingHelper = SnappingHelper(viewport, divergence)
 
     init {
         val existingTransformables: List<Transformable>

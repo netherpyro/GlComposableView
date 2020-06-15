@@ -10,11 +10,11 @@ import kotlin.math.min
  */
 internal class SnappingHelper(
         var viewport: GlViewport,
-        private val deviation: Float
+        private val divergence: Float
 ) {
 
     fun snappingCenter(position: Float): Float {
-        return if (abs(position) > deviation) position
+        return if (abs(position) > divergence) position
         else 0f
     }
 
@@ -37,15 +37,15 @@ internal class SnappingHelper(
 
         return when (minOf(leftSideDeviation, rightSideDeviation, centerDeviation)) {
             leftSideDeviation -> {
-                if (deviation > leftSideDeviation) position + (leftSide - layerLeftPosition)
+                if (divergence > leftSideDeviation) position + (leftSide - layerLeftPosition)
                 else position
             }
             rightSideDeviation -> {
-                if (deviation > rightSideDeviation) position + (rightSide - layerRightPosition)
+                if (divergence > rightSideDeviation) position + (rightSide - layerRightPosition)
                 else position
             }
             else -> {
-                if (centerDeviation > deviation) position
+                if (centerDeviation > divergence) position
                 else 0f
             }
         }
@@ -70,15 +70,15 @@ internal class SnappingHelper(
 
         return when (minOf(topSideDeviation, bottomSideDeviation, centerDeviation)) {
             topSideDeviation -> {
-                if (deviation > topSideDeviation) position + (topSide - layerTopPosition)
+                if (divergence > topSideDeviation) position + (topSide - layerTopPosition)
                 else position
             }
             bottomSideDeviation -> {
-                if (deviation > bottomSideDeviation) position + (bottomSide - layerBottomPosition)
+                if (divergence > bottomSideDeviation) position + (bottomSide - layerBottomPosition)
                 else position
             }
             else -> {
-                if (centerDeviation > deviation) position
+                if (centerDeviation > divergence) position
                 else 0f
             }
         }
@@ -102,11 +102,11 @@ internal class SnappingHelper(
 
         return when {
             leftSideDeviation > rightSideDeviation -> {
-                if (deviation > rightSideDeviation) position + (rightSide - layerRightPosition)
+                if (divergence > rightSideDeviation) position + (rightSide - layerRightPosition)
                 else position
             }
             else -> {
-                if (deviation > leftSideDeviation) position + (leftSide - layerLeftPosition)
+                if (divergence > leftSideDeviation) position + (leftSide - layerLeftPosition)
                 else position
             }
         }
@@ -130,11 +130,11 @@ internal class SnappingHelper(
 
         return when {
             topSideDeviation > bottomSideDeviation -> {
-                if (deviation > bottomSideDeviation) position + (bottomSide - layerBottomPosition)
+                if (divergence > bottomSideDeviation) position + (bottomSide - layerBottomPosition)
                 else position
             }
             else -> {
-                if (deviation > topSideDeviation) position + (topSide - layerTopPosition)
+                if (divergence > topSideDeviation) position + (topSide - layerTopPosition)
                 else position
             }
         }
