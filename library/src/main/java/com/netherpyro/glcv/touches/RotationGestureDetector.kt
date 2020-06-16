@@ -1,12 +1,17 @@
 package com.netherpyro.glcv.touches
 
 import android.view.MotionEvent
+import com.netherpyro.glcv.util.HapticUtil
+import kotlin.math.abs
 import kotlin.math.atan2
 
 /**
  * Credits https://stackoverflow.com/questions/10682019/android-two-finger-rotation
  * */
-internal class RotationGestureDetector(private val listener: (Float) -> Unit) {
+internal class RotationGestureDetector(
+        private val haptic: HapticUtil,
+        private val listener: (Float) -> Unit
+) {
 
     companion object {
         private const val INVALID_POINTER_ID = -1
@@ -23,6 +28,8 @@ internal class RotationGestureDetector(private val listener: (Float) -> Unit) {
         private set
 
     var isSnapEnabled: Boolean = false
+
+    private var shouldVibrate = false
 
     private var oldAngle = 0f
 
@@ -50,6 +57,7 @@ internal class RotationGestureDetector(private val listener: (Float) -> Unit) {
 
                 angle = if (isSnapEnabled) {
                     snappingAngle((angleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY) + oldAngle) % 360f)
+                        .also { angel -> checkVibration(angel) }
                 } else {
                     (angleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY) + oldAngle) % 360f
                 }
@@ -66,6 +74,15 @@ internal class RotationGestureDetector(private val listener: (Float) -> Unit) {
         }
 
         return true
+    }
+
+    private fun checkVibration(angel: Float) {
+        if (shouldVibrate && abs(angel % 45) == 0f) {
+            shouldVibrate = false
+            haptic.vibrate()
+        } else if (abs(angel % 45) != 0f) {
+            shouldVibrate = true
+        }
     }
 
     private fun angleBetweenLines(fX: Float, fY: Float, sX: Float, sY: Float,

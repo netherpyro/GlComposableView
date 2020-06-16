@@ -11,6 +11,7 @@ import android.view.ScaleGestureDetector
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.TransformableObservable
+import com.netherpyro.glcv.util.HapticUtil
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -36,7 +37,9 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
 
     private val divergence = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, context.resources.displayMetrics)
 
-    private val snappingHelper = SnappingHelper(viewport, divergence)
+    private val haptic = HapticUtil(context)
+
+    private val snappingHelper = SnappingHelper(viewport, divergence, haptic)
 
     init {
         val existingTransformables: List<Transformable>
@@ -61,7 +64,7 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
     }
 
     // rotation
-    private val rotationGestureDetector = RotationGestureDetector { angle ->
+    private val rotationGestureDetector = RotationGestureDetector(haptic) { angle ->
         transformables.filter { it.enableGesturesTransform }
             .forEach { it.setRotation(angle) }
     }
@@ -98,13 +101,13 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
 
                     val newX = when {
                         isCenterSnapEnabled && isSideSnapEnabled -> snappingHelper.snappingXSideAndCenter(curX + distanceX, transformable)
-                        isCenterSnapEnabled -> snappingHelper.snappingCenter(curX + distanceX)
+                        isCenterSnapEnabled -> snappingHelper.snappingXCenter(curX + distanceX)
                         isSideSnapEnabled -> snappingHelper.snappingXSide(curX + distanceX, transformable)
                         else -> curX + distanceX
                     }
                     val newY = when {
                         isCenterSnapEnabled && isSideSnapEnabled -> snappingHelper.snappingYSideAndCenter(curY + distanceY, transformable)
-                        isCenterSnapEnabled -> snappingHelper.snappingCenter(curY + distanceY)
+                        isCenterSnapEnabled -> snappingHelper.snappingYCenter(curY + distanceY)
                         isSideSnapEnabled -> snappingHelper.snappingYSide(curY + distanceY, transformable)
                         else -> curY + distanceY
                     }

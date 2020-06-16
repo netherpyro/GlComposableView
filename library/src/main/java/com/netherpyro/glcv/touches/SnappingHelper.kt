@@ -2,6 +2,7 @@ package com.netherpyro.glcv.touches
 
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.util.HapticUtil
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -10,12 +11,48 @@ import kotlin.math.min
  */
 internal class SnappingHelper(
         var viewport: GlViewport,
-        private val divergence: Float
+        private val divergence: Float,
+        private val haptic: HapticUtil
 ) {
 
-    fun snappingCenter(position: Float): Float {
-        return if (abs(position) > divergence) position
-        else 0f
+    private var shouldVibrateYCenterSnap = false
+
+    private var shouldVibrateXCenterSnap = false
+
+    private var shouldVibrateXSideSnap = false
+
+    private var shouldVibrateYSideSnap = false
+
+    fun snappingXCenter(position: Float): Float {
+        return when {
+            (abs(position) > divergence) -> {
+                shouldVibrateXCenterSnap = true
+                position
+            }
+            else -> 0f
+        }
+            .also { newPosition ->
+                if (newPosition != position && shouldVibrateXCenterSnap) {
+                    shouldVibrateXCenterSnap = false
+                    haptic.vibrate()
+                }
+            }
+    }
+
+    fun snappingYCenter(position: Float): Float {
+        return when {
+            (abs(position) > divergence) -> {
+                shouldVibrateYCenterSnap = true
+                position
+            }
+            else -> 0f
+        }
+            .also { newPosition ->
+                if (newPosition != position && shouldVibrateYCenterSnap) {
+                    shouldVibrateYCenterSnap = false
+                    haptic.vibrate()
+                }
+            }
     }
 
     fun snappingXSideAndCenter(position: Float, transformable: Transformable): Float {
@@ -36,18 +73,8 @@ internal class SnappingHelper(
         val centerDivergence = abs(position)
 
         return when (minOf(leftSideDivergence, rightSideDivergence, centerDivergence)) {
-            leftSideDivergence -> {
-                if (divergence > leftSideDivergence) position + (leftSide - layerLeftPosition)
-                else position
-            }
-            rightSideDivergence -> {
-                if (divergence > rightSideDivergence) position + (rightSide - layerRightPosition)
-                else position
-            }
-            else -> {
-                if (centerDivergence > divergence) position
-                else 0f
-            }
+            leftSideDivergence, rightSideDivergence -> snappingXSide(position, transformable)
+            else -> snappingXCenter(position)
         }
     }
 
@@ -69,18 +96,8 @@ internal class SnappingHelper(
         val centerDivergence = abs(position)
 
         return when (minOf(topSideDivergence, bottomSideDivergence, centerDivergence)) {
-            topSideDivergence -> {
-                if (divergence > topSideDivergence) position + (topSide - layerTopPosition)
-                else position
-            }
-            bottomSideDivergence -> {
-                if (divergence > bottomSideDivergence) position + (bottomSide - layerBottomPosition)
-                else position
-            }
-            else -> {
-                if (centerDivergence > divergence) position
-                else 0f
-            }
+            topSideDivergence, bottomSideDivergence -> snappingYSide(position,transformable)
+            else -> snappingYCenter(position)
         }
     }
 
@@ -103,13 +120,25 @@ internal class SnappingHelper(
         return when {
             leftSideDivergence > rightSideDivergence -> {
                 if (divergence > rightSideDivergence) position + (rightSide - layerRightPosition)
-                else position
+                else {
+                    shouldVibrateXSideSnap = true
+                    position
+                }
             }
             else -> {
                 if (divergence > leftSideDivergence) position + (leftSide - layerLeftPosition)
-                else position
+                else {
+                    shouldVibrateXSideSnap = true
+                    position
+                }
             }
         }
+            .also { newPosition ->
+                if (newPosition != position && shouldVibrateXSideSnap) {
+                    shouldVibrateXSideSnap = false
+                    haptic.vibrate()
+                }
+            }
     }
 
     fun snappingYSide(position: Float, transformable: Transformable): Float {
@@ -120,7 +149,7 @@ internal class SnappingHelper(
         val topSide = viewport.height / 2
         val bottomSide = viewport.height / -2
 
-         val halfHeight = transformable.calculateHalfHeight()
+        val halfHeight = transformable.calculateHalfHeight()
 
         val layerTopPosition = position + halfHeight
         val layerBottomPosition = position - halfHeight
@@ -131,13 +160,25 @@ internal class SnappingHelper(
         return when {
             topSideDivergence > bottomSideDivergence -> {
                 if (divergence > bottomSideDivergence) position + (bottomSide - layerBottomPosition)
-                else position
+                else {
+                    shouldVibrateYSideSnap = true
+                    position
+                }
             }
             else -> {
                 if (divergence > topSideDivergence) position + (topSide - layerTopPosition)
-                else position
+                else {
+                    shouldVibrateYSideSnap = true
+                    position
+                }
             }
         }
+            .also { newPosition ->
+                if (newPosition != position && shouldVibrateYSideSnap) {
+                    shouldVibrateYSideSnap = false
+                    haptic.vibrate()
+                }
+            }
     }
 
     private fun Transformable.calculateHalfWidth(): Float {
@@ -164,7 +205,7 @@ internal class SnappingHelper(
             }
     }
 
-    private fun Transformable.calculateHalfHeight() : Float {
+    private fun Transformable.calculateHalfHeight(): Float {
         val halfSize = min(viewport.width, viewport.height) / 2
         val viewportAspect = viewport.width.toFloat() / viewport.height
         val s: Float = getLayerAspect() / viewportAspect
