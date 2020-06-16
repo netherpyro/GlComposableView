@@ -73,7 +73,8 @@ internal class SnappingHelper(
         val centerDivergence = abs(position)
 
         return when (minOf(leftSideDivergence, rightSideDivergence, centerDivergence)) {
-            leftSideDivergence, rightSideDivergence -> snappingXSide(position, transformable)
+            leftSideDivergence, rightSideDivergence -> calculateXSidePosition(leftSideDivergence, rightSideDivergence,
+                    position, rightSide, layerRightPosition, leftSide, layerLeftPosition)
             else -> snappingXCenter(position)
         }
     }
@@ -96,7 +97,8 @@ internal class SnappingHelper(
         val centerDivergence = abs(position)
 
         return when (minOf(topSideDivergence, bottomSideDivergence, centerDivergence)) {
-            topSideDivergence, bottomSideDivergence -> snappingYSide(position,transformable)
+            topSideDivergence, bottomSideDivergence -> calculateYSidePosition(topSideDivergence, bottomSideDivergence,
+                    position, bottomSide, layerBottomPosition, topSide, layerTopPosition)
             else -> snappingYCenter(position)
         }
     }
@@ -117,6 +119,39 @@ internal class SnappingHelper(
         val leftSideDivergence = abs(leftSide - layerLeftPosition)
         val rightSideDivergence = abs(rightSide - layerRightPosition)
 
+        return calculateXSidePosition(leftSideDivergence, rightSideDivergence, position, rightSide, layerRightPosition,
+                leftSide, layerLeftPosition)
+    }
+
+    fun snappingYSide(position: Float, transformable: Transformable): Float {
+        if (transformable.getRotation() % 90 != 0f) {
+            return position
+        }
+
+        val topSide = viewport.height / 2
+        val bottomSide = viewport.height / -2
+
+        val halfHeight = transformable.calculateHalfHeight()
+
+        val layerTopPosition = position + halfHeight
+        val layerBottomPosition = position - halfHeight
+
+        val topSideDivergence = abs(topSide - layerTopPosition)
+        val bottomSideDivergence = abs(bottomSide - layerBottomPosition)
+
+        return calculateYSidePosition(topSideDivergence, bottomSideDivergence, position, bottomSide,
+                layerBottomPosition, topSide, layerTopPosition)
+    }
+
+    private fun calculateXSidePosition(
+            leftSideDivergence: Float,
+            rightSideDivergence: Float,
+            position: Float,
+            rightSide: Int,
+            layerRightPosition: Float,
+            leftSide: Int,
+            layerLeftPosition: Float
+    ): Float {
         return when {
             leftSideDivergence > rightSideDivergence -> {
                 if (divergence > rightSideDivergence) position + (rightSide - layerRightPosition)
@@ -141,22 +176,15 @@ internal class SnappingHelper(
             }
     }
 
-    fun snappingYSide(position: Float, transformable: Transformable): Float {
-        if (transformable.getRotation() % 90 != 0f) {
-            return position
-        }
-
-        val topSide = viewport.height / 2
-        val bottomSide = viewport.height / -2
-
-        val halfHeight = transformable.calculateHalfHeight()
-
-        val layerTopPosition = position + halfHeight
-        val layerBottomPosition = position - halfHeight
-
-        val topSideDivergence = abs(topSide - layerTopPosition)
-        val bottomSideDivergence = abs(bottomSide - layerBottomPosition)
-
+    private fun calculateYSidePosition(
+            topSideDivergence: Float,
+            bottomSideDivergence: Float,
+            position: Float,
+            bottomSide: Int,
+            layerBottomPosition: Float,
+            topSide: Int,
+            layerTopPosition: Float
+    ): Float {
         return when {
             topSideDivergence > bottomSideDivergence -> {
                 if (divergence > bottomSideDivergence) position + (bottomSide - layerBottomPosition)
