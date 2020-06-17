@@ -2,7 +2,7 @@ package com.netherpyro.glcv.touches
 
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Transformable
-import com.netherpyro.glcv.util.HapticUtil
+import com.netherpyro.glcv.util.Haptic
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -12,7 +12,7 @@ import kotlin.math.min
 internal class SnappingHelper(
         var viewport: GlViewport,
         private val divergence: Float,
-        private val haptic: HapticUtil
+        private val haptic: Haptic
 ) {
 
     private var shouldVibrateYCenterSnap = false
@@ -34,7 +34,7 @@ internal class SnappingHelper(
             .also { newPosition ->
                 if (newPosition != position && shouldVibrateXCenterSnap) {
                     shouldVibrateXCenterSnap = false
-                    haptic.vibrate()
+                    haptic.perform()
                 }
             }
     }
@@ -50,7 +50,7 @@ internal class SnappingHelper(
             .also { newPosition ->
                 if (newPosition != position && shouldVibrateYCenterSnap) {
                     shouldVibrateYCenterSnap = false
-                    haptic.vibrate()
+                    haptic.perform()
                 }
             }
     }
@@ -171,7 +171,7 @@ internal class SnappingHelper(
             .also { newPosition ->
                 if (newPosition != position && shouldVibrateXSideSnap) {
                     shouldVibrateXSideSnap = false
-                    haptic.vibrate()
+                    haptic.perform()
                 }
             }
     }
@@ -204,7 +204,7 @@ internal class SnappingHelper(
             .also { newPosition ->
                 if (newPosition != position && shouldVibrateYSideSnap) {
                     shouldVibrateYSideSnap = false
-                    haptic.vibrate()
+                    haptic.perform()
                 }
             }
     }

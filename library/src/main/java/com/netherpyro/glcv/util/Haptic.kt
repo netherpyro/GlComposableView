@@ -6,7 +6,7 @@ import com.netherpyro.glcv.extensions.vibrate
 /**
  * @author Alexei Korshun on 16.06.2020.
  */
-internal class HapticUtil(
+internal class Haptic(
         private val context: Context
 ) {
 
@@ -14,7 +14,7 @@ internal class HapticUtil(
 
     private val throttler = Throttler(500)
 
-    fun vibrate() {
+    fun perform() {
         if (!enabled)
             return
 

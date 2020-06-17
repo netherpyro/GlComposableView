@@ -1,7 +1,7 @@
 package com.netherpyro.glcv.touches
 
 import android.view.MotionEvent
-import com.netherpyro.glcv.util.HapticUtil
+import com.netherpyro.glcv.util.Haptic
 import kotlin.math.abs
 import kotlin.math.atan2
 
@@ -9,7 +9,7 @@ import kotlin.math.atan2
  * Credits https://stackoverflow.com/questions/10682019/android-two-finger-rotation
  * */
 internal class RotationGestureDetector(
-        private val haptic: HapticUtil,
+        private val haptic: Haptic,
         private val listener: (Float) -> Unit
 ) {
 
@@ -79,7 +79,7 @@ internal class RotationGestureDetector(
     private fun checkVibration(angel: Float) {
         if (shouldVibrate && abs(angel % 45) == 0f) {
             shouldVibrate = false
-            haptic.vibrate()
+            haptic.perform()
         } else if (abs(angel % 45) != 0f) {
             shouldVibrate = true
         }

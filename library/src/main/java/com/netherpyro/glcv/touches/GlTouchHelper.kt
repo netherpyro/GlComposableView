@@ -11,7 +11,7 @@ import android.view.ScaleGestureDetector
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Transformable
 import com.netherpyro.glcv.TransformableObservable
-import com.netherpyro.glcv.util.HapticUtil
+import com.netherpyro.glcv.util.Haptic
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -37,7 +37,7 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
 
     private val divergence = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, context.resources.displayMetrics)
 
-    private val haptic = HapticUtil(context)
+    private val haptic = Haptic(context)
 
     private val snappingHelper = SnappingHelper(viewport, divergence, haptic)
 
