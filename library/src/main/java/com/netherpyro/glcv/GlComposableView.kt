@@ -115,6 +115,10 @@ class GlComposableView @JvmOverloads constructor(
         } else super.onTouchEvent(event)
     }
 
+    override fun setHapticFeedbackEnabled(enabled: Boolean) {
+        touchHelper.setHapticFeedbackEnabled(enabled)
+    }
+
     fun listLayers() = renderer.listLayers()
 
     fun addSurfaceLayer(

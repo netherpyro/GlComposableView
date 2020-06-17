@@ -2,6 +2,7 @@ package com.netherpyro.glcv.touches
 
 import com.netherpyro.glcv.GlViewport
 import com.netherpyro.glcv.Transformable
+import com.netherpyro.glcv.util.Haptic
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -10,12 +11,48 @@ import kotlin.math.min
  */
 internal class SnappingHelper(
         var viewport: GlViewport,
-        private val divergence: Float
+        private val divergence: Float,
+        private val haptic: Haptic
 ) {
 
-    fun snappingCenter(position: Float): Float {
-        return if (abs(position) > divergence) position
-        else 0f
+    private var shouldVibrateYCenterSnap = false
+
+    private var shouldVibrateXCenterSnap = false
+
+    private var shouldVibrateXSideSnap = false
+
+    private var shouldVibrateYSideSnap = false
+
+    fun snappingXCenter(position: Float): Float {
+        return when {
+            (abs(position) > divergence) -> {
+                shouldVibrateXCenterSnap = true
+                position
+            }
+            else -> 0f
+        }
+            .also { newPosition ->
+                if (newPosition != position && shouldVibrateXCenterSnap) {
+                    shouldVibrateXCenterSnap = false
+                    haptic.perform()
+                }
+            }
+    }
+
+    fun snappingYCenter(position: Float): Float {
+        return when {
+            (abs(position) > divergence) -> {
+                shouldVibrateYCenterSnap = true
+                position
+            }
+            else -> 0f
+        }
+            .also { newPosition ->
+                if (newPosition != position && shouldVibrateYCenterSnap) {
+                    shouldVibrateYCenterSnap = false
+                    haptic.perform()
+                }
+            }
     }
 
     fun snappingXSideAndCenter(position: Float, transformable: Transformable): Float {
@@ -36,18 +73,9 @@ internal class SnappingHelper(
         val centerDivergence = abs(position)
 
         return when (minOf(leftSideDivergence, rightSideDivergence, centerDivergence)) {
-            leftSideDivergence -> {
-                if (divergence > leftSideDivergence) position + (leftSide - layerLeftPosition)
-                else position
-            }
-            rightSideDivergence -> {
-                if (divergence > rightSideDivergence) position + (rightSide - layerRightPosition)
-                else position
-            }
-            else -> {
-                if (centerDivergence > divergence) position
-                else 0f
-            }
+            leftSideDivergence, rightSideDivergence -> calculateXSidePosition(leftSideDivergence, rightSideDivergence,
+                    position, rightSide, layerRightPosition, leftSide, layerLeftPosition)
+            else -> snappingXCenter(position)
         }
     }
 
@@ -69,18 +97,9 @@ internal class SnappingHelper(
         val centerDivergence = abs(position)
 
         return when (minOf(topSideDivergence, bottomSideDivergence, centerDivergence)) {
-            topSideDivergence -> {
-                if (divergence > topSideDivergence) position + (topSide - layerTopPosition)
-                else position
-            }
-            bottomSideDivergence -> {
-                if (divergence > bottomSideDivergence) position + (bottomSide - layerBottomPosition)
-                else position
-            }
-            else -> {
-                if (centerDivergence > divergence) position
-                else 0f
-            }
+            topSideDivergence, bottomSideDivergence -> calculateYSidePosition(topSideDivergence, bottomSideDivergence,
+                    position, bottomSide, layerBottomPosition, topSide, layerTopPosition)
+            else -> snappingYCenter(position)
         }
     }
 
@@ -100,16 +119,8 @@ internal class SnappingHelper(
         val leftSideDivergence = abs(leftSide - layerLeftPosition)
         val rightSideDivergence = abs(rightSide - layerRightPosition)
 
-        return when {
-            leftSideDivergence > rightSideDivergence -> {
-                if (divergence > rightSideDivergence) position + (rightSide - layerRightPosition)
-                else position
-            }
-            else -> {
-                if (divergence > leftSideDivergence) position + (leftSide - layerLeftPosition)
-                else position
-            }
-        }
+        return calculateXSidePosition(leftSideDivergence, rightSideDivergence, position, rightSide, layerRightPosition,
+                leftSide, layerLeftPosition)
     }
 
     fun snappingYSide(position: Float, transformable: Transformable): Float {
@@ -120,7 +131,7 @@ internal class SnappingHelper(
         val topSide = viewport.height / 2
         val bottomSide = viewport.height / -2
 
-         val halfHeight = transformable.calculateHalfHeight()
+        val halfHeight = transformable.calculateHalfHeight()
 
         val layerTopPosition = position + halfHeight
         val layerBottomPosition = position - halfHeight
@@ -128,16 +139,74 @@ internal class SnappingHelper(
         val topSideDivergence = abs(topSide - layerTopPosition)
         val bottomSideDivergence = abs(bottomSide - layerBottomPosition)
 
+        return calculateYSidePosition(topSideDivergence, bottomSideDivergence, position, bottomSide,
+                layerBottomPosition, topSide, layerTopPosition)
+    }
+
+    private fun calculateXSidePosition(
+            leftSideDivergence: Float,
+            rightSideDivergence: Float,
+            position: Float,
+            rightSide: Int,
+            layerRightPosition: Float,
+            leftSide: Int,
+            layerLeftPosition: Float
+    ): Float {
+        return when {
+            leftSideDivergence > rightSideDivergence -> {
+                if (divergence > rightSideDivergence) position + (rightSide - layerRightPosition)
+                else {
+                    shouldVibrateXSideSnap = true
+                    position
+                }
+            }
+            else -> {
+                if (divergence > leftSideDivergence) position + (leftSide - layerLeftPosition)
+                else {
+                    shouldVibrateXSideSnap = true
+                    position
+                }
+            }
+        }
+            .also { newPosition ->
+                if (newPosition != position && shouldVibrateXSideSnap) {
+                    shouldVibrateXSideSnap = false
+                    haptic.perform()
+                }
+            }
+    }
+
+    private fun calculateYSidePosition(
+            topSideDivergence: Float,
+            bottomSideDivergence: Float,
+            position: Float,
+            bottomSide: Int,
+            layerBottomPosition: Float,
+            topSide: Int,
+            layerTopPosition: Float
+    ): Float {
         return when {
             topSideDivergence > bottomSideDivergence -> {
                 if (divergence > bottomSideDivergence) position + (bottomSide - layerBottomPosition)
-                else position
+                else {
+                    shouldVibrateYSideSnap = true
+                    position
+                }
             }
             else -> {
                 if (divergence > topSideDivergence) position + (topSide - layerTopPosition)
-                else position
+                else {
+                    shouldVibrateYSideSnap = true
+                    position
+                }
             }
         }
+            .also { newPosition ->
+                if (newPosition != position && shouldVibrateYSideSnap) {
+                    shouldVibrateYSideSnap = false
+                    haptic.perform()
+                }
+            }
     }
 
     private fun Transformable.calculateHalfWidth(): Float {
@@ -164,7 +233,7 @@ internal class SnappingHelper(
             }
     }
 
-    private fun Transformable.calculateHalfHeight() : Float {
+    private fun Transformable.calculateHalfHeight(): Float {
         val halfSize = min(viewport.width, viewport.height) / 2
         val viewportAspect = viewport.width.toFloat() / viewport.height
         val s: Float = getLayerAspect() / viewportAspect
