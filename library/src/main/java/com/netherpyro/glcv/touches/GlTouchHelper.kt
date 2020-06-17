@@ -163,6 +163,10 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
         rotationGestureDetector.isSnapEnabled = enabled
     }
 
+    fun setHapticFeedbackEnabled(enabled: Boolean) {
+        haptic.enabled = enabled
+    }
+
     private fun hitTest(tapPoint: PointF, transformable: Transformable): Boolean {
         val (trX, trY) = transformable.getTranslation()
         val scaleFactor = transformable.getScale()

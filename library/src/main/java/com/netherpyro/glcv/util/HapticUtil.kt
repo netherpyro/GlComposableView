@@ -10,9 +10,14 @@ internal class HapticUtil(
         private val context: Context
 ) {
 
+    var enabled: Boolean = false
+
     private val throttler = Throttler(500)
 
     fun vibrate() {
+        if (!enabled)
+            return
+
         throttler.publish { context.vibrate() }
     }
 }
