@@ -23,9 +23,10 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
 
     var touchesListener: LayerTouchListener? = null
 
+    var maxScale = 2f
+    var minScale = 0.5f
+
     private val transformables = mutableListOf<Transformable>()
-    private val maxScale = 2f
-    private val minScale = 0.5f
 
     init {
         val existingTransformables: List<Transformable>

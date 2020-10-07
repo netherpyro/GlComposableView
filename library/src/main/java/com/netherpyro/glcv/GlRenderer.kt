@@ -47,7 +47,7 @@ class GlRenderer(
     override fun onSurfaceCreated() {
         glDisable(GLES20.GL_DEPTH_TEST)
         glEnable(GLES20.GL_BLEND)
-        glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         glClearColor(backgroundColor.red(), backgroundColor.green(), backgroundColor.blue(), backgroundColor.alpha())
 
         layers.forEach { it.setup() }
@@ -197,12 +197,10 @@ class GlRenderer(
     private fun getNextId() = nextId++
 
     private fun refineAddPosition(desiredPos: Int): Int {
-        val currentMaxPosition: Int = layers.maxBy { it.position }?.position ?: -1
-
-        return when {
-            desiredPos < 0 -> 0 // bottom position
-            desiredPos > currentMaxPosition -> currentMaxPosition + 1 // top position
-            else -> desiredPos // desired position
+        return if (desiredPos < 0) {
+            0
+        } else {
+            desiredPos
         }
     }
 }
