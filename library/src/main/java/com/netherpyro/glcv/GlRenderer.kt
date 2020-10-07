@@ -96,9 +96,9 @@ class GlRenderer(
     }
 
     override fun claimLayerPosition(layer: Layer, position: Int) {
-        renderHost.enqueueEvent(Runnable {
+        renderHost.enqueueEvent {
             moveLayer(layer, position)
-        })
+        }
     }
 
     fun setViewport(viewport: GlViewport) {
@@ -117,11 +117,27 @@ class GlRenderer(
             initialValues: TransformData? = null,
             onFrameAvailable: ((Long) -> Unit)? = null
     ): Transformable =
-            SurfaceLayer(getNextId(), tag, refineAddPosition(position), this, initialValues, surfaceConsumer, onFrameAvailable)
+            SurfaceLayer(
+                    getNextId(),
+                    tag,
+                    position.refine(),
+                    this,
+                    initialValues,
+                    surfaceConsumer,
+                    onFrameAvailable
+            )
                 .also { addLayer(it) }
 
-    fun addBitmapLayer(tag: String?, bitmap: Bitmap, position: Int, initialValues: TransformData? = null): Transformable =
-            BitmapLayer(getNextId(), tag, refineAddPosition(position), this, initialValues, bitmap)
+    fun addBitmapLayer(tag: String?, bitmap: Bitmap, position: Int,
+                       initialValues: TransformData? = null): Transformable =
+            BitmapLayer(
+                    getNextId(),
+                    tag,
+                    position.refine(),
+                    this,
+                    initialValues,
+                    bitmap
+            )
                 .also { addLayer(it) }
 
     fun removeLayer(transformable: Transformable) {
@@ -196,11 +212,13 @@ class GlRenderer(
 
     private fun getNextId() = nextId++
 
-    private fun refineAddPosition(desiredPos: Int): Int {
-        return if (desiredPos < 0) {
-            0
-        } else {
-            desiredPos
+    private fun Int.refine(): Int {
+        val currentMaxPosition: Int = layers.maxByOrNull { it.position }?.position ?: -1
+
+        return when {
+            this < 0 -> 0 // bottom position
+            this == TOP_POSITION -> currentMaxPosition + 1 // top position
+            else -> this // desired position
         }
     }
 }

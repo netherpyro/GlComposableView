@@ -6,17 +6,16 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.invoke
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.marginBottom
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResultListener
 import com.netherpyro.glcv.App
 import com.netherpyro.glcv.AspectRatio
 import com.netherpyro.glcv.R
@@ -81,7 +80,7 @@ class ComposerFragment : Fragment() {
             ActivityResultContracts.RequestMultiplePermissions()
     ) { permissionsResult ->
         val granted = permissionsResult.values.fold(false) { acc, granted -> acc or granted }
-        if (granted) getMedia("image/* video/*")
+        if (granted) getMedia.launch("image/* video/*")
         else {
             val redirectToSettings = permissionsResult.keys.fold(false) { acc, permission ->
                 acc or shouldShowRequestPermissionRationale(permission).not()
@@ -170,7 +169,7 @@ class ComposerFragment : Fragment() {
             adapter = aspectRatioAdapter
         }
 
-        fab_pick.setOnClickListener { checkPermissionsAndGetMedia(MainActivity.PERMISSIONS) }
+        fab_pick.setOnClickListener { checkPermissionsAndGetMedia.launch(MainActivity.PERMISSIONS) }
         btn_render.setOnClickListener {
             RenderDialog().show(childFragmentManager, TAG_RENDER_DIALOG)
             playbackController.pause()
@@ -338,7 +337,7 @@ class ComposerFragment : Fragment() {
             // store and play baked video
             with(requireContext()) {
                 saveToGallery(outputFile)?.let {
-                    Handler().postDelayed({ playVideo(it) }, 1000L)
+                    Handler(Looper.getMainLooper()).postDelayed({ playVideo(it) }, 1000L)
                 }
             }
         }

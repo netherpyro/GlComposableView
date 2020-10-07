@@ -50,11 +50,11 @@ object Util {
                         mediaMetadataRetriever.setDataSource(context, uri)
 
                         width = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                            .toInt()
+                            ?.toInt() ?: 0
 
                         height = mediaMetadataRetriever.extractMetadata(
                                 MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-                            .toInt()
+                            ?.toInt() ?: 0
 
                         orientation = mediaMetadataRetriever.extractMetadata(
                                 MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
@@ -85,10 +85,12 @@ object Util {
                     cursor.moveToFirst()
 
                     width = cursor.getString(cursor.getColumnIndex(MediaStore.Files.FileColumns.WIDTH))
-                        .toInt()
+                        ?.toInt()
+                        ?: 0
 
                     height = cursor.getString(cursor.getColumnIndex(MediaStore.Files.FileColumns.HEIGHT))
-                        .toInt()
+                        ?.toInt()
+                        ?: 0
 
                     orientation = cursor.getString(cursor.getColumnIndex(MediaStore.Files.FileColumns.ORIENTATION))
                         ?.toInt()
