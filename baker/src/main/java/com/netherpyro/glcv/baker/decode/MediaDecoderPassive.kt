@@ -40,15 +40,16 @@ internal class MediaDecoderPassive(
         private val context: Context,
         private val tag: String,
         private val uri: Uri,
-        private val decodeAudioTrack: Boolean
+        private val decodeAudioTrack: Boolean,
+        private val projectFps: Int,
 ) : SurfaceConsumer {
 
     companion object {
         private const val TAG = "MediaDecoderPassive"
         private const val TIMEOUT_USEC = 10000L
-
-        private val VERBOSE = VERBOSE_LOGGING
     }
+
+    private val verboseLogging = VERBOSE_LOGGING
 
     private val videoBufferInfo: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
     private val audioBufferInfo: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
@@ -72,6 +73,7 @@ internal class MediaDecoderPassive(
     private var videoExtractorWarmedUp = false
     private var audioExtractorWarmedUp = false
     private var released = false
+    private var isProjectSlower = false
 
     var isUsed = false
         private set
@@ -130,8 +132,8 @@ internal class MediaDecoderPassive(
 
         isUsed = true
 
-        if (speedController?.test(ptsUsec) == false) {
-            if (VERBOSE) Log.i(TAG, "advance::skip frame due to frame threshold")
+        if (!isProjectSlower && speedController?.test(ptsUsec) == false) {
+            if (verboseLogging) Log.i(TAG, "advance::skip frame due to frame threshold")
             return
         }
 
@@ -141,6 +143,12 @@ internal class MediaDecoderPassive(
 
         if (videoTrackInfo != null) {
             advanceVideoExtractor()
+
+            if (isProjectSlower) {
+                while (videoExtractor.sampleTime in 0 until ptsUsec) {
+                    advanceVideoExtractor()
+                }
+            }
         }
     }
 
@@ -169,6 +177,7 @@ internal class MediaDecoderPassive(
 
                 Log.d(TAG, "prepareInternal::video frame rate = $fps")
 
+                isProjectSlower = projectFps <= fps
                 speedController = SpeedController(fps)
 
                 // Create a MediaCodec decoder, and configure it with the MediaFormat from the
@@ -221,17 +230,17 @@ internal class MediaDecoderPassive(
                     videoDecoder.queueInputBuffer(inputBufferIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                     videoInputDone = true
 
-                    if (VERBOSE) Log.i(TAG, "advanceVideoExtractor::sent input EOS")
+                    if (verboseLogging) Log.i(TAG, "advanceVideoExtractor::sent input EOS")
                 } else {
                     val presentationTimeUs = videoExtractor.sampleTime
                     videoDecoder.queueInputBuffer(inputBufferIndex, 0, chunkSize, presentationTimeUs, 0)
 
-                    if (VERBOSE) Log.v(TAG, "advanceVideoExtractor::submitted chunk to decoder, size=$chunkSize")
+                    if (verboseLogging) Log.v(TAG, "advanceVideoExtractor::submitted chunk to decoder, size=$chunkSize")
 
                     videoExtractor.advance()
                 }
             } else {
-                if (VERBOSE) Log.i(TAG, "advanceVideoExtractor::input buffer not available")
+                if (verboseLogging) Log.i(TAG, "advanceVideoExtractor::input buffer not available")
             }
         }
 
@@ -239,16 +248,16 @@ internal class MediaDecoderPassive(
             val outputBufferIndex = videoDecoder.dequeueOutputBuffer(videoBufferInfo, TIMEOUT_USEC)
             when {
                 outputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER ->
-                    if (VERBOSE) Log.i(TAG, "advanceVideoExtractor::no output from decoder available")
+                    if (verboseLogging) Log.i(TAG, "advanceVideoExtractor::no output from decoder available")
                 outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                     videoExtractorWarmedUp = true
                     val newFormat = videoDecoder.outputFormat
-                    if (VERBOSE) Log.i(TAG, "advanceVideoExtractor::decoder output format changed: $newFormat")
+                    if (verboseLogging) Log.i(TAG, "advanceVideoExtractor::decoder output format changed: $newFormat")
                 }
                 outputBufferIndex < 0 -> Log.w(TAG, "advanceVideoExtractor::" +
                         "unexpected result from decoder with status: $outputBufferIndex. Ignoring.")
                 else -> {
-                    if (VERBOSE) Log.v(TAG, "advanceVideoExtractor::surface decoder given buffer $outputBufferIndex " +
+                    if (verboseLogging) Log.v(TAG, "advanceVideoExtractor::surface decoder given buffer $outputBufferIndex " +
                             "with size=${videoBufferInfo.size}")
 
                     if (videoBufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
@@ -279,16 +288,16 @@ internal class MediaDecoderPassive(
                     audioDecoder.queueInputBuffer(inputBufferIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                     audioInputDone = true
 
-                    if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::sent input EOS")
+                    if (verboseLogging) Log.i(TAG, "advanceAudioExtractor::sent input EOS")
                 } else {
                     audioDecoder.queueInputBuffer(inputBufferIndex, 0, chunkSize, audioExtractor.sampleTime, audioExtractor.sampleFlags)
 
-                    if (VERBOSE) Log.v(TAG, "advanceAudioExtractor::submitted chunk to decoder, size=$chunkSize")
+                    if (verboseLogging) Log.v(TAG, "advanceAudioExtractor::submitted chunk to decoder, size=$chunkSize")
 
                     audioExtractor.advance()
                 }
             } else {
-                if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::input buffer not available")
+                if (verboseLogging) Log.i(TAG, "advanceAudioExtractor::input buffer not available")
             }
         }
 
@@ -296,16 +305,16 @@ internal class MediaDecoderPassive(
             val outputBufferIndex = audioDecoder.dequeueOutputBuffer(audioBufferInfo, TIMEOUT_USEC)
             when {
                 outputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER ->
-                    if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::no output from decoder available")
+                    if (verboseLogging) Log.i(TAG, "advanceAudioExtractor::no output from decoder available")
                 outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                     audioExtractorWarmedUp = true
                     val newFormat = audioDecoder.outputFormat
-                    if (VERBOSE) Log.i(TAG, "advanceAudioExtractor::decoder output format changed: $newFormat")
+                    if (verboseLogging) Log.i(TAG, "advanceAudioExtractor::decoder output format changed: $newFormat")
                 }
                 outputBufferIndex < 0 -> Log.w(TAG, "advanceAudioExtractor::" +
                         "unexpected result from decoder with status: $outputBufferIndex. Ignoring.")
                 else -> {
-                    if (VERBOSE) Log.v(TAG, "advanceAudioExtractor::surface decoder given buffer $outputBufferIndex " +
+                    if (verboseLogging) Log.v(TAG, "advanceAudioExtractor::surface decoder given buffer $outputBufferIndex " +
                             "with size=${audioBufferInfo.size}")
 
                     if (audioBufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {

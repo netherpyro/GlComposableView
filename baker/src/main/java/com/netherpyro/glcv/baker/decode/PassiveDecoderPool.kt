@@ -13,8 +13,8 @@ internal class PassiveDecoderPool {
 
     private val decoders = mutableMapOf<String, MediaDecoderPassive>()
 
-    fun createMediaDecoder(context: Context, tag: String, uri: Uri, decodeAudioTrack: Boolean): SurfaceConsumer {
-        val decoder = MediaDecoderPassive(context, tag, uri, decodeAudioTrack)
+    fun createMediaDecoder(context: Context, tag: String, uri: Uri, decodeAudioTrack: Boolean, projectFps: Int): SurfaceConsumer {
+        val decoder = MediaDecoderPassive(context, tag, uri, decodeAudioTrack, projectFps)
         decoders[tag] = decoder
 
         return decoder

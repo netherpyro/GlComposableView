@@ -205,7 +205,8 @@ internal class Baker private constructor(
                                             context,
                                             unit.tag,
                                             unit.uri,
-                                            decodeAudioTrack = decodeSound
+                                            decodeAudioTrack = decodeSound,
+                                            projectFps = config.fps,
                                     ),
                                     position = unit.zPosition,
                                     initialValues = unit.asTransformData(metadata.width, metadata.height)
