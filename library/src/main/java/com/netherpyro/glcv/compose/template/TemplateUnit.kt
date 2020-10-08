@@ -11,6 +11,7 @@ data class TemplateUnit(
         val tag: String,
         val uri: Uri,
         val startDelayMs: Long,
+        val startClipMs: Long,
         val trimmedDurationMs: Long,
         val zPosition: Int,
         val scaleFactor: Float,
@@ -26,6 +27,7 @@ data class TemplateUnit(
                 TemplateUnit(
                         parcel.readString()!!,
                         parcel.readParcelable(Uri::class.java.classLoader)!!,
+                        parcel.readLong(),
                         parcel.readLong(),
                         parcel.readLong(),
                         parcel.readInt(),
@@ -46,6 +48,7 @@ data class TemplateUnit(
         parcel.writeString(tag)
         parcel.writeParcelable(uri, flags)
         parcel.writeLong(startDelayMs)
+        parcel.writeLong(startClipMs)
         parcel.writeLong(trimmedDurationMs)
         parcel.writeInt(zPosition)
         parcel.writeFloat(scaleFactor)

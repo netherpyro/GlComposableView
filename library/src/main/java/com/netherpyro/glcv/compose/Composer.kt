@@ -211,6 +211,7 @@ class Composer(context: Context) {
                     tag = tag,
                     uri = src,
                     startDelayMs = startMs.coerceAtLeast(0L),
+                    startClipMs = 0L,
                     durationMs = durationMs.coerceAtLeast(1000L),
                     mutedAudio = true
             )
@@ -267,6 +268,7 @@ class Composer(context: Context) {
                     tag = tag,
                     uri = src,
                     startDelayMs = appliedStartDelaysMs,
+                    startClipMs = appliedBeginClipAmountMs,
                     durationMs = appliedDurationMs,
                     mutedAudio = mutedAudio or metadata.hasAudio.not()
             )

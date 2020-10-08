@@ -9,6 +9,7 @@ internal data class Sequence(
         val tag: String,
         val uri: Uri,
         var startDelayMs: Long,
+        var startClipMs: Long,
         var durationMs: Long,
         var mutedAudio: Boolean
 ): Controllable

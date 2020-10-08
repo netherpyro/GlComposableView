@@ -7,7 +7,7 @@ import android.opengl.EGLContext
  *
  * Encoder configuration.
  */
-data class EncoderConfig(
+internal data class EncoderConfig(
         val outputPath: String,
         val width: Int,
         val height: Int,
@@ -16,5 +16,7 @@ data class EncoderConfig(
         val bitRate: Int,
         val eglContext: EGLContext?
 ) {
+    var tempOutputPath = outputPath
+
     override fun toString() = "EncoderConfig: ${width}x${height}@$fps@$bitRate with $iFrameIntervalSecs interval secs to '$outputPath', shared context=$eglContext"
 }

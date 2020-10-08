@@ -5,10 +5,15 @@ package com.netherpyro.glcv.baker
  */
 class MuteCalculator {
 
-    private val muteAnswers = ArrayList<Boolean>()
+    private val muteAnswers = HashMap<String, Boolean>()
 
-    fun shouldMute(mutePreference: Boolean, hasAudio: Boolean): Boolean =
-            (mutePreference or hasAudio.not()).also { muteAnswers.add(it) }
+    /**
+     * @return whether should mute entry
+     */
+    fun addEntry(tag: String, mutePreference: Boolean, hasAudio: Boolean): Boolean =
+            (mutePreference or hasAudio.not()).also { muteAnswers[tag] = it }
 
-    fun hasAudio(): Boolean = muteAnswers.fold(false) { acc, answer -> acc or !answer }
+    fun shouldSound(tag: String) = muteAnswers[tag]?.not() ?: false
+
+    fun shouldSoundAtLeastOne(): Boolean = muteAnswers.values.fold(false) { acc, answer -> acc or !answer }
 }

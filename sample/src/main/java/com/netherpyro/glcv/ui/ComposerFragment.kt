@@ -25,6 +25,7 @@ import com.netherpyro.glcv.alsoOnLaid
 import com.netherpyro.glcv.attrValue
 import com.netherpyro.glcv.baker.BakeProgressReceiver
 import com.netherpyro.glcv.baker.Cancellable
+import com.netherpyro.glcv.baker.EncodeTarget
 import com.netherpyro.glcv.baker.renderToVideoFile
 import com.netherpyro.glcv.baker.renderToVideoFileInSeparateProcess
 import com.netherpyro.glcv.compose.Composer
@@ -269,7 +270,7 @@ class ComposerFragment : Fragment() {
     }
 
     private fun registerProgressReceiver() {
-        progressReceiver = BakeProgressReceiver { progress, completed -> handleProgress(progress, completed) }
+        progressReceiver = BakeProgressReceiver { encodeTarget, progress, completed -> handleProgress(encodeTarget, progress, completed) }
         requireContext()
             .registerReceiver(progressReceiver, IntentFilter(BakeProgressReceiver.ACTION_PUBLISH_PROGRESS))
     }
@@ -315,16 +316,16 @@ class ComposerFragment : Fragment() {
                     outputMinSidePx = outputMinSidePx,
                     fps = fps,
                     verboseLogging = true,
-                    progressListener = { progress: Float, completed: Boolean ->
-                        requireActivity().runOnUiThread { handleProgress(progress, completed) }
+                    progressListener = { encodeTarget: EncodeTarget, progress: Float, completed: Boolean ->
+                        requireActivity().runOnUiThread { handleProgress(encodeTarget, progress, completed) }
                     }
             )
         }
     }
 
-    private fun handleProgress(value: Float, completed: Boolean) {
-        Log.d(TAG, "handleProgress::$value : $completed")
-        progressDialog?.setProgress(value)
+    private fun handleProgress(encodeTarget: EncodeTarget, value: Float, completed: Boolean) {
+        Log.d(TAG, "handleProgress::$encodeTarget @ $value : $completed")
+        progressDialog?.setProgress(encodeTarget, value)
 
         if (completed) {
             Log.d(TAG, "handleProgress::completed for ${(System.nanoTime() - startTimeNsec).toSeconds()} seconds")

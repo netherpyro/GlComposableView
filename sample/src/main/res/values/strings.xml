@@ -19,4 +19,6 @@
     <string name="screen_title_composer">Composer</string>
     <string name="label_fps">FPS</string>
     <string name="label_resolution">Resolution</string>
+    <string name="encode_video">Video encoding</string>
+    <string name="encode_audio">Audio encoding</string>
 </resources>

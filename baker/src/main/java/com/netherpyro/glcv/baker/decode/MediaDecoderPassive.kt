@@ -174,7 +174,7 @@ internal class MediaDecoderPassive(
                 // Create a MediaCodec decoder, and configure it with the MediaFormat from the
                 // extractor. It's very important to use the format from the extractor because
                 // it contains a copy of the CSD-0/CSD-1 codec-specific data chunks.
-                val mime = videoTrackInfo.format.getString(MediaFormat.KEY_MIME)
+                val mime = videoTrackInfo.format.getString(MediaFormat.KEY_MIME)!!
                 videoDecoder = MediaCodec.createDecoderByType(mime)
                 videoDecoder.configure(videoTrackInfo.format, outputSurface, null, 0)
                 videoDecoder.start()
@@ -189,7 +189,7 @@ internal class MediaDecoderPassive(
                 this.audioBuffer = audioBufferProvider.provide(tag)
                 audioExtractor.selectTrack(audioTrackInfo.index)
 
-                val mime = audioTrackInfo.format.getString(MediaFormat.KEY_MIME)
+                val mime = audioTrackInfo.format.getString(MediaFormat.KEY_MIME)!!
                 // todo handle "audio/unknown" mime
                 audioDecoder = MediaCodec.createDecoderByType(mime)
                 audioDecoder.configure(audioTrackInfo.format, null, null, 0)

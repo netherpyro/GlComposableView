@@ -33,6 +33,7 @@ class Template private constructor(
                         tag = sequence.tag,
                         uri = sequence.uri,
                         startDelayMs = sequence.startDelayMs,
+                        startClipMs = sequence.startClipMs,
                         trimmedDurationMs = sequence.durationMs,
                         zPosition = transformable.getLayerPosition(),
                         scaleFactor = transformable.getScale(),

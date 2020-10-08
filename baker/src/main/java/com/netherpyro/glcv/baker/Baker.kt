@@ -24,13 +24,13 @@ import com.netherpyro.glcv.compose.media.Type
 import com.netherpyro.glcv.compose.media.Util
 import com.netherpyro.glcv.compose.template.Template
 import com.netherpyro.glcv.compose.template.TimeMask
+import java.io.File
 
 /**
  * @author mmikhailov on 28.03.2020.
  *
  * Bakes (records) composed [Template] synced with [TimeMask] into video file.
  */
-// todo handle errors
 internal class Baker private constructor(
         config: EncoderConfig,
         @ColorInt
@@ -41,6 +41,7 @@ internal class Baker private constructor(
 ) : Cancellable {
 
     companion object {
+        var AUDIO_PROCESSING_BY_FFMPEG = true
         var VERBOSE_LOGGING = false
 
         fun bake(
@@ -95,6 +96,7 @@ internal class Baker private constructor(
         private lateinit var handler: Handler
         private lateinit var encoder: Encoder
         private lateinit var transformables: Array<Transformable>
+        private lateinit var muteCalculator: MuteCalculator
 
         private val glRenderer = GlRenderer(RenderHostStub, Color.BLACK, viewportColor)
 
@@ -142,9 +144,22 @@ internal class Baker private constructor(
         }
 
         private fun startEncoding(): Boolean {
-            val hasAudio = prepareMedia()
+            prepareMedia()
 
-            encoder = Encoder(glRenderer, viewport, hasAudio, config, this,
+            val processAudioByEncoder =
+                    if (AUDIO_PROCESSING_BY_FFMPEG) false
+                    else muteCalculator.shouldSoundAtLeastOne()
+
+            if (AUDIO_PROCESSING_BY_FFMPEG && muteCalculator.shouldSoundAtLeastOne()) {
+                config.tempOutputPath = File(context.cacheDir, "temp_${System.currentTimeMillis()}").absolutePath
+            }
+
+            encoder = Encoder(
+                    glRenderer,
+                    viewport,
+                    processAudioByEncoder,
+                    config,
+                    this,
                     object : PrepareCallback {
                         override fun onPrepared(audioBufferProvider: AudioBufferProvider) {
                             decoders.prepare(audioBufferProvider)
@@ -161,15 +176,13 @@ internal class Baker private constructor(
             encoder.stop()
             decoders.release()
 
-            interrupt()
-            quit()
+            quitSafely()
 
             return true
         }
 
-        private fun prepareMedia(): Boolean {
-            val muteCalculator = MuteCalculator()
-
+        private fun prepareMedia() {
+            muteCalculator = MuteCalculator()
             transformables = Array(template.units.size) { index ->
                 template.units[index].let { unit ->
                     val metadata = Util.getMetadata(
@@ -180,17 +193,24 @@ internal class Baker private constructor(
 
                     @Suppress("UnnecessaryVariable")
                     val transformable = when (metadata.type) {
-                        Type.VIDEO -> glRenderer.addSurfaceLayer(
-                                unit.tag,
-                                surfaceConsumer = decoders.createMediaDecoder(
-                                        context,
-                                        unit.tag,
-                                        unit.uri,
-                                        decodeAudioTrack = false//!muteCalculator.shouldMute(unit.mutedAudio, metadata.hasAudio)  // todo restore after resolving audio issues
-                                ),
-                                position = unit.zPosition,
-                                initialValues = unit.asTransformData(metadata.width, metadata.height)
-                        )
+                        Type.VIDEO -> {
+                            val hasSound = !muteCalculator.addEntry(unit.tag, unit.mutedAudio, metadata.hasAudio)
+                            val decodeSound =
+                                    if (AUDIO_PROCESSING_BY_FFMPEG) false
+                                    else hasSound
+
+                            glRenderer.addSurfaceLayer(
+                                    unit.tag,
+                                    surfaceConsumer = decoders.createMediaDecoder(
+                                            context,
+                                            unit.tag,
+                                            unit.uri,
+                                            decodeAudioTrack = decodeSound
+                                    ),
+                                    position = unit.zPosition,
+                                    initialValues = unit.asTransformData(metadata.width, metadata.height)
+                            )
+                        }
                         Type.IMAGE -> glRenderer.addBitmapLayer(
                                 unit.tag,
                                 bitmap = Util.getBitmap(context, unit.uri),
@@ -202,8 +222,6 @@ internal class Baker private constructor(
                     return@let transformable
                 }
             }
-
-            return muteCalculator.hasAudio()
         }
 
         private fun generateFrame(): Boolean {
@@ -217,19 +235,52 @@ internal class Baker private constructor(
                                     .contentToString()}")
 
             invalidateLayersVisibility(status)
-            decoders.advance(presentationTimeNanos / 1_000L, status)
 
-            val progress = presentationTimeNanos / totalDurationNanos.toFloat()
+            decoders.advance(presentationTimeNanos / 1_000L, status)
             val hasFrames = presentationTimeNanos <= totalDurationNanos
-            progressPublisher?.publish(progress, !hasFrames)
 
             if (hasFrames) {
+                progressPublisher?.apply {
+                    publish(EncodeTarget.VIDEO, presentationTimeNanos / totalDurationNanos.toFloat(), false)
+                }
+
                 encoder.frameAvailable(presentationTimeNanos)
             } else {
-                stopEncoding()
+                handleEndOfFrames()
             }
 
             return true
+        }
+
+        private fun handleEndOfFrames() {
+            var encodeTarget = EncodeTarget.VIDEO
+
+            fun tearDown() {
+                progressPublisher?.publish(encodeTarget, 1f, true)
+                quitSafely()
+            }
+
+            encoder.stop()
+            decoders.release()
+
+            if (muteCalculator.shouldSoundAtLeastOne()) {
+                encodeTarget = EncodeTarget.AUDIO
+                val mediaWithSound =
+                        template.units.filter { muteCalculator.shouldSound(it.tag) }
+
+                // ffmpeg asynchronous audio merging pipeline
+                FFmpegLauncher.putAudio(
+                        context = context,
+                        targetPath = config.tempOutputPath,
+                        resultPath = config.outputPath,
+                        mediaUnits = mediaWithSound,
+                        onTimeProgress = { time ->
+                            val progress: Float = time.toFloat() / timeMask.durationMs
+                            progressPublisher?.publish(encodeTarget, progress, false)
+                        },
+                        onFinish = ::tearDown,
+                )
+            } else tearDown()
         }
 
         private fun invalidateLayersVisibility(statuses: List<TimeMask.VisibilityStatus>) {

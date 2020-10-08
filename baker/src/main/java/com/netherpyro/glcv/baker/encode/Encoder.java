@@ -349,7 +349,7 @@ public class Encoder implements Runnable {
         // because our MediaFormat doesn't have the Magic Goodies. These can only be
         // obtained from the encoder after it has started processing data.
         try {
-            muxer = new MediaMuxer(config.getOutputPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            muxer = new MediaMuxer(config.getTempOutputPath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         } catch (IOException e) {
             throw new RuntimeException("handlePrepare::MediaMuxer creation failed", e);
         }

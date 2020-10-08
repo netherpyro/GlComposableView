@@ -8,6 +8,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import com.netherpyro.glcv.R
+import com.netherpyro.glcv.baker.EncodeTarget
 import kotlinx.android.synthetic.main.d_progress.*
 
 /**
@@ -19,6 +20,8 @@ class ProgressDialog : DialogFragment() {
         const val CODE_REQUEST_CANCEL = "CODE_REQUEST_CANCEL"
         const val KEY_CANCEL_ACTION = "KEY_CANCEL_ACTION"
     }
+
+    private var encodeTarget: EncodeTarget? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,11 +42,19 @@ class ProgressDialog : DialogFragment() {
         }
     }
 
-    fun setProgress(progress: Float) {
+    fun setProgress(encodeTarget: EncodeTarget, progress: Float) {
         if (view != null) {
             val percent = "%.0f".format(progress * 100)
                 .plus("%")
             txt_progress_value.text = percent
+
+            if (this.encodeTarget != encodeTarget) {
+                this.encodeTarget = encodeTarget
+                txt_encode_target.text = when (encodeTarget) {
+                    EncodeTarget.VIDEO -> getString(R.string.encode_video)
+                    EncodeTarget.AUDIO -> getString(R.string.encode_audio)
+                }
+            }
         }
     }
 }

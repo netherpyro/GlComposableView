@@ -24,11 +24,22 @@
         android:text="@string/zero_percent"
         android:textAppearance="@style/TextAppearance.AppCompat.Headline"
         android:textColor="?attr/colorOnSurface"
-        app:layout_constraintBottom_toTopOf="@id/btn_cancel"
+        app:layout_constraintBottom_toTopOf="@id/txt_encode_target"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/bar_progress"
         tools:text="78%" />
+
+    <TextView android:id="@+id/txt_encode_target"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.AppCompat.Caption"
+        android:textColor="?attr/colorOnSurface"
+        app:layout_constraintBottom_toTopOf="@id/btn_cancel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txt_progress_value"
+        tools:text="Video encoding" />
 
     <ImageButton android:id="@+id/btn_cancel"
         android:layout_width="36dp"
@@ -40,6 +51,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/txt_progress_value" />
+        app:layout_constraintTop_toBottomOf="@id/txt_encode_target" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
