@@ -116,7 +116,7 @@ class Composer(context: Context) {
             template.units
                 .sortedBy { it.zPosition }
                 .forEach { unit ->
-                    addMedia(
+                    addMediaInternal(
                             tag = unit.tag,
                             src = unit.uri,
                             zOrderDirection = ZOrderDirection.TOP,
@@ -134,7 +134,26 @@ class Composer(context: Context) {
         return emptyList()
     }
 
+    /**
+     * Trimming and clipping are excluded
+     * */
     fun addMedia(
+            tag: String,
+            src: Uri,
+            zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
+            mutedAudio: Boolean = false,
+            transformData: TransformData? = null,
+            onTransformable: ((Transformable) -> Unit)? = null,
+    ) = addMediaInternal(
+            tag = tag,
+            src = src,
+            zOrderDirection = zOrderDirection,
+            mutedAudio = mutedAudio,
+            transformData = transformData,
+            onTransformable = onTransformable,
+    )
+
+    private fun addMediaInternal(
             tag: String,
             src: Uri,
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
@@ -174,7 +193,7 @@ class Composer(context: Context) {
      * @param startMs specifies when image should start display at project timeline. In milliseconds. Cannot be < 0;
      * @param durationMs of image visibility at project timeline. In milliseconds. Cannot be < 1000;
      * */
-    fun addImage(
+    private fun addImage(
             tag: String,
             src: Uri,
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
@@ -224,7 +243,7 @@ class Composer(context: Context) {
         return null
     }
 
-    fun addVideo(
+    private fun addVideo(
             tag: String,
             src: Uri,
             zOrderDirection: ZOrderDirection = ZOrderDirection.TOP,
