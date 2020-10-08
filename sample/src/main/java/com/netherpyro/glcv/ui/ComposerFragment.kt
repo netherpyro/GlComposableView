@@ -52,17 +52,15 @@ class ComposerFragment : Fragment() {
 
         private const val KEY_USE_RECEIVER = "KEY_USE_RECEIVER"
         private const val KEY_START_TIME = "KEY_START_TIME"
-
-        // should be stored at lifecycle aware environment
-        private val composer = Composer(App.instance).apply {
-            setViewportColor(Color.DKGRAY)
-            setBaseColor(Color.WHITE)
-        }
-
-        private var bakeProcess: Cancellable? = null
-        private val playbackController: IPlaybackController = composer.getPlaybackController()
     }
 
+    // inject it
+    private val composer = Composer(App.instance).apply {
+        setViewportColor(Color.DKGRAY)
+        setBaseColor(Color.WHITE)
+    }
+
+    private val playbackController: IPlaybackController = composer.getPlaybackController()
     private val outputFile by lazy { File(requireContext().cacheDir, "result.mp4") }
     private val transformableList = mutableListOf<Transformable>()
     private val controllableList = mutableListOf<Controllable>()
@@ -123,9 +121,13 @@ class ComposerFragment : Fragment() {
     private var useReceiver = false
     private var startTimeNsec: Long = 0
     private var primaryColor: Int = 0
+    private var bakeProcess: Cancellable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        @Suppress("DEPRECATION")
+        retainInstance = true
 
         childFragmentManager.setFragmentResultListener(ProgressDialog.CODE_REQUEST_CANCEL, this) { _, _ ->
             bakeProcess?.cancel()
