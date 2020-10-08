@@ -203,17 +203,21 @@ class ComposerFragment : Fragment() {
             }
 
             override fun onViewportOutsideTap(): Boolean {
-                transformableList.forEach {
-                    if (it.enableGesturesTransform) {
-                        it.setBorder(0f, primaryColor)
-                    }
-
-                    it.setOpacity(1f)
-                }
+                clearSelection()
 
                 return true
             }
         })
+    }
+
+    private fun clearSelection() {
+        transformableList.forEach {
+            if (it.enableGesturesTransform) {
+                it.setBorder(0f, primaryColor)
+            }
+
+            it.setOpacity(1f)
+        }
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
@@ -289,6 +293,7 @@ class ComposerFragment : Fragment() {
     }
 
     private fun startRender(options: Bundle) {
+        clearSelection()
         showProgressDialog()
         startTimeNsec = System.nanoTime()
         val outputPath = outputFile.absolutePath
