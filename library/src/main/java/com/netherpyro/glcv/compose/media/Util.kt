@@ -43,34 +43,47 @@ object Util {
         val hasAudio: Boolean
 
         when (type) {
-                Type.VIDEO -> {
-                    val mediaMetadataRetriever = MediaMetadataRetriever()
+            Type.VIDEO -> {
+                val mediaMetadataRetriever = MediaMetadataRetriever()
 
-                    try {
-                        mediaMetadataRetriever.setDataSource(context, uri)
+                try {
+                    mediaMetadataRetriever.setDataSource(context, uri)
 
-                        width = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                            ?.toInt() ?: 0
+                    orientation = mediaMetadataRetriever.extractMetadata(
+                            MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+                        ?.toInt()
+                        ?.toOrientation() ?: Orientation.DEG_0
 
-                        height = mediaMetadataRetriever.extractMetadata(
-                                MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-                            ?.toInt() ?: 0
+                    width = mediaMetadataRetriever.extractMetadata(
+                            when (orientation) {
+                                Orientation.DEG_0 -> MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
+                                Orientation.DEG_180 -> MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
+                                Orientation.DEG_90 -> MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT
+                                Orientation.DEG_270 -> MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT
+                            }
+                    )
+                        ?.toInt() ?: 0
 
-                        orientation = mediaMetadataRetriever.extractMetadata(
-                                MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
-                            ?.toInt()
-                            ?.toOrientation() ?: Orientation.DEG_0
+                    height = mediaMetadataRetriever.extractMetadata(
+                            when (orientation) {
+                                Orientation.DEG_0 -> MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT
+                                Orientation.DEG_180 -> MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT
+                                Orientation.DEG_90 -> MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
+                                Orientation.DEG_270 -> MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
+                            }
+                    )
+                        ?.toInt() ?: 0
 
-                        duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                            ?.toLong() ?: 0L
+                    duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                        ?.toLong() ?: 0L
 
-                        hasAudio = mediaMetadataRetriever.extractMetadata(
-                                MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) == "yes"
+                    hasAudio = mediaMetadataRetriever.extractMetadata(
+                            MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) == "yes"
 
-                    } finally {
-                        mediaMetadataRetriever.release()
-                    }
+                } finally {
+                    mediaMetadataRetriever.release()
                 }
+            }
                 Type.IMAGE -> {
                     // todo handle uri of non-content scheme
                     val cursor = context.contentResolver.query(
