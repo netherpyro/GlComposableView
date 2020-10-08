@@ -62,7 +62,7 @@ class GlComposableView @JvmOverloads constructor(
     init {
         setEGLContextFactory(this)
         setEGLConfigChooser(EConfigChooser())
-        holder.setFormat(PixelFormat.RGBA_8888) // todo remove line (?)
+        holder.setFormat(PixelFormat.RGBA_8888)
 
         renderer = GlRenderer(this, defaultBaseColor, defaultViewportColor)
         layoutHelper = LayoutHelper(defaultViewportAspectRatio)
@@ -73,7 +73,7 @@ class GlComposableView @JvmOverloads constructor(
     }
 
     override fun onSurfaceChanged(width: Int, height: Int) {
-        post { holder.setFixedSize(width, height) } // todo remove line (?)
+        post { holder.setFixedSize(width, height) }
 
         val viewport = layoutHelper.onSurfaceChanged(width, height)
         touchHelper.viewHeight = height
@@ -190,6 +190,10 @@ class GlComposableView @JvmOverloads constructor(
 
     fun setMinScale(factor: Float) {
         touchHelper.minScale = factor
+    }
+
+    fun enableOnClickLayerIteration(enable: Boolean) {
+        touchHelper.useIteration = enable
     }
 
     private fun setAspectRatioInternal(targetValue: Float, animated: Boolean) {

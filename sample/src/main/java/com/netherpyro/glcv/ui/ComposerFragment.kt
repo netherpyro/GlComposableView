@@ -157,6 +157,7 @@ class ComposerFragment : Fragment() {
         pane_control.alsoOnLaid { glView.setViewportMargin(bottom = it.height + it.marginBottom + it.marginTop) }
 
         composer.setBaseColor(requireContext().attrValue(R.attr.colorSurface))
+        composer.enableOnClickLayerIteration(true)
 
         val addedControllables = composer.setGlView(glView) { transformable -> transformableList.add(transformable) }
         controllableList.clear()

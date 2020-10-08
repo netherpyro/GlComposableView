@@ -26,6 +26,9 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
     var maxScale = 2f
     var minScale = 0.5f
 
+    var useIteration: Boolean = false
+
+    private val hitIds = mutableListOf<Int>()
     private val transformables = mutableListOf<Transformable>()
 
     init {
@@ -100,20 +103,34 @@ internal class GlTouchHelper(context: Context, observable: TransformableObservab
                 var hitLayer: Transformable? = null
 
                 for (transformable in transformables) {
-                    if (hitTest(PointF(e.x, (viewHeight - e.y)), transformable)) {
-                        Log.i("Touches", "Hit! the transformable $transformable")
-                        hitLayer = transformable
-                        break
+                    val hitTest = hitTest(PointF(e.x, (viewHeight - e.y)), transformable)
+
+                    if (useIteration) {
+                        if (hitIds.contains(transformable.id).not() && hitTest) {
+                            hitIds.add(transformable.id)
+
+                            Log.i("Touches", "Hit! the transformable $transformable")
+                            hitLayer = transformable
+                            break
+                        }
+                    } else {
+                        if (hitTest) {
+                            Log.i("Touches", "Hit! the transformable $transformable")
+                            hitLayer = transformable
+                            break
+                        }
                     }
                 }
 
                 return if (hitLayer != null) {
                     touchesListener?.onLayerTap(hitLayer) ?: false
                 } else {
+                    hitIds.clear()
                     touchesListener?.onViewportInsideTap() ?: false
                 }
             }
 
+            hitIds.clear()
             return touchesListener?.onViewportOutsideTap() ?: false
         }
     })

@@ -42,6 +42,8 @@ class Composer(context: Context) {
     var aspectRatio: Float = 1f
         private set
 
+    private var useLayerIteration = false
+
     private var glView: GlComposableView? = null
 
     private val mediaSeqs = mutableSetOf<Sequence>()
@@ -63,6 +65,7 @@ class Composer(context: Context) {
         glComposableView.setViewportColor(viewportColor)
         glComposableView.setBaseColor(baseColor)
         glComposableView.setAspectRatio(aspectRatio)
+        glComposableView.enableOnClickLayerIteration(useLayerIteration)
 
         return try {
             applyTemplate(takeTemplate(), onTransformable)
@@ -87,11 +90,16 @@ class Composer(context: Context) {
         glView?.setViewportColor(color)
     }
 
+    fun enableOnClickLayerIteration(enable: Boolean) {
+        this.useLayerIteration = enable
+        glView?.enableOnClickLayerIteration(enable)
+    }
+
     @Suppress("LiftReturnOrAssignment")
     fun getSharedEglContext(): EGLContext? {
         if (glView != null) {
             val exchanger = Exchanger<EGLContext>()
-            glView?.enqueueEvent(Runnable { exchanger.exchange(EGL14.eglGetCurrentContext()) })
+            glView?.enqueueEvent { exchanger.exchange(EGL14.eglGetCurrentContext()) }
 
             return exchanger.exchange(null)
 
