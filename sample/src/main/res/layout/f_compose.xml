@@ -54,7 +54,7 @@
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         tools:listitem="@layout/i_aspect" />
 
-    <LinearLayout android:id="@+id/pane_control"
+    <androidx.constraintlayout.widget.ConstraintLayout android:id="@+id/pane_control"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -70,6 +70,8 @@
             android:layout_height="wrap_content"
             android:contentDescription="@null"
             android:scaleType="centerInside"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             android:src="@drawable/ic_replay_24" />
 
         <ImageView android:id="@+id/btn_play_pause"
@@ -78,10 +80,37 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:contentDescription="@null"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btn_replay"
             android:scaleType="centerInside"
             android:src="@drawable/ic_play_24" />
 
-    </LinearLayout>
+        <ImageView android:id="@+id/btn_cancel_selection"
+            style="@style/ImageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@null"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_baseline_close_24"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:visibility="visible" />
+
+        <ImageView android:id="@+id/btn_delete"
+            style="@style/ImageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@null"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_baseline_delete_24"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btn_cancel_selection"
+            tools:visibility="visible" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fab_pick"
         android:layout_width="wrap_content"

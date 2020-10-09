@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.isVisible
 import androidx.core.view.marginBottom
 import androidx.core.view.marginTop
 import androidx.fragment.app.Fragment
@@ -122,6 +123,7 @@ class ComposerFragment : Fragment() {
     private var startTimeNsec: Long = 0
     private var primaryColor: Int = 0
     private var bakeProcess: Cancellable? = null
+    private var deleteAction: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -180,9 +182,19 @@ class ComposerFragment : Fragment() {
         }
         btn_play_pause.setOnClickListener { playbackController.togglePlay() }
         btn_replay.setOnClickListener { playbackController.seek(0) }
+        btn_cancel_selection.setOnClickListener { clearSelection() }
+        btn_delete.setOnClickListener { deleteAction?.invoke() }
 
         glView.listenTouches(object : LayerTouchListener {
             override fun onLayerTap(transformable: Transformable): Boolean {
+                fab_pick.hide()
+                btn_cancel_selection.isVisible = true
+                btn_delete.isVisible = true
+                deleteAction = {
+                    composer.removeMedia(transformable.tag!!)
+                    clearSelection()
+                }
+
                 transformableList.forEach {
                     val clicked = it.id == transformable.id
                     it.enableGesturesTransform = clicked
@@ -196,6 +208,11 @@ class ComposerFragment : Fragment() {
             }
 
             override fun onViewportInsideTap(): Boolean {
+                fab_pick.show()
+                btn_cancel_selection.isVisible = false
+                btn_delete.isVisible = false
+                deleteAction = null
+
                 transformableList.forEach {
                     it.enableGesturesTransform = false
                     it.setBorder(0f, primaryColor)
@@ -214,6 +231,11 @@ class ComposerFragment : Fragment() {
     }
 
     private fun clearSelection() {
+        fab_pick.show()
+        btn_cancel_selection.isVisible = false
+        btn_delete.isVisible = false
+        deleteAction = null
+
         transformableList.forEach {
             if (it.enableGesturesTransform) {
                 it.setBorder(0f, primaryColor)

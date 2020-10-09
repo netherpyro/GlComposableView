@@ -289,7 +289,7 @@ class Composer(context: Context) {
                         this@Composer.transformables.add(it)
                         onTransformable?.invoke(it)
                     }
-                )
+            )
 
             val sequence = Sequence(
                     tag = tag,
@@ -310,8 +310,9 @@ class Composer(context: Context) {
 
     fun removeMedia(tag: String) {
         checkGlView("removeMedia") {
-            // todo modify sequence list
-            // todo apply to glView
+            mediaSeqs.removeFirst { it.tag == tag }
+            transformables.removeFirst { it.tag == tag }!!
+                .also { glView!!.removeLayer(it) }
         }
     }
 
@@ -356,5 +357,18 @@ class Composer(context: Context) {
         }
 
         block()
+    }
+
+    private inline fun <E> MutableSet<E>.removeFirst(filter: (E) -> Boolean): E? {
+        val iterator = iterator()
+        while (iterator.hasNext()) {
+            val item = iterator.next()
+            if (filter(item)) {
+                iterator.remove()
+                return item
+            }
+        }
+
+        return null
     }
 }
