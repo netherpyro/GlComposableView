@@ -60,7 +60,7 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
             rebuildVertices()
         }
 
-    private val borderMarginCoefficient = 0.05f
+    private val borderMarginCoefficient = 0.06f
     private val borderWidthCoefficient = 0.08f
 
     private var aspectCoefficient: Float = 0f
@@ -69,7 +69,7 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
     private var ratioLoc = -1
     private var aPosLoc = -1
     private var uColorLoc = -1
-    private var vertices = createVertices()
+    private var vertices: FloatArray = createVertices()
 
     private var redComponent = color.red()
     private var greenComponent = color.green()
@@ -110,9 +110,9 @@ internal class GlBorderShader : GlShader(VERTEX_SHADER, FRAGMENT_SHADER) {
 
     fun setAspect(aspect: Float) {
         aspectCoefficient = when {
-            aspect > 1f -> 1f / aspect
-            aspect < 1f -> -aspect
-            else -> 0f
+            aspect > 1f -> 0f       // horizontal
+            aspect < 1f -> -aspect  // vertical
+            else -> 0f              // square
         }
 
         rebuildVertices()

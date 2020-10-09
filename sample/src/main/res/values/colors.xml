@@ -8,11 +8,11 @@
     <color name="colorSurface">@android:color/white</color>
     <color name="colorOnSurface">@color/stormDark</color>
 
-    <color name="stormBright">#5f3057</color>
-    <color name="stormDark">#3D1F38</color>
+    <color name="stormBright">#30575f</color>
+    <color name="stormDark">#1f383d</color>
 
-    <color name="stormBright7">#125f3057</color>
-    <color name="stormBright40">#665f3057</color>
+    <color name="stormBright7">#1230575f</color>
+    <color name="stormBright40">#6630575f</color>
     <color name="white40">#66ffffff</color>
 
 </resources>
